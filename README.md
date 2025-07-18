@@ -1,37 +1,170 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mashti Cafe Website
 
-## Getting Started
+A modern, responsive website for Mashti Cafe - The First Iranian Juice and Ice Cream Bar in British Columbia.
 
-First, run the development server:
+## 🏪 About Mashti Cafe
+
+Mashti Cafe brings authentic Persian flavors to Vancouver with premium juices, traditional ice cream, and specialty coffee drinks. Our website showcases the unique blend of Iranian heritage and contemporary cafe culture.
+
+## ✨ Features
+
+- **Modern Design**: Beautiful gradient backgrounds with glassmorphism effects
+- **Responsive Layout**: Optimized for all devices (mobile, tablet, desktop)
+- **Persian/Arabic Support**: Proper RTL text support for Persian content
+- **Interactive Elements**: Smooth animations and hover effects
+- **Component-Based**: Modular React components for easy maintenance
+- **SEO Optimized**: Proper metadata and semantic HTML
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15 with App Router
+- **Styling**: Tailwind CSS 4
+- **Language**: TypeScript
+- **Fonts**: Geist Sans (Google Fonts)
+- **Deployment**: Ready for Vercel deployment
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- npm or yarn
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone <repository-url>
+cd mashti-cafe
+```
+
+2. Install dependencies:
+
+```bash
+npm install
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📁 Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+mashti-cafe/
+├── src/
+│   ├── app/
+│   │   ├── layout.tsx          # Root layout with metadata
+│   │   ├── page.tsx            # Homepage component
+│   │   └── globals.css         # Global styles and animations
+│   └── components/
+│       ├── Navigation.tsx      # Navigation component with mobile menu
+│       └── MenuItem.tsx        # Reusable menu item component
+├── public/                     # Static assets
+├── package.json               # Dependencies and scripts
+└── README.md                  # Project documentation
+```
 
-## Learn More
+## 🎨 Design Features
 
-To learn more about Next.js, take a look at the following resources:
+### Color Scheme
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Primary**: Red (#dc2626) - Represents energy and passion
+- **Secondary**: Blue (#1e40af) - Trust and reliability
+- **Accent**: Orange (#f59e0b) - Warmth and hospitality
+- **Background**: Blue-purple gradient - Modern and vibrant
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Typography
 
-## Deploy on Vercel
+- **English**: Geist Sans - Clean and modern
+- **Persian**: Tahoma - Proper RTL support
+- **Hierarchy**: Clear typography scale for readability
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Animations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# mashti-cafe
+- **Fade In Up**: Smooth entrance animations
+- **Pulse Glow**: Subtle logo animation
+- **Hover Effects**: Interactive feedback on buttons and cards
+
+## 📱 Responsive Design
+
+The website is fully responsive with breakpoints:
+
+- **Mobile**: < 768px
+- **Tablet**: 768px - 1024px
+- **Desktop**: > 1024px
+
+## 🔧 Customization
+
+### Adding New Menu Items
+
+Edit the `menuItems` array in `src/app/page.tsx`:
+
+```typescript
+const menuItems = [
+  {
+    icon: "🥤",
+    title: "Fresh Juices",
+    items: ["Pomegranate Juice", "Orange & Carrot"],
+    bgColor: "bg-orange-500",
+  },
+  // Add more items...
+];
+```
+
+### Updating Colors
+
+Modify CSS variables in `src/app/globals.css`:
+
+```css
+:root {
+  --primary: #dc2626;
+  --secondary: #1e40af;
+  --accent: #f59e0b;
+}
+```
+
+## 🚀 Deployment
+
+### Vercel (Recommended)
+
+1. Push your code to GitHub
+2. Connect your repository to Vercel
+3. Deploy automatically
+
+### Other Platforms
+
+Build the project:
+
+```bash
+npm run build
+```
+
+The built files will be in the `.next` directory.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
+
+## 📞 Contact
+
+For questions about this website or Mashti Cafe:
+
+- Email: info@mashticafe.com
+- Phone: (604) 555-0123
+
+---
+
+**Mashti Cafe** - The First Iranian Juice and Ice Cream Bar in B.C. 🥤🍦☕
