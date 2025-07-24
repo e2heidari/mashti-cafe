@@ -1,0 +1,51 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import Navigation from "../../../components/Navigation";
+import AIAssistant from "../../../components/AIAssistant";
+
+export default function CentralAboutPage() {
+  const [isAIOpen, setIsAIOpen] = useState(false);
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+      <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+      <div className="pt-56 pb-12">
+        <h1 className="text-5xl font-extrabold text-white text-center mb-8">
+          About Central Branch
+        </h1>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+          <div className="mb-8 md:mb-0">
+            <Image
+              src="/images/about.webp"
+              alt="About Mashti Cafe"
+              width={700}
+              height={400}
+              className="w-full h-auto rounded-2xl shadow-2xl object-cover"
+            />
+          </div>
+          <div>
+            <p className="text-lg text-gray-300 mb-4">
+              Welcome to Mashti Central Branch! Experience the authentic taste
+              of Iran in the heart of North Vancouver. Our menu features a wide
+              variety of fresh juices, smoothies, shakes, ice creams, and
+              traditional Persian sweets. Whether you are looking for a healthy
+              drink, a sweet treat, or a cozy place to relax, Mashti has
+              something for everyone.
+            </p>
+            <ul className="list-disc list-inside text-gray-300 mb-4">
+              <li>Premium quality ingredients</li>
+              <li>Unique Persian flavors</li>
+              <li>Friendly and welcoming atmosphere</li>
+              <li>Perfect for families and friends</li>
+            </ul>
+            <p className="text-lg text-gray-300">
+              Visit us and enjoy a memorable experience at Mashti Central
+              Branch!
+            </p>
+          </div>
+        </div>
+      </div>
+      <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
+    </div>
+  );
+}

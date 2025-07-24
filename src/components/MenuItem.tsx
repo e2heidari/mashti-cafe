@@ -23,6 +23,9 @@ export default function MenuItem({
   subtitle,
   promotion = false,
 }: MenuItemProps) {
+  // Determine if there is a real discount
+  const hasDiscount =
+    discount && originalPrice && parseFloat(originalPrice) > parseFloat(price);
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all">
       <div
@@ -51,20 +54,24 @@ export default function MenuItem({
         </div>
       )}
       <div className="text-center mb-3">
-        {discount && originalPrice && (
-          <div className="mb-1">
-            <span className="text-lg line-through text-gray-400 mr-2">
-              {originalPrice}
+        {hasDiscount && (
+          <div className="mb-1 flex items-center justify-center gap-2">
+            <span className="text-lg line-through text-gray-400">
+              ${originalPrice}
             </span>
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-              30% OFF
+              {`${Math.round(
+                (1 - parseFloat(price) / parseFloat(originalPrice!)) * 100
+              )}% OFF`}
             </span>
           </div>
         )}
-        <span className="text-2xl font-bold text-yellow-400">{price}</span>
+        <span className="text-2xl font-bold text-yellow-400">${price}</span>
       </div>
       <p className="text-gray-300 text-center text-sm leading-relaxed">
-        {description}
+        {description && description.trim() !== ""
+          ? description
+          : "Ask our staff for details!"}
       </p>
     </div>
   );
