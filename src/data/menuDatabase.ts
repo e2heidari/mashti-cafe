@@ -655,7 +655,6 @@ export const getRecommendations = (
   tastePreference?: string,
   dietaryRestrictions?: string[]
 ): MenuItem[] => {
-  const filtered = [...menuDatabase];
   let strictFiltered = [...menuDatabase];
 
   // Apply strict filters (all must match)

@@ -43,7 +43,7 @@ export default function CentralMenuPage() {
         }
         setLoading(false);
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         setLoading(false);
       });
   }, []);

@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
-import MenuItem from "../../components/MenuItem";
 import AIAssistant from "../../components/AIAssistant";
 import {
   fetchMenuData,
@@ -13,8 +12,6 @@ import {
 } from "../../data/menuApi";
 
 export default function CentralBranch() {
-  const [activeMenu, setActiveMenu] = useState("");
-  const [filter, setFilter] = useState("");
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [menuData, setMenuData] = useState<{
     categories: TransformedMenuCategory[];
@@ -30,45 +27,12 @@ export default function CentralBranch() {
       .then((data) => {
         const transformed = transformDirectusData(data);
         setMenuData(transformed);
-        // Set activeMenu to first category that has items
-        if (transformed.categories.length > 0) {
-          const firstCategoryWithItems = transformed.categories.find((cat) =>
-            transformed.items.some((item) => item.category === cat.name)
-          );
-          if (firstCategoryWithItems) {
-            setActiveMenu(firstCategoryWithItems.name);
-          }
-        }
         setLoading(false);
       })
-      .catch((error) => {
-        console.error("Error loading data:", error);
+      .catch(() => {
         setLoading(false);
       });
   }, []);
-
-  // Filter items
-  const filterItems = (items: TransformedMenuItem[], category: string) => {
-    let filtered = items.filter((item) => item.category === category);
-    if (filter === "popular")
-      filtered = filtered.filter((item) => item.popular);
-    if (filter === "discount")
-      filtered = filtered.filter((item) => item.discount);
-    if (filter === "promotion")
-      filtered = filtered.filter((item) => item.promotion);
-    return filtered;
-  };
-
-  const getAllFilteredItems = () => {
-    let filtered = menuData.items;
-    if (filter === "popular")
-      filtered = filtered.filter((item) => item.popular);
-    if (filter === "discount")
-      filtered = filtered.filter((item) => item.discount);
-    if (filter === "promotion")
-      filtered = filtered.filter((item) => item.promotion);
-    return filtered;
-  };
 
   if (loading)
     return <div className="text-white text-center py-10">Loading...</div>;
@@ -76,8 +40,6 @@ export default function CentralBranch() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
       <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={true} />
-
-      {/* Main content with top margin for fixed navigation */}
       <div className="pt-48">
         {/* Gallery Section */}
         <section
