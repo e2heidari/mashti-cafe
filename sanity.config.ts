@@ -7,8 +7,8 @@ export default defineConfig({
   name: 'default',
   title: 'Mashti Cafe',
 
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || '',
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || '',
+  projectId: 'eh05fgze',
+  dataset: 'mashti-menu',
 
   plugins: [deskTool(), visionTool()],
 

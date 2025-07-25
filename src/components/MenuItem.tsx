@@ -1,46 +1,40 @@
 import { memo } from "react";
 
 interface MenuItemProps {
-  icon: string;
-  title: string;
-  price: string;
+  id: string;
+  name: string;
+  price: number;
   description: string;
-  bgColor: string;
   popular?: boolean;
   discount?: boolean;
-  originalPrice?: string;
-  subtitle?: string;
   promotion?: boolean;
+  originalPrice?: number;
 }
 
 const MenuItem = memo(function MenuItem({
-  icon,
-  title,
+  id,
+  name,
   price,
   description,
-  bgColor,
   popular = false,
   discount = false,
-  originalPrice,
-  subtitle,
   promotion = false,
+  originalPrice,
 }: MenuItemProps) {
   // Determine if there is a real discount
-  const hasDiscount =
-    discount && originalPrice && parseFloat(originalPrice) > parseFloat(price);
+  const hasDiscount = discount && originalPrice && originalPrice > price;
+
+  const discountPercentage = hasDiscount
+    ? Math.round((1 - price / originalPrice!) * 100)
+    : 0;
+
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all">
-      <div
-        className={`w-16 h-16 ${bgColor} rounded-full mx-auto mb-4 flex items-center justify-center`}
-      >
-        <span className="text-2xl">{icon}</span>
+      <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+        <span className="text-2xl">🍽️</span>
       </div>
-      <h3 className="text-xl font-bold text-white text-center mb-2">{title}</h3>
-      {subtitle && (
-        <p className="text-sm text-gray-300 text-center mb-2 italic">
-          {subtitle}
-        </p>
-      )}
+      <h3 className="text-xl font-bold text-white text-center mb-2">{name}</h3>
+
       {popular && (
         <div className="text-center mb-2">
           <span className="bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded-full">
@@ -48,6 +42,7 @@ const MenuItem = memo(function MenuItem({
           </span>
         </div>
       )}
+
       {promotion && (
         <div className="text-center mb-2">
           <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
@@ -55,6 +50,7 @@ const MenuItem = memo(function MenuItem({
           </span>
         </div>
       )}
+
       <div className="text-center mb-3">
         {hasDiscount && (
           <div className="mb-1 flex items-center justify-center gap-2">
@@ -62,14 +58,13 @@ const MenuItem = memo(function MenuItem({
               ${originalPrice}
             </span>
             <span className="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-              {`${Math.round(
-                (1 - parseFloat(price) / parseFloat(originalPrice!)) * 100
-              )}% OFF`}
+              {`${discountPercentage}% OFF`}
             </span>
           </div>
         )}
         <span className="text-2xl font-bold text-yellow-400">${price}</span>
       </div>
+
       <p className="text-gray-300 text-center text-sm leading-relaxed">
         {description && description.trim() !== ""
           ? description

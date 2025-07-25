@@ -256,7 +256,20 @@ export default function CoquitlamBranch() {
                   <div className="absolute -top-2 -left-2 bg-orange-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
                     {item.category}
                   </div>
-                  <MenuItem {...item} />
+                  <MenuItem
+                    id={item.title}
+                    name={item.title}
+                    price={parseFloat(item.price)}
+                    description={item.description}
+                    popular={item.popular}
+                    discount={item.discount}
+                    promotion={item.promotion}
+                    originalPrice={
+                      item.originalPrice
+                        ? parseFloat(item.originalPrice)
+                        : undefined
+                    }
+                  />
                 </div>
               ))
             ) : (
@@ -264,31 +277,129 @@ export default function CoquitlamBranch() {
               <>
                 {activeMenu === "shakes" &&
                   menuItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
                 {activeMenu === "coffee-tea" &&
                   coffeeTeaItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
                 {activeMenu === "smoothies" &&
                   smoothieItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
                 {activeMenu === "juices" &&
                   juiceItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
                 {activeMenu === "protein" &&
                   proteinShakeItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
                 {activeMenu === "ice-cream" &&
                   iceCreamItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
                 {activeMenu === "sweets" &&
                   sweetsItems.map((item, index) => (
-                    <MenuItem key={index} {...item} />
+                    <MenuItem
+                      key={index}
+                      id={item.title}
+                      name={item.title}
+                      price={parseFloat(item.price)}
+                      description={item.description}
+                      popular={item.popular}
+                      discount={item.discount}
+                      promotion={item.promotion}
+                      originalPrice={
+                        item.originalPrice
+                          ? parseFloat(item.originalPrice)
+                          : undefined
+                      }
+                    />
                   ))}
               </>
             )}

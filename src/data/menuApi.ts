@@ -98,7 +98,8 @@ export async function fetchMenuData(): Promise<MenuApiResponse> {
       discount: item.discount,
       bogo: item.bogo,
       category: item.category?.name || "",
-      originalPrice: item.originalPrice
+      originalPrice: item.originalPrice,
+      order: item.order
     }));
 
     return {
@@ -122,6 +123,7 @@ export interface TransformedMenuItem {
   bogo: boolean;
   category: string;
   originalPrice?: number;
+  order: number;
 }
 
 export interface TransformedMenuCategory {

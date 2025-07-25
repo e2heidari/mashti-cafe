@@ -3,8 +3,8 @@ import { createClient } from 'next-sanity';
 
 // Create Sanity client with CDN enabled for better performance
 const client = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  projectId: 'eh05fgze',
+  dataset: 'mashti-menu',
   apiVersion: '2024-01-01',
   useCdn: true, // Enable CDN for better performance
 });
@@ -57,41 +57,45 @@ interface TransformedCategory {
   items: TransformedMenuItem[];
 }
 
+// Cache duration in seconds (15 minutes)
+const CACHE_DURATION = 15 * 60;
+
 async function fetchMenuData() {
   try {
-    // Fetch categories
-    const categories = await client.fetch<SanityMenuCategory[]>(`
-      *[_type == "menuCategory"] | order(order asc) {
-        _id,
-        name,
-        order
-      }
-    `);
-
-    // Fetch items with category information
-    const items = await client.fetch<SanityMenuItem[]>(`
-      *[_type == "menuItem" && active == true] | order(order asc) {
-        _id,
-        name,
-        description,
-        price,
-        originalPrice,
-        category->{
+    // Single optimized query to fetch all data at once
+    const data = await client.fetch<{
+      categories: SanityMenuCategory[];
+      items: SanityMenuItem[];
+    }>(`
+      {
+        "categories": *[_type == "menuCategory"] | order(order asc) {
           _id,
           name,
           order
         },
-        popular,
-        discount,
-        bogo,
-        active,
-        available,
-        order
+        "items": *[_type == "menuItem" && active == true] | order(order asc) {
+          _id,
+          name,
+          description,
+          price,
+          originalPrice,
+          category->{
+            _id,
+            name,
+            order
+          },
+          popular,
+          discount,
+          bogo,
+          active,
+          available,
+          order
+        }
       }
     `);
 
     // Transform the data to match the expected format
-    const transformedCategories: TransformedCategory[] = categories.map(category => ({
+    const transformedCategories: TransformedCategory[] = data.categories.map(category => ({
       id: category._id,
       name: category.name,
       description: '',
@@ -100,12 +104,12 @@ async function fetchMenuData() {
       items: []
     }));
 
-    const transformedItems: TransformedMenuItem[] = items.map(item => ({
+    const transformedItems: TransformedMenuItem[] = data.items.map(item => ({
       id: item._id,
       name: item.name,
       description: item.description || '',
       price: item.price,
-      category: item.category?.name || 'Unknown',
+      category: item.category?.name || '',
       popular: item.popular,
       discount: item.discount,
       bogo: item.bogo,
@@ -115,55 +119,36 @@ async function fetchMenuData() {
     }));
 
     // Group items by category
-    transformedCategories.forEach(category => {
-      category.items = transformedItems.filter(item => item.category === category.name);
-    });
+    const categoriesWithItems = transformedCategories.map(category => ({
+      ...category,
+      items: transformedItems.filter(item => item.category === category.name)
+    }));
 
-    return { categories: transformedCategories, menuItems: transformedItems };
+    return {
+      categories: categoriesWithItems,
+      menuItems: transformedItems
+    };
   } catch (error) {
-    console.error('Error fetching menu data from Sanity:', error);
-    return null;
+    console.error('Error fetching menu data:', error);
+    throw error;
   }
 }
 
-// Cache for storing the last successfully fetched data
-let cachedData: { categories: TransformedCategory[]; menuItems: TransformedMenuItem[] } | null = null;
-let lastCacheTime: number = 0;
-const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache for better performance
-
 export async function GET() {
   try {
-    // Check if we have valid cached data
-    const now = Date.now();
-    if (cachedData && (now - lastCacheTime) < CACHE_DURATION) {
-      return NextResponse.json(cachedData);
-    }
-
-    // Try to fetch fresh data
-    const freshData = await fetchMenuData();
+    const data = await fetchMenuData();
     
-    if (freshData) {
-      // Update cache with fresh data
-      cachedData = freshData;
-      lastCacheTime = now;
-      return NextResponse.json(freshData);
-    }
-
-    // If fresh data failed but we have cached data, return cached data
-    if (cachedData) {
-      return NextResponse.json(cachedData);
-    }
-
-    // If no data available at all, return empty arrays
-    return NextResponse.json({ categories: [], menuItems: [] });
+    return NextResponse.json(data, {
+      headers: {
+        'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`,
+        'Content-Type': 'application/json',
+      },
+    });
   } catch (error) {
-    console.error('API route error:', error);
-    
-    // Return cached data if available, otherwise empty arrays
-    if (cachedData) {
-      return NextResponse.json(cachedData);
-    }
-    
-    return NextResponse.json({ categories: [], menuItems: [] });
+    console.error('API Error:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch menu data' },
+      { status: 500 }
+    );
   }
 } 

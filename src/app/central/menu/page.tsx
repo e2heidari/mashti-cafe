@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Navigation from "../../../components/Navigation";
 import MenuItem from "../../../components/MenuItem";
 import dynamic from "next/dynamic";
@@ -27,37 +27,122 @@ export default function CentralMenuPage() {
     menuItems: [],
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isAIOpen, setIsAIOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await fetch("/api/menu");
-        const data: MenuApiResponse = await res.json();
-        setMenuData(data);
-        if (data.categories.length > 0) {
-          const firstCategoryWithItems = data.categories.find(
-            (cat: TransformedMenuCategory) =>
-              data.menuItems.some(
-                (item: TransformedMenuItem) => item.category === cat.name
-              )
-          );
-          if (firstCategoryWithItems) {
-            setActiveMenu(firstCategoryWithItems.name);
-          }
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching menu data:", error);
-        setLoading(false);
-      }
-    };
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-    fetchData();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+      const res = await fetch("/api/menu", {
+        signal: controller.signal,
+        headers: {
+          "Cache-Control": "max-age=900", // 15 minutes cache
+        },
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+
+      const data: MenuApiResponse = await res.json();
+      setMenuData(data);
+
+      if (data.categories.length > 0) {
+        const firstCategoryWithItems = data.categories.find(
+          (cat: TransformedMenuCategory) =>
+            data.menuItems.some(
+              (item: TransformedMenuItem) => item.category === cat.name
+            )
+        );
+        if (firstCategoryWithItems) {
+          setActiveMenu(firstCategoryWithItems.name);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching menu data:", error);
+      setError(error instanceof Error ? error.message : "Failed to load menu");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (loading)
-    return <div className="text-white text-center py-10">Loading...</div>;
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Memoized filtered items for better performance
+  const filteredItems = useMemo(() => {
+    if (!menuData.menuItems.length) return [];
+
+    let items = menuData.menuItems;
+
+    if (filter === "popular") {
+      items = items.filter((item) => item.popular);
+    } else if (filter === "discount") {
+      items = items.filter((item) => item.discount);
+    } else if (filter === "bogo") {
+      items = items.filter((item) => item.bogo);
+    } else if (activeMenu) {
+      items = items.filter((item) => item.category === activeMenu);
+    }
+
+    return items.sort((a, b) => a.order - b.order);
+  }, [menuData.menuItems, filter, activeMenu]);
+
+  // Memoized sorted categories
+  const sortedCategories = useMemo(() => {
+    return menuData.categories.sort((a, b) => a.order - b.order);
+  }, [menuData.categories]);
+
+  const handleCategoryClick = useCallback((categoryName: string) => {
+    setActiveMenu(categoryName);
+    setFilter("");
+  }, []);
+
+  const handleFilterClick = useCallback((filterType: string) => {
+    setFilter(filterType);
+    setActiveMenu("");
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+        <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+        <div className="pt-56 pb-12">
+          <div className="text-white text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p className="text-lg">Loading menu...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+        <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+        <div className="pt-56 pb-12">
+          <div className="text-white text-center py-20">
+            <p className="text-lg mb-4">Failed to load menu</p>
+            <button
+              onClick={fetchData}
+              className="px-6 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
@@ -66,17 +151,14 @@ export default function CentralMenuPage() {
         <h1 className="text-5xl font-extrabold text-white text-center mb-8">
           Menu
         </h1>
+
         {/* Menu Tabs */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
-          {menuData.categories
-            .sort((a, b) => a.order - b.order)
-            .map((cat: TransformedMenuCategory, index: number) => (
+          {sortedCategories.map(
+            (cat: TransformedMenuCategory, index: number) => (
               <button
                 key={cat._id || `category-${cat.name}-${index}`}
-                onClick={() => {
-                  setActiveMenu(cat.name);
-                  setFilter("");
-                }}
+                onClick={() => handleCategoryClick(cat.name)}
                 className={`px-6 py-3 rounded-full font-semibold transition-all ${
                   activeMenu === cat.name
                     ? "bg-orange-500 text-white shadow-lg"
@@ -85,111 +167,87 @@ export default function CentralMenuPage() {
               >
                 {cat.name}
               </button>
-            ))}
+            )
+          )}
         </div>
+
         {/* Filter Options */}
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           <button
-            onClick={() => {
-              setFilter("popular");
-              setActiveMenu("");
-            }}
+            onClick={() => handleFilterClick("popular")}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               filter === "popular"
                 ? "bg-green-500 text-white shadow-lg"
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            ⭐ Popular
+            Popular
           </button>
           <button
-            onClick={() => {
-              setFilter("discount");
-              setActiveMenu("");
-            }}
+            onClick={() => handleFilterClick("discount")}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               filter === "discount"
-                ? "bg-green-500 text-white shadow-lg"
+                ? "bg-red-500 text-white shadow-lg"
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            🏷️ Discount
+            Discount
           </button>
           <button
-            onClick={() => {
-              setFilter("promotion");
-              setActiveMenu("");
-            }}
+            onClick={() => handleFilterClick("bogo")}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              filter === "promotion"
-                ? "bg-green-500 text-white shadow-lg"
+              filter === "bogo"
+                ? "bg-purple-500 text-white shadow-lg"
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            🎁 Buy 1 Get 1 FREE
+            BOGO
           </button>
         </div>
-        {/* Menu Items Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-          {(() => {
-            let itemsToShow = menuData.menuItems;
-            if (filter) {
-              if (filter === "popular") {
-                itemsToShow = itemsToShow.filter(
-                  (item: TransformedMenuItem) => item.popular
-                );
-              } else if (filter === "discount") {
-                itemsToShow = itemsToShow.filter(
-                  (item: TransformedMenuItem) => item.discount
-                );
-              } else if (filter === "promotion") {
-                itemsToShow = itemsToShow.filter(
-                  (item: TransformedMenuItem) => item.bogo
-                );
-              }
-            } else if (activeMenu) {
-              itemsToShow = itemsToShow.filter(
-                (item: TransformedMenuItem) => item.category === activeMenu
-              );
-            }
-            if (itemsToShow.length === 0) {
-              let message = "No items available.";
-              if (filter === "discount")
-                message = "No discounted items available.";
-              else if (filter === "popular")
-                message = "No popular items available.";
-              else if (filter === "promotion")
-                message = "No promotional items available.";
-              else if (activeMenu)
-                message = `No items available in ${activeMenu} category.`;
-              else message = "No items available.";
-              return (
-                <div className="col-span-full text-center text-gray-300 text-lg py-10">
-                  {message}
-                </div>
-              );
-            }
-            return itemsToShow.map(
-              (item: TransformedMenuItem, index: number) => (
+
+        {/* Menu Items */}
+        <div className="max-w-6xl mx-auto px-4">
+          {filteredItems.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-white text-lg mb-4">
+                {filter || activeMenu
+                  ? `No items found in ${filter || activeMenu}`
+                  : "No menu items available"}
+              </p>
+              <button
+                onClick={() => {
+                  setFilter("");
+                  setActiveMenu("");
+                }}
+                className="px-6 py-3 bg-orange-500 text-white rounded-full hover:bg-orange-600 transition-colors"
+              >
+                Show All Items
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredItems.map((item: TransformedMenuItem) => (
                 <MenuItem
-                  key={index}
-                  icon="🍽️"
-                  title={item.name}
-                  price={item.price.toString()}
-                  description={item.description || ""}
-                  bgColor="bg-orange-500"
+                  key={item.id}
+                  id={item.id}
+                  name={item.name}
+                  price={item.price}
+                  description={item.description}
                   popular={item.popular}
                   discount={item.discount}
                   promotion={item.bogo}
-                  originalPrice={item.originalPrice?.toString()}
-                  subtitle={undefined}
+                  originalPrice={item.originalPrice}
                 />
-              )
-            );
-          })()}
+              ))}
+            </div>
+          )}
         </div>
       </div>
-      <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
+
+      {/* AI Assistant */}
+      {isAIOpen && (
+        <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
+      )}
     </div>
   );
 }
