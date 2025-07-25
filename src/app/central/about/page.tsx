@@ -2,7 +2,13 @@
 import { useState } from "react";
 import Image from "next/image";
 import Navigation from "../../../components/Navigation";
-import AIAssistant from "../../../components/AIAssistant";
+import dynamic from "next/dynamic";
+
+// Dynamically import AI Assistant to reduce initial bundle size
+const AIAssistant = dynamic(() => import("../../../components/AIAssistant"), {
+  loading: () => <div className="text-white">Loading AI Assistant...</div>,
+  ssr: false,
+});
 
 export default function CentralAboutPage() {
   const [isAIOpen, setIsAIOpen] = useState(false);
@@ -21,6 +27,9 @@ export default function CentralAboutPage() {
               width={700}
               height={400}
               className="w-full h-auto rounded-2xl shadow-2xl object-cover"
+              priority
+              placeholder="blur"
+              blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
             />
           </div>
           <div>

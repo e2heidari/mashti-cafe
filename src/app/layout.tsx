@@ -27,6 +27,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Preload critical resources for better performance */}
+        <link rel="preload" href="/images/newmashti-logo.png" as="image" />
+        <link rel="preload" href="/images/1.webp" as="image" />
+        <link rel="preload" href="/images/2.webp" as="image" />
+        <link rel="preload" href="/images/3.webp" as="image" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

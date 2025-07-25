@@ -1,41 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
-import AIAssistant from "../../components/AIAssistant";
-import {
-  fetchMenuData,
-  transformDirectusData,
-  TransformedMenuCategory,
-  TransformedMenuItem,
-} from "../../data/menuApi";
+import dynamic from "next/dynamic";
+
+// Dynamically import AI Assistant to reduce initial bundle size
+const AIAssistant = dynamic(() => import("../../components/AIAssistant"), {
+  loading: () => <div className="text-white">Loading AI Assistant...</div>,
+  ssr: false,
+});
 
 export default function CentralBranch() {
   const [isAIOpen, setIsAIOpen] = useState(false);
-  const [menuData, setMenuData] = useState<{
-    categories: TransformedMenuCategory[];
-    items: TransformedMenuItem[];
-  }>({
-    categories: [],
-    items: [],
-  });
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchMenuData()
-      .then((data) => {
-        const transformed = transformDirectusData(data);
-        setMenuData(transformed);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
-  }, []);
-
-  if (loading)
-    return <div className="text-white text-center py-10">Loading...</div>;
+  // Removed unused states since they're not needed in this component
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
@@ -55,6 +33,9 @@ export default function CentralBranch() {
                   width={600}
                   height={600}
                   className="w-full h-[500px] object-cover transition-transform duration-300 group-hover:scale-110"
+                  priority
+                  placeholder="blur"
+                  blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx0f/EABUBAQEAAAAAAAAAAAAAAAAAAAMF/8QAGhEAAgIDAAAAAAAAAAAAAAAAAAECEgMRkf/aAAwDAQACEQMRAD8AltJagyeH0AthI5xdrLcNM91BF5pX2HaH9bcfaSXWGaRmknyJckliyjqTzSlT54b6bk+h0R//2Q=="
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="absolute bottom-6 left-6 text-white">

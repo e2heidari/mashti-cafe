@@ -1,111 +1,169 @@
 import { NextResponse } from 'next/server';
+import { createClient } from 'next-sanity';
 
-interface DirectusCategory {
-  id: number;
-  name: string;
-  slug: string;
-  order: number;
-  active: number;
-}
+// Create Sanity client with CDN enabled for better performance
+const client = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID!,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET!,
+  apiVersion: '2024-01-01',
+  useCdn: true, // Enable CDN for better performance
+});
 
-interface DirectusMenuItem {
-  id: number;
+interface SanityMenuItem {
+  _id: string;
   name: string;
+  description?: string;
   price: number;
-  description: string;
-  popular: number;
-  discount: number;
-  bogo: number;
+  originalPrice?: number;
+  category: {
+    _id: string;
+    name: string;
+    order: number;
+  };
+  popular: boolean;
+  discount: boolean;
+  bogo: boolean;
+  active: boolean;
+  available: boolean;
   order: number;
-  active: number;
-  available: number;
-  image?: unknown;
-  menu_category?: DirectusCategory;
 }
 
-let cachedData: {
-  categories: DirectusCategory[];
-  menuItems: DirectusMenuItem[];
-} | null = null;
+interface SanityMenuCategory {
+  _id: string;
+  name: string;
+  order: number;
+}
+
+interface TransformedMenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  popular: boolean;
+  discount: boolean;
+  bogo: boolean;
+  active: boolean;
+  available: boolean;
+  order: number;
+}
+
+interface TransformedCategory {
+  id: string;
+  name: string;
+  description: string;
+  active: boolean;
+  order: number;
+  items: TransformedMenuItem[];
+}
+
+async function fetchMenuData() {
+  try {
+    // Fetch categories
+    const categories = await client.fetch<SanityMenuCategory[]>(`
+      *[_type == "menuCategory"] | order(order asc) {
+        _id,
+        name,
+        order
+      }
+    `);
+
+    // Fetch items with category information
+    const items = await client.fetch<SanityMenuItem[]>(`
+      *[_type == "menuItem" && active == true] | order(order asc) {
+        _id,
+        name,
+        description,
+        price,
+        originalPrice,
+        category->{
+          _id,
+          name,
+          order
+        },
+        popular,
+        discount,
+        bogo,
+        active,
+        available,
+        order
+      }
+    `);
+
+    // Transform the data to match the expected format
+    const transformedCategories: TransformedCategory[] = categories.map(category => ({
+      id: category._id,
+      name: category.name,
+      description: '',
+      active: true,
+      order: category.order,
+      items: []
+    }));
+
+    const transformedItems: TransformedMenuItem[] = items.map(item => ({
+      id: item._id,
+      name: item.name,
+      description: item.description || '',
+      price: item.price,
+      category: item.category?.name || 'Unknown',
+      popular: item.popular,
+      discount: item.discount,
+      bogo: item.bogo,
+      active: item.active,
+      available: item.available,
+      order: item.order
+    }));
+
+    // Group items by category
+    transformedCategories.forEach(category => {
+      category.items = transformedItems.filter(item => item.category === category.name);
+    });
+
+    return { categories: transformedCategories, menuItems: transformedItems };
+  } catch (error) {
+    console.error('Error fetching menu data from Sanity:', error);
+    return null;
+  }
+}
+
+// Cache for storing the last successfully fetched data
+let cachedData: { categories: TransformedCategory[]; menuItems: TransformedMenuItem[] } | null = null;
 let lastCacheTime: number = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes cache
+const CACHE_DURATION = 15 * 60 * 1000; // 15 minutes cache for better performance
 
 export async function GET() {
   try {
-    const directusUrl = 'http://localhost:8055';
-    const serverCheck = await fetch(`${directusUrl}/server/info`, { 
-      method: 'GET',
-      signal: AbortSignal.timeout(2000)
-    }).catch(() => null);
-    if (!serverCheck || !serverCheck.ok) {
-      if (cachedData && (Date.now() - lastCacheTime) < CACHE_DURATION) {
-        return NextResponse.json(cachedData);
-      } else {
-        return NextResponse.json({ categories: [], menuItems: [] });
-      }
-    }
-    const loginResponse = await fetch(`${directusUrl}/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: 'ehsan.heydari@gmail.com',
-        password: 'admin123'
-      }),
-      signal: AbortSignal.timeout(3000)
-    }).catch(() => null);
-    if (!loginResponse || !loginResponse.ok) {
-      if (cachedData && (Date.now() - lastCacheTime) < CACHE_DURATION) {
-        return NextResponse.json(cachedData);
-      } else {
-        return NextResponse.json({ categories: [], menuItems: [] });
-      }
-    }
-    const loginData = await loginResponse.json();
-    const accessToken = loginData.data.access_token;
-    const categoriesResponse = await fetch(`${directusUrl}/items/menu_categories?filter[active][_eq]=true&sort=order`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-      signal: AbortSignal.timeout(3000)
-    }).catch(() => null);
-    if (!categoriesResponse || !categoriesResponse.ok) {
-      if (cachedData && (Date.now() - lastCacheTime) < CACHE_DURATION) {
-        return NextResponse.json(cachedData);
-      } else {
-        return NextResponse.json({ categories: [], menuItems: [] });
-      }
-    }
-    const categoriesData = await categoriesResponse.json();
-    const menuItemsResponse = await fetch(`${directusUrl}/items/menu_items?filter[active][_eq]=true&sort=order&fields=*,menu_category.*`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` },
-      signal: AbortSignal.timeout(3000)
-    }).catch(() => null);
-    if (!menuItemsResponse || !menuItemsResponse.ok) {
-      if (cachedData && (Date.now() - lastCacheTime) < CACHE_DURATION) {
-        return NextResponse.json(cachedData);
-      } else {
-        return NextResponse.json({ categories: [], menuItems: [] });
-      }
-    }
-    const menuItemsData = await menuItemsResponse.json();
-    const categoryMap = new Map<number, DirectusCategory>();
-    (categoriesData.data as DirectusCategory[]).forEach((cat) => {
-      categoryMap.set(cat.id, cat);
-    });
-    const menuItemsWithCategories = (menuItemsData.data as DirectusMenuItem[]).map((item) => ({
-      ...item,
-      menu_category: item.menu_category ? categoryMap.get((item.menu_category as DirectusCategory).id) : undefined
-    }));
-    const freshData = {
-      categories: categoriesData.data as DirectusCategory[] || [],
-      menuItems: menuItemsWithCategories || []
-    };
-    cachedData = freshData;
-    lastCacheTime = Date.now();
-    return NextResponse.json(freshData);
-  } catch {
-    if (cachedData && (Date.now() - lastCacheTime) < CACHE_DURATION) {
+    // Check if we have valid cached data
+    const now = Date.now();
+    if (cachedData && (now - lastCacheTime) < CACHE_DURATION) {
       return NextResponse.json(cachedData);
-    } else {
-      return NextResponse.json({ categories: [], menuItems: [] });
     }
+
+    // Try to fetch fresh data
+    const freshData = await fetchMenuData();
+    
+    if (freshData) {
+      // Update cache with fresh data
+      cachedData = freshData;
+      lastCacheTime = now;
+      return NextResponse.json(freshData);
+    }
+
+    // If fresh data failed but we have cached data, return cached data
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
+
+    // If no data available at all, return empty arrays
+    return NextResponse.json({ categories: [], menuItems: [] });
+  } catch (error) {
+    console.error('API route error:', error);
+    
+    // Return cached data if available, otherwise empty arrays
+    if (cachedData) {
+      return NextResponse.json(cachedData);
+    }
+    
+    return NextResponse.json({ categories: [], menuItems: [] });
   }
 } 

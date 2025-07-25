@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import Navigation from "../../../components/Navigation";
 import MenuItem from "../../../components/MenuItem";
-import AIAssistant from "../../../components/AIAssistant";
+import dynamic from "next/dynamic";
+
+// Dynamically import AI Assistant to reduce initial bundle size
+const AIAssistant = dynamic(() => import("../../../components/AIAssistant"), {
+  loading: () => <div className="text-white">Loading AI Assistant...</div>,
+  ssr: false,
+});
 import {
-  fetchMenuData,
-  transformDirectusData,
   TransformedMenuCategory,
   TransformedMenuItem,
   MenuApiResponse,
@@ -17,23 +21,24 @@ export default function CentralMenuPage() {
   const [filter, setFilter] = useState("");
   const [menuData, setMenuData] = useState<{
     categories: TransformedMenuCategory[];
-    items: TransformedMenuItem[];
+    menuItems: TransformedMenuItem[];
   }>({
     categories: [],
-    items: [],
+    menuItems: [],
   });
   const [loading, setLoading] = useState(true);
   const [isAIOpen, setIsAIOpen] = useState(false);
 
   useEffect(() => {
-    fetchMenuData()
-      .then((data: MenuApiResponse) => {
-        const transformed = transformDirectusData(data);
-        setMenuData(transformed);
-        if (transformed.categories.length > 0) {
-          const firstCategoryWithItems = transformed.categories.find(
+    const fetchData = async () => {
+      try {
+        const res = await fetch("/api/menu");
+        const data: MenuApiResponse = await res.json();
+        setMenuData(data);
+        if (data.categories.length > 0) {
+          const firstCategoryWithItems = data.categories.find(
             (cat: TransformedMenuCategory) =>
-              transformed.items.some(
+              data.menuItems.some(
                 (item: TransformedMenuItem) => item.category === cat.name
               )
           );
@@ -42,10 +47,13 @@ export default function CentralMenuPage() {
           }
         }
         setLoading(false);
-      })
-      .catch(() => {
+      } catch (error) {
+        console.error("Error fetching menu data:", error);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
 
   if (loading)
@@ -62,9 +70,9 @@ export default function CentralMenuPage() {
         <div className="flex flex-wrap justify-center gap-2 mb-8">
           {menuData.categories
             .sort((a, b) => a.order - b.order)
-            .map((cat: TransformedMenuCategory) => (
+            .map((cat: TransformedMenuCategory, index: number) => (
               <button
-                key={cat.id}
+                key={cat._id || `category-${cat.name}-${index}`}
                 onClick={() => {
                   setActiveMenu(cat.name);
                   setFilter("");
@@ -124,7 +132,7 @@ export default function CentralMenuPage() {
         {/* Menu Items Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
           {(() => {
-            let itemsToShow = menuData.items;
+            let itemsToShow = menuData.menuItems;
             if (filter) {
               if (filter === "popular") {
                 itemsToShow = itemsToShow.filter(
@@ -136,7 +144,7 @@ export default function CentralMenuPage() {
                 );
               } else if (filter === "promotion") {
                 itemsToShow = itemsToShow.filter(
-                  (item: TransformedMenuItem) => item.promotion
+                  (item: TransformedMenuItem) => item.bogo
                 );
               }
             } else if (activeMenu) {
@@ -165,9 +173,16 @@ export default function CentralMenuPage() {
               (item: TransformedMenuItem, index: number) => (
                 <MenuItem
                   key={index}
-                  {...item}
+                  icon="🍽️"
+                  title={item.name}
                   price={item.price.toString()}
+                  description={item.description || ""}
+                  bgColor="bg-orange-500"
+                  popular={item.popular}
+                  discount={item.discount}
+                  promotion={item.bogo}
                   originalPrice={item.originalPrice?.toString()}
+                  subtitle={undefined}
                 />
               )
             );

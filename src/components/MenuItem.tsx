@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 interface MenuItemProps {
   icon: string;
   title: string;
@@ -11,7 +13,7 @@ interface MenuItemProps {
   promotion?: boolean;
 }
 
-export default function MenuItem({
+const MenuItem = memo(function MenuItem({
   icon,
   title,
   price,
@@ -75,4 +77,6 @@ export default function MenuItem({
       </p>
     </div>
   );
-}
+});
+
+export default MenuItem;

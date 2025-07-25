@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo, useCallback } from "react";
 import { MenuItem, getRecommendations } from "../data/menuDatabase";
 
 interface AIAssistantProps {
@@ -8,7 +8,10 @@ interface AIAssistantProps {
   onClose: () => void;
 }
 
-export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
+const AIAssistant = memo(function AIAssistant({
+  isOpen,
+  onClose,
+}: AIAssistantProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [recommendations, setRecommendations] = useState<MenuItem[]>([]);
@@ -92,44 +95,47 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
     },
   ];
 
-  const handleAnswer = (questionId: string, answer: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: answer }));
+  const handleAnswer = useCallback(
+    (questionId: string, answer: string) => {
+      setAnswers((prev) => ({ ...prev, [questionId]: answer }));
 
-    if (currentStep < questions.length - 1) {
-      setCurrentStep((prev) => prev + 1);
-    } else {
-      // Get recommendations
-      setIsLoading(true);
+      if (currentStep < questions.length - 1) {
+        setCurrentStep((prev) => prev + 1);
+      } else {
+        // Get recommendations
+        setIsLoading(true);
 
-      // Simulate API call
-      setTimeout(() => {
-        const dietaryRestrictions =
-          answers.dietaryRestrictions === "none"
-            ? []
-            : [answers.dietaryRestrictions];
-        const recs = getRecommendations(
-          answers.temperature,
-          answers.timeOfDay,
-          answers.flavor,
-          answers.caffeine,
-          answers.healthGoal,
-          answers.tastePreference,
-          dietaryRestrictions
-        );
+        // Simulate API call
+        setTimeout(() => {
+          const dietaryRestrictions =
+            answers.dietaryRestrictions === "none"
+              ? []
+              : [answers.dietaryRestrictions];
+          const recs = getRecommendations(
+            answers.temperature,
+            answers.timeOfDay,
+            answers.flavor,
+            answers.caffeine,
+            answers.healthGoal,
+            answers.tastePreference,
+            dietaryRestrictions
+          );
 
-        setRecommendations(recs);
-        setIsLoading(false);
-        setShowResults(true);
-      }, 1500);
-    }
-  };
+          setRecommendations(recs);
+          setIsLoading(false);
+          setShowResults(true);
+        }, 1500);
+      }
+    },
+    [currentStep, answers, questions.length]
+  );
 
-  const resetConversation = () => {
+  const resetConversation = useCallback(() => {
     setCurrentStep(0);
     setAnswers({});
     setRecommendations([]);
     setShowResults(false);
-  };
+  }, []);
 
   const getNutritionalInfo = (item: MenuItem) => {
     return (
@@ -403,4 +409,6 @@ export default function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
       </div>
     </div>
   );
-}
+});
+
+export default AIAssistant;
