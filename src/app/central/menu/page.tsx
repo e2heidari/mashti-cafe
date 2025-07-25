@@ -201,7 +201,7 @@ export default function CentralMenuPage() {
                 : "bg-white/10 text-white hover:bg-white/20"
             }`}
           >
-            BOGO
+            Buy1 Get1 FREE
           </button>
         </div>
 
