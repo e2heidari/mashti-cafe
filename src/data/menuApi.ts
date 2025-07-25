@@ -124,12 +124,16 @@ export interface TransformedMenuItem {
   category: string;
   originalPrice?: number;
   order: number;
+  imageUrl?: string;
+  imageAlt?: string;
 }
 
 export interface TransformedMenuCategory {
   _id: string;
   name: string;
   order: number;
+  imageUrl?: string;
+  imageAlt?: string;
 }
 
 export function transformDirectusData(directusData: MenuApiResponse) {

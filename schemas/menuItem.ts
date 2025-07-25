@@ -17,6 +17,25 @@ export default defineType({
       type: 'text',
     }),
     defineField({
+      name: 'image',
+      title: 'Item Image',
+      type: 'image',
+      options: {
+        hotspot: true, // Enables hotspot for better image cropping
+      },
+      fields: [
+        {
+          name: 'alt',
+          type: 'string',
+          title: 'Alternative text',
+          description: 'Important for SEO and accessibility.',
+          options: {
+            isHighlighted: true, // Shows this field when image is selected
+          },
+        },
+      ],
+    }),
+    defineField({
       name: 'price',
       title: 'Price',
       type: 'number',
@@ -78,12 +97,14 @@ export default defineType({
       price: 'price',
       category: 'category.name',
       popular: 'popular',
+      media: 'image',
     },
     prepare(selection) {
-      const { title, price, category, popular } = selection
+      const { title, price, category, popular, media } = selection
       return {
         title: title,
         subtitle: `${category} - $${price}${popular ? ' (Popular)' : ''}`,
+        media: media,
       }
     },
   },

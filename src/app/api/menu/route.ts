@@ -15,6 +15,8 @@ interface SanityMenuItem {
   description?: string;
   price: number;
   originalPrice?: number;
+  imageUrl?: string;
+  imageAlt?: string;
   category: {
     _id: string;
     name: string;
@@ -32,6 +34,8 @@ interface SanityMenuCategory {
   _id: string;
   name: string;
   order: number;
+  imageUrl?: string;
+  imageAlt?: string;
 }
 
 interface TransformedMenuItem {
@@ -40,6 +44,8 @@ interface TransformedMenuItem {
   description: string;
   price: number;
   category: string;
+  imageUrl?: string;
+  imageAlt?: string;
   popular: boolean;
   discount: boolean;
   bogo: boolean;
@@ -54,6 +60,8 @@ interface TransformedCategory {
   description: string;
   active: boolean;
   order: number;
+  imageUrl?: string;
+  imageAlt?: string;
   items: TransformedMenuItem[];
 }
 
@@ -71,7 +79,9 @@ async function fetchMenuData() {
         "categories": *[_type == "menuCategory"] | order(order asc) {
           _id,
           name,
-          order
+          order,
+          "imageUrl": image.asset->url,
+          "imageAlt": image.alt
         },
         "items": *[_type == "menuItem" && active == true] | order(order asc) {
           _id,
@@ -79,6 +89,8 @@ async function fetchMenuData() {
           description,
           price,
           originalPrice,
+          "imageUrl": image.asset->url,
+          "imageAlt": image.alt,
           category->{
             _id,
             name,
@@ -101,6 +113,8 @@ async function fetchMenuData() {
       description: '',
       active: true,
       order: category.order,
+      imageUrl: category.imageUrl,
+      imageAlt: category.imageAlt,
       items: []
     }));
 
@@ -110,6 +124,8 @@ async function fetchMenuData() {
       description: item.description || '',
       price: item.price,
       category: item.category?.name || '',
+      imageUrl: item.imageUrl,
+      imageAlt: item.imageAlt,
       popular: item.popular,
       discount: item.discount,
       bogo: item.bogo,
