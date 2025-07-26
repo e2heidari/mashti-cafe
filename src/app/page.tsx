@@ -1,7 +1,6 @@
 "use client";
 
 import Navigation from "../components/Navigation";
-import Footer from "../components/Footer";
 
 export default function Home() {
   return (
@@ -271,7 +270,6 @@ export default function Home() {
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 }

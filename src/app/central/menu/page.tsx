@@ -229,32 +229,6 @@ export default function CentralMenuPage() {
                   key={item.id}
                   className="bg-white border border-gray-100 shadow-xs rounded-lg p-5 mb-4 flex flex-col h-full"
                 >
-                  {/* Badge for popular/discount/bogo */}
-                  {(item.popular || item.discount || item.bogo) && (
-                    <div className="flex justify-center mb-2 gap-2">
-                      {item.popular && (
-                        <span className="bg-red-600 text-white rounded px-2 text-xs font-bold">
-                          Popular
-                        </span>
-                      )}
-                      {item.discount && (
-                        <span className="bg-red-600 text-white rounded px-2 text-xs font-bold">
-                          Discount
-                        </span>
-                      )}
-                      {item.bogo && (
-                        <span className="bg-red-600 text-white rounded px-2 text-xs font-bold">
-                          BOGO
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  <h3 className="text-lg font-bold text-gray-900 mb-2 text-center">
-                    {item.name}
-                  </h3>
-                  <div className="text-xl font-bold text-red-600 text-center mb-2">
-                    ${item.price}
-                  </div>
                   <MenuItem
                     id={item.id}
                     name={item.name}
@@ -265,9 +239,6 @@ export default function CentralMenuPage() {
                     promotion={item.bogo}
                     originalPrice={item.originalPrice}
                   />
-                  <div className="text-gray-600 text-sm mt-3 text-center">
-                    {item.description}
-                  </div>
                 </div>
               ))}
             </div>

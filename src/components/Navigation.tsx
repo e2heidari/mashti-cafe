@@ -22,9 +22,9 @@ const Navigation = memo(function Navigation({
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#e80812]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full">
         {/* Main Header */}
-        <div className="flex justify-between items-start py-4 px-2 md:px-0">
+        <div className="flex justify-between items-start py-4 px-4 sm:px-6 lg:px-8">
           {/* Brand Name and Tagline - Left Side */}
           <div className="flex flex-col items-start space-y-1 md:space-y-2">
             <p className="text-white text-xs md:text-sm font-medium text-left">
@@ -147,99 +147,103 @@ const Navigation = memo(function Navigation({
         {/* Navigation Menu - Only show if showMenu is true */}
         {showMenu && (
           <>
-            <div className="flex justify-between items-center py-4 border-t border-white/20">
-              {/* Desktop Navigation Links */}
-              <div className="hidden md:flex items-center space-x-8">
-                <Link
-                  href={homeHref}
-                  className="text-white hover:text-yellow-300 transition-colors font-medium"
-                >
-                  Home
-                </Link>
-                <Link
-                  href={menuHref}
-                  className="text-white hover:text-yellow-300 transition-colors font-medium"
-                >
-                  Menu
-                </Link>
-                <Link
-                  href={aboutHref}
-                  className="text-white hover:text-yellow-300 transition-colors font-medium"
-                >
-                  About
-                </Link>
-              </div>
+            <div className="bg-gray-800 w-full">
+              <div className="w-full">
+                <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
+                  {/* Desktop Navigation Links */}
+                  <div className="hidden md:flex items-center space-x-8">
+                    <Link
+                      href={homeHref}
+                      className="text-white hover:text-gray-300 transition-colors font-medium"
+                    >
+                      Home
+                    </Link>
+                    <Link
+                      href={menuHref}
+                      className="text-white hover:text-gray-300 transition-colors font-medium"
+                    >
+                      Menu
+                    </Link>
+                    <Link
+                      href={aboutHref}
+                      className="text-white hover:text-gray-300 transition-colors font-medium"
+                    >
+                      About
+                    </Link>
+                  </div>
 
-              {/* AI Button */}
-              <button
-                onClick={onAIOpen}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-full font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl flex items-center space-x-2"
-              >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
-                  />
-                </svg>
-                <span>Mashti AI</span>
-              </button>
+                  {/* AI Button */}
+                  <button
+                    onClick={onAIOpen}
+                    className="bg-white text-red-600 px-6 py-2.5 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-2 border-2 border-white hover:border-gray-200"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
+                      />
+                    </svg>
+                    <span className="font-bold">Mashti AI</span>
+                  </button>
 
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="md:hidden text-white hover:text-yellow-300 transition-colors"
-              >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            {/* Mobile Menu */}
-            {isMenuOpen && (
-              <div className="md:hidden bg-white/10 backdrop-blur-sm rounded-lg mt-4 p-4">
-                <div className="flex flex-col space-y-4">
-                  <Link
-                    href={homeHref}
-                    className="text-white hover:text-yellow-300 transition-colors font-medium"
-                    onClick={() => setIsMenuOpen(false)}
+                  {/* Mobile Menu Button */}
+                  <button
+                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                    className="md:hidden text-white hover:text-gray-300 transition-colors"
                   >
-                    Home
-                  </Link>
-                  <Link
-                    href={menuHref}
-                    className="text-white hover:text-yellow-300 transition-colors font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    Menu
-                  </Link>
-                  <Link
-                    href={aboutHref}
-                    className="text-white hover:text-yellow-300 transition-colors font-medium"
-                    onClick={() => setIsMenuOpen(false)}
-                  >
-                    About
-                  </Link>
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    </svg>
+                  </button>
                 </div>
+
+                {/* Mobile Menu */}
+                {isMenuOpen && (
+                  <div className="md:hidden bg-gray-700 border border-gray-600 backdrop-blur-sm rounded-lg p-4">
+                    <div className="flex flex-col space-y-4">
+                      <Link
+                        href={homeHref}
+                        className="text-white hover:text-gray-300 transition-colors font-medium"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Home
+                      </Link>
+                      <Link
+                        href={menuHref}
+                        className="text-white hover:text-gray-300 transition-colors font-medium"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        Menu
+                      </Link>
+                      <Link
+                        href={aboutHref}
+                        className="text-white hover:text-gray-300 transition-colors font-medium"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        About
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </>
         )}
       </div>

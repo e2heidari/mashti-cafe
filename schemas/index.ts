@@ -1,4 +1,5 @@
 import menuCategory from './menuCategory'
 import menuItem from './menuItem'
-
-export const schemaTypes = [menuCategory, menuItem] 
+import newsItem from './newsItem'
+ 
+export const schemaTypes = [menuCategory, menuItem, newsItem] 

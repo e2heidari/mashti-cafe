@@ -5,7 +5,7 @@ import { schemaTypes } from './schemas'
 
 export default defineConfig({
   name: 'default',
-  title: 'Mashti Cafe',
+  title: 'Mashti Cafe CMS',
 
   projectId: 'eh05fgze',
   dataset: 'mashti-menu',

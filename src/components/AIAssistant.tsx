@@ -8,6 +8,12 @@ interface AIAssistantProps {
   onClose: () => void;
 }
 
+interface QuestionOption {
+  value: string;
+  label: string;
+  emoji: string;
+}
+
 const AIAssistant = memo(function AIAssistant({
   isOpen,
   onClose,
@@ -18,82 +24,195 @@ const AIAssistant = memo(function AIAssistant({
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
 
-  const questions = [
-    {
-      id: "temperature",
-      question: "نوشیدنی خود را چگونه می‌خواهید؟",
-      options: [
-        { value: "hot", label: "گرم", emoji: "🔥" },
-        { value: "cold", label: "سرد", emoji: "❄️" },
-        { value: "both", label: "هر دو", emoji: "🌡️" },
-      ],
-    },
-    {
-      id: "timeOfDay",
-      question: "چه زمانی از روز می‌خواهید؟",
-      options: [
-        { value: "morning", label: "صبح", emoji: "🌅" },
-        { value: "afternoon", label: "ظهر", emoji: "☀️" },
-        { value: "evening", label: "عصر", emoji: "🌆" },
-        { value: "night", label: "شب", emoji: "🌙" },
-      ],
-    },
-    {
+  // Dynamic questions based on previous answers
+  const getDynamicQuestions = useCallback(() => {
+    const baseQuestions = [
+      {
+        id: "temperature",
+        question:
+          "How would you like your drink?\nنوشیدنی خود را چگونه می‌خواهید؟",
+        options: [
+          { value: "hot", label: "Hot (گرم)", emoji: "🔥" },
+          { value: "cold", label: "Cold (سرد)", emoji: "❄️" },
+          { value: "both", label: "Both (هر دو)", emoji: "🌡️" },
+        ],
+      },
+      {
+        id: "timeOfDay",
+        question: "What time of day is it?\nچه زمانی از روز می‌خواهید؟",
+        options: [
+          { value: "morning", label: "Morning (صبح)", emoji: "🌅" },
+          { value: "afternoon", label: "Afternoon (ظهر)", emoji: "☀️" },
+          { value: "evening", label: "Evening (عصر)", emoji: "🌆" },
+          { value: "night", label: "Night (شب)", emoji: "🌙" },
+        ],
+      },
+    ];
+
+    // Add flavor question with optimized options based on temperature
+    const flavorQuestion = {
       id: "flavor",
-      question: "چه طعمی را ترجیح می‌دهید؟",
-      options: [
-        { value: "fruity", label: "میوه‌ای", emoji: "🍓" },
-        { value: "sweet", label: "شیرین", emoji: "🍯" },
-        { value: "creamy", label: "خامه‌ای", emoji: "🥛" },
-        { value: "refreshing", label: "خنک کننده", emoji: "🌊" },
-        { value: "rich", label: "پر و غنی", emoji: "💎" },
-        { value: "tart", label: "ترش", emoji: "🍋" },
-      ],
-    },
-    {
+      question: "What flavor do you prefer?\nچه طعمی را ترجیح می‌دهید؟",
+      options: [] as QuestionOption[],
+    };
+
+    if (answers.temperature === "hot") {
+      flavorQuestion.options = [
+        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
+        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
+        { value: "rich", label: "Rich (پر و غنی)", emoji: "💎" },
+        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
+      ];
+    } else if (answers.temperature === "cold") {
+      flavorQuestion.options = [
+        { value: "fruity", label: "Fruity (میوه‌ای)", emoji: "🍓" },
+        { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
+        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
+        { value: "tart", label: "Tart (ترش)", emoji: "🍋" },
+      ];
+    } else {
+      // Both or no answer yet - show all options
+      flavorQuestion.options = [
+        { value: "fruity", label: "Fruity (میوه‌ای)", emoji: "🍓" },
+        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
+        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
+        { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
+        { value: "rich", label: "Rich (پر و غنی)", emoji: "💎" },
+        { value: "tart", label: "Tart (ترش)", emoji: "🍋" },
+      ];
+    }
+
+    // Add caffeine question with optimized options based on time of day
+    const caffeineQuestion = {
       id: "caffeine",
-      question: "آیا کافئین می‌خواهید؟",
-      options: [
-        { value: "yes", label: "بله", emoji: "☕" },
-        { value: "no", label: "نه", emoji: "🚫" },
-        { value: "both", label: "مهم نیست", emoji: "🤷" },
-      ],
-    },
-    {
+      question: "Do you want caffeine?\nآیا کافئین می‌خواهید؟",
+      options: [] as QuestionOption[],
+    };
+
+    if (answers.timeOfDay === "morning") {
+      caffeineQuestion.options = [
+        { value: "yes", label: "Yes (بله)", emoji: "☕" },
+        { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
+      ];
+    } else if (answers.timeOfDay === "night") {
+      caffeineQuestion.options = [
+        { value: "no", label: "No (نه)", emoji: "🚫" },
+        { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
+      ];
+    } else {
+      caffeineQuestion.options = [
+        { value: "yes", label: "Yes (بله)", emoji: "☕" },
+        { value: "no", label: "No (نه)", emoji: "🚫" },
+        { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
+      ];
+    }
+
+    // Add health goal question with optimized options based on flavor
+    const healthGoalQuestion = {
       id: "healthGoal",
-      question: "هدف سلامتی شما چیست؟",
-      options: [
-        { value: "energy", label: "انرژی", emoji: "💪" },
-        { value: "vitamins", label: "ویتامین‌ها", emoji: "🥬" },
-        { value: "antioxidants", label: "آنتی اکسیدان", emoji: "🛡️" },
-        { value: "protein", label: "پروتئین", emoji: "🏋️" },
-        { value: "relaxation", label: "آرامش", emoji: "😌" },
-        { value: "none", label: "هیچ کدام", emoji: "🎯" },
-      ],
-    },
-    {
+      question: "What's your health goal?\nهدف سلامتی شما چیست؟",
+      options: [] as QuestionOption[],
+    };
+
+    if (answers.flavor === "fruity" || answers.flavor === "refreshing") {
+      healthGoalQuestion.options = [
+        { value: "vitamins", label: "Vitamins (ویتامین‌ها)", emoji: "🥬" },
+        {
+          value: "antioxidants",
+          label: "Antioxidants (آنتی اکسیدان)",
+          emoji: "🛡️",
+        },
+        { value: "energy", label: "Energy (انرژی)", emoji: "💪" },
+        { value: "none", label: "None (هیچ کدام)", emoji: "🎯" },
+      ];
+    } else if (answers.flavor === "creamy" || answers.flavor === "rich") {
+      healthGoalQuestion.options = [
+        { value: "protein", label: "Protein (پروتئین)", emoji: "🏋️" },
+        { value: "energy", label: "Energy (انرژی)", emoji: "💪" },
+        { value: "relaxation", label: "Relaxation (آرامش)", emoji: "😌" },
+        { value: "none", label: "None (هیچ کدام)", emoji: "🎯" },
+      ];
+    } else {
+      healthGoalQuestion.options = [
+        { value: "energy", label: "Energy (انرژی)", emoji: "💪" },
+        { value: "vitamins", label: "Vitamins (ویتامین‌ها)", emoji: "🥬" },
+        {
+          value: "antioxidants",
+          label: "Antioxidants (آنتی اکسیدان)",
+          emoji: "🛡️",
+        },
+        { value: "protein", label: "Protein (پروتئین)", emoji: "🏋️" },
+        { value: "relaxation", label: "Relaxation (آرامش)", emoji: "😌" },
+        { value: "none", label: "None (هیچ کدام)", emoji: "🎯" },
+      ];
+    }
+
+    // Add taste preference question (simplified based on previous answers)
+    const tastePreferenceQuestion = {
       id: "tastePreference",
-      question: "ترجیح طعم شما چیست؟",
-      options: [
-        { value: "sweet", label: "شیرین", emoji: "🍯" },
-        { value: "refreshing", label: "خنک کننده", emoji: "🌊" },
-        { value: "creamy", label: "خامه‌ای", emoji: "🥛" },
-        { value: "spicy", label: "ادویه‌دار", emoji: "🌶️" },
-        { value: "none", label: "مهم نیست", emoji: "🤷" },
-      ],
-    },
-    {
+      question: "What's your taste preference?\nترجیح طعم شما چیست؟",
+      options: [] as QuestionOption[],
+    };
+
+    // Remove redundant options based on previous answers
+    const usedFlavors = [answers.flavor, answers.temperature].filter(Boolean);
+
+    if (usedFlavors.includes("sweet")) {
+      tastePreferenceQuestion.options = [
+        { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
+        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
+        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
+        { value: "none", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
+      ];
+    } else if (usedFlavors.includes("refreshing")) {
+      tastePreferenceQuestion.options = [
+        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
+        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
+        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
+        { value: "none", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
+      ];
+    } else {
+      tastePreferenceQuestion.options = [
+        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
+        { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
+        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
+        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
+        { value: "none", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
+      ];
+    }
+
+    // Add dietary restrictions question
+    const dietaryQuestion = {
       id: "dietaryRestrictions",
-      question: "آیا محدودیت غذایی دارید؟",
+      question: "Do you have dietary restrictions?\nآیا محدودیت غذایی دارید؟",
       options: [
-        { value: "vegan", label: "وگان", emoji: "🌱" },
-        { value: "vegetarian", label: "گیاهخوار", emoji: "🥗" },
-        { value: "gluten-free", label: "بدون گلوتن", emoji: "🌾" },
-        { value: "high-protein", label: "پروتئین بالا", emoji: "🏋️" },
-        { value: "none", label: "هیچ کدام", emoji: "✅" },
+        { value: "vegan", label: "Vegan (وگان)", emoji: "🌱" },
+        { value: "vegetarian", label: "Vegetarian (گیاهخوار)", emoji: "🥗" },
+        {
+          value: "gluten-free",
+          label: "Gluten-free (بدون گلوتن)",
+          emoji: "🌾",
+        },
+        {
+          value: "high-protein",
+          label: "High protein (پروتئین بالا)",
+          emoji: "🏋️",
+        },
+        { value: "none", label: "None (هیچ کدام)", emoji: "✅" },
       ],
-    },
-  ];
+    };
+
+    return [
+      ...baseQuestions,
+      flavorQuestion,
+      caffeineQuestion,
+      healthGoalQuestion,
+      tastePreferenceQuestion,
+      dietaryQuestion,
+    ];
+  }, [answers]);
+
+  const questions = getDynamicQuestions();
 
   const handleAnswer = useCallback(
     (questionId: string, answer: string) => {
@@ -215,8 +334,10 @@ const AIAssistant = memo(function AIAssistant({
               <div className="absolute inset-0 bg-white/20 rounded-full blur-sm"></div>
             </div>
             <div>
-              <h2 className="text-xl font-bold drop-shadow-sm">AI مشتی</h2>
-              <p className="text-sm opacity-90">دستیار هوشمند انتخاب محصول</p>
+              <h2 className="text-xl font-bold drop-shadow-sm">Mashti AI</h2>
+              <p className="text-sm opacity-90">
+                Smart Product Selection Assistant
+              </p>
             </div>
           </div>
         </div>
@@ -228,9 +349,9 @@ const AIAssistant = memo(function AIAssistant({
               {/* Progress Bar */}
               <div className="mb-6">
                 <div className="flex justify-between text-xs text-gray-500 mb-2">
-                  <span>پیشرفت</span>
+                  <span>Progress</span>
                   <span>
-                    سوال {currentStep + 1} از {questions.length}
+                    Question {currentStep + 1} of {questions.length}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200/50 backdrop-blur-sm rounded-full h-3 overflow-hidden">
@@ -245,7 +366,7 @@ const AIAssistant = memo(function AIAssistant({
 
               {/* Question */}
               <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4 whitespace-pre-line">
                   {questions[currentStep].question}
                 </h3>
               </div>
@@ -270,6 +391,53 @@ const AIAssistant = memo(function AIAssistant({
                 ))}
               </div>
 
+              {/* Navigation Buttons */}
+              <div className="flex gap-3 mt-6">
+                {/* Back Button - Only show if not on first question */}
+                {currentStep > 0 && (
+                  <button
+                    onClick={() => setCurrentStep(currentStep - 1)}
+                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M15 19l-7-7 7-7"
+                      />
+                    </svg>
+                    <span>Previous Question</span>
+                  </button>
+                )}
+
+                {/* Reset Button - Always show */}
+                <button
+                  onClick={resetConversation}
+                  className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span>Start Over</span>
+                </button>
+              </div>
+
               {/* Loading */}
               {isLoading && (
                 <div className="text-center py-8">
@@ -278,10 +446,10 @@ const AIAssistant = memo(function AIAssistant({
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-orange-400/20 to-pink-400/20 animate-pulse"></div>
                   </div>
                   <p className="text-gray-600 font-medium">
-                    در حال تحلیل ترجیحات شما...
+                    Analyzing your preferences...
                   </p>
                   <p className="text-gray-400 text-sm mt-2">
-                    AI مشتی در حال انتخاب بهترین محصولات است
+                    Mashti AI is selecting the best products for you
                   </p>
                 </div>
               )}
@@ -291,9 +459,9 @@ const AIAssistant = memo(function AIAssistant({
             <div>
               <div className="text-center mb-6">
                 <h3 className="text-xl font-bold text-gray-800 mb-2">
-                  پیشنهادات مشتی
+                  Mashti Recommendations
                 </h3>
-                <p className="text-gray-600">بر اساس ترجیحات شما</p>
+                <p className="text-gray-600">Based on your preferences</p>
               </div>
 
               <div className="space-y-4">
@@ -328,13 +496,13 @@ const AIAssistant = memo(function AIAssistant({
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div className="bg-gray-50 p-3 rounded-lg">
                             <h5 className="font-semibold text-xs text-gray-700 mb-2">
-                              اطلاعات تغذیه‌ای
+                              Nutritional Info
                             </h5>
                             {getNutritionalInfo(item)}
                           </div>
                           <div className="bg-gray-50 p-3 rounded-lg">
                             <h5 className="font-semibold text-xs text-gray-700 mb-2">
-                              پروفایل طعم
+                              Taste Profile
                             </h5>
                             {getTasteProfile(item)}
                           </div>
@@ -343,7 +511,7 @@ const AIAssistant = memo(function AIAssistant({
                         {/* Ingredients */}
                         <div className="mb-3">
                           <h5 className="font-semibold text-xs text-gray-700 mb-1">
-                            مواد تشکیل دهنده:
+                            Ingredients:
                           </h5>
                           <div className="text-xs text-gray-600">
                             {item.ingredients.join(", ")}
@@ -353,7 +521,7 @@ const AIAssistant = memo(function AIAssistant({
                         {/* Health Benefits */}
                         <div className="mb-3">
                           <h5 className="font-semibold text-xs text-gray-700 mb-1">
-                            فواید سلامتی:
+                            Health Benefits:
                           </h5>
                           <div className="flex flex-wrap gap-1">
                             {item.healthBenefits.map((benefit, idx) => (
@@ -371,7 +539,7 @@ const AIAssistant = memo(function AIAssistant({
                         {item.allergens.length > 0 && (
                           <div className="mb-3">
                             <h5 className="font-semibold text-xs text-red-700 mb-1">
-                              مواد حساسیت‌زا:
+                              Allergens:
                             </h5>
                             <div className="flex flex-wrap gap-1">
                               {item.allergens.map((allergen, idx) => (
@@ -387,7 +555,9 @@ const AIAssistant = memo(function AIAssistant({
                         )}
 
                         <div className="text-sm text-gray-500 mt-2">
-                          <span className="font-semibold">دلیل انتخاب:</span>{" "}
+                          <span className="font-semibold">
+                            Why we chose this:
+                          </span>{" "}
                           {item.reason}
                         </div>
                       </div>
@@ -396,13 +566,53 @@ const AIAssistant = memo(function AIAssistant({
                 ))}
               </div>
 
-              {/* Reset Button */}
-              <button
-                onClick={resetConversation}
-                className="w-full mt-6 bg-gradient-to-r from-orange-400 to-pink-400 text-white py-3 px-6 rounded-2xl font-semibold hover:from-orange-500 hover:to-pink-500 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 backdrop-blur-sm"
-              >
-                شروع مجدد
-              </button>
+              {/* Action Buttons */}
+              <div className="flex gap-3 mt-6">
+                {/* Back to Questions Button */}
+                <button
+                  onClick={() => {
+                    setShowResults(false);
+                    setCurrentStep(0);
+                  }}
+                  className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 19l-7-7 7-7"
+                    />
+                  </svg>
+                  <span>Back to Questions</span>
+                </button>
+
+                {/* Reset Button */}
+                <button
+                  onClick={resetConversation}
+                  className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span>Start Over</span>
+                </button>
+              </div>
             </div>
           )}
         </div>
