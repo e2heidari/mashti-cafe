@@ -17,7 +17,7 @@ export default function Footer() {
             href="https://www.facebook.com/mashticafe"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white hover:text-blue-300 transition-colors duration-300 cursor-pointer z-10 relative"
+            className="text-white hover:text-gray-300 transition-colors duration-300 cursor-pointer z-10 relative"
             title="Facebook"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -41,7 +41,7 @@ export default function Footer() {
             href="https://www.linkedin.com/company/mashticafe"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white hover:text-blue-400 transition-colors duration-300 cursor-pointer z-10 relative"
+            className="text-white hover:text-gray-300 transition-colors duration-300 cursor-pointer z-10 relative"
             title="LinkedIn"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@ export default function Footer() {
             href="https://twitter.com/mashticafe"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-white hover:text-blue-400 transition-colors duration-300 cursor-pointer z-10 relative"
+            className="text-white hover:text-gray-300 transition-colors duration-300 cursor-pointer z-10 relative"
             title="Twitter"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

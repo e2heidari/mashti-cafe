@@ -16,8 +16,9 @@
   --color-primary-dark: var(--primary-dark);
   --color-secondary: var(--secondary);
   --color-accent: var(--accent);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-sodo-sans);
+  --font-lander: var(--font-lander);
+  --font-pike: var(--font-pike);
 }
 
 @media (prefers-color-scheme: dark) {

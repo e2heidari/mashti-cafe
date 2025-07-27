@@ -51,7 +51,7 @@ export default function CentralBranch() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+    <div className="min-h-screen bg-white">
       <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={true} />
       <div className="pt-48">
         {/* News Section */}
@@ -60,21 +60,27 @@ export default function CentralBranch() {
             {loading ? (
               <div className="text-center py-20">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                <p className="text-gray-600 text-lg">Loading news...</p>
+                <p className="text-gray-600 text-lg font-sodo">
+                  Loading news...
+                </p>
               </div>
             ) : error ? (
               <div className="text-center py-20">
-                <p className="text-red-600 text-lg mb-4">Failed to load news</p>
+                <p className="text-red-600 text-lg mb-4 font-sodo">
+                  Failed to load news
+                </p>
                 <button
                   onClick={() => window.location.reload()}
-                  className="bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition-colors"
+                  className="bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition-colors font-pike"
                 >
                   Try Again
                 </button>
               </div>
             ) : newsItems.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-gray-600 text-lg">No news items available</p>
+                <p className="text-gray-600 text-lg font-sodo">
+                  No news items available
+                </p>
               </div>
             ) : (
               newsItems.map((item, index) => (
@@ -95,14 +101,14 @@ export default function CentralBranch() {
                     />
                   </div>
                   <div className="w-full lg:w-1/2 text-center lg:text-left">
-                    <h3 className="text-3xl font-bold text-gray-900 mb-4">
+                    <h3 className="text-3xl font-bold text-gray-900 mb-4 font-pike">
                       {item.title}
                     </h3>
-                    <p className="text-lg text-gray-600 mb-6">
+                    <p className="text-lg text-gray-600 mb-6 font-sodo">
                       {item.description}
                     </p>
                     <Link href="/central/menu">
-                      <button className="bg-red-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors">
+                      <button className="bg-red-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike">
                         {item.buttonText}
                       </button>
                     </Link>

@@ -67,7 +67,7 @@ export default function AdminPanel() {
     return (
       <div className="min-h-screen bg-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
           <p>Loading admin panel...</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ export default function AdminPanel() {
                 });
                 setShowForm(true);
               }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors"
             >
               Add New Item
             </button>
@@ -123,7 +123,7 @@ export default function AdminPanel() {
                           title: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                       required
                     />
                   </div>
@@ -140,7 +140,7 @@ export default function AdminPanel() {
                           description: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                       rows={4}
                       required
                     />
@@ -159,7 +159,7 @@ export default function AdminPanel() {
                           buttonText: e.target.value,
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                       required
                     />
                   </div>
@@ -177,7 +177,7 @@ export default function AdminPanel() {
                           order: parseInt(e.target.value),
                         })
                       }
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500"
                       required
                     />
                   </div>
@@ -248,7 +248,7 @@ export default function AdminPanel() {
                   <div className="ml-4">
                     <button
                       onClick={() => handleEdit(item)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
                     >
                       Edit
                     </button>

@@ -54,7 +54,7 @@ export default function CoquitlamBranch() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+    <div className="min-h-screen bg-white">
       <Navigation onAIOpen={() => setIsAIOpen(true)} />
 
       {/* Hero Section */}
@@ -73,7 +73,7 @@ export default function CoquitlamBranch() {
               <p className="text-lg opacity-90">JUICE BAR + COFFEE</p>
             </div>
           </div>
-          <h2 className="text-5xl font-bold text-white mb-6">
+          <h2 className="text-5xl font-bold text-white font-pike mb-6">
             Coquitlam Branch
           </h2>
           <p className="text-xl text-gray-300 mb-8">Coquitlam Centre</p>
@@ -101,7 +101,7 @@ export default function CoquitlamBranch() {
       {/* Menu Section */}
       <section id="menu" className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-8">
+          <h2 className="text-4xl font-bold text-white font-pike text-center mb-8">
             Our Menu
           </h2>
 
@@ -410,12 +410,12 @@ export default function CoquitlamBranch() {
       {/* About Section */}
       <section
         id="about"
-        className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-orange-400/20 to-pink-400/20 backdrop-blur-sm"
+        className="py-16 px-4 sm:px-6 lg:px-8 bg-white backdrop-blur-sm"
       >
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-white mb-6">
+              <h2 className="text-4xl font-bold text-white font-pike mb-6">
                 About Mashti Coquitlam
               </h2>
               <p className="text-gray-300 text-lg mb-6">
@@ -462,13 +462,13 @@ export default function CoquitlamBranch() {
       {/* Contact Section */}
       <section id="contact" className="py-16 px-4 sm:px-6 lg:px-8 bg-white/5">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-white text-center mb-12">
+          <h2 className="text-4xl font-bold text-white font-pike text-center mb-12">
             Contact Us
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-white mb-4">
+              <h3 className="text-2xl font-bold text-white font-pike mb-4">
                 Location Info
               </h3>
               <div className="space-y-4">
@@ -491,11 +491,11 @@ export default function CoquitlamBranch() {
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-white mb-4">Hours</h3>
+              <h3 className="text-2xl font-bold text-white font-pike mb-4">Hours</h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-300">Monday - Sunday</span>
-                  <span className="text-orange-400 font-semibold">
+                  <span className="text-orange-400 font-semibold font-lander">
                     11:00 AM - 12:00 AM
                   </span>
                 </div>

@@ -61,7 +61,6 @@ const AIAssistant = memo(function AIAssistant({
         { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
         { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
         { value: "rich", label: "Rich (پر و غنی)", emoji: "💎" },
-        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
       ];
     } else if (answers.temperature === "cold") {
       flavorQuestion.options = [
@@ -161,14 +160,12 @@ const AIAssistant = memo(function AIAssistant({
       tastePreferenceQuestion.options = [
         { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
         { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
-        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
         { value: "none", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
       ];
     } else if (usedFlavors.includes("refreshing")) {
       tastePreferenceQuestion.options = [
         { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
         { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
-        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
         { value: "none", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
       ];
     } else {
@@ -176,7 +173,6 @@ const AIAssistant = memo(function AIAssistant({
         { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
         { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
         { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
-        { value: "spicy", label: "Spicy (ادویه‌دار)", emoji: "🌶️" },
         { value: "none", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
       ];
     }
@@ -334,7 +330,9 @@ const AIAssistant = memo(function AIAssistant({
               <div className="absolute inset-0 bg-white/20 rounded-full blur-sm"></div>
             </div>
             <div>
-              <h2 className="text-xl font-bold drop-shadow-sm">Mashti AI</h2>
+              <h2 className="text-xl font-bold drop-shadow-sm font-pike">
+                Mashti AI
+              </h2>
               <p className="text-sm opacity-90">
                 Smart Product Selection Assistant
               </p>

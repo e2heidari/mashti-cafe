@@ -101,11 +101,11 @@ export default function CentralMenuPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+      <div className="min-h-screen bg-white">
         <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
-        <div className="pt-56 pb-12">
-          <div className="text-white text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+        <div className="pt-64 pb-12">
+          <div className="text-gray-600 text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
             <p className="text-lg">Loading menu...</p>
           </div>
         </div>
@@ -115,10 +115,10 @@ export default function CentralMenuPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+      <div className="min-h-screen bg-white">
         <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
-        <div className="pt-56 pb-12">
-          <div className="text-white text-center py-20">
+        <div className="pt-64 pb-12">
+          <div className="text-gray-600 text-center py-20">
             <p className="text-lg mb-4">Failed to load menu</p>
             <button
               onClick={fetchData}
@@ -135,8 +135,8 @@ export default function CentralMenuPage() {
   return (
     <div className="min-h-screen bg-white">
       <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
-      <div className="pt-56 pb-12">
-        <h1 className="text-4xl font-bold text-gray-900 text-center mb-2">
+      <div className="pt-64 pb-12">
+        <h1 className="text-4xl font-bold text-gray-900 text-center mb-2 font-pike">
           Menu
         </h1>
         <div className="border-b-4 border-red-600 w-16 mx-auto my-4"></div>
@@ -147,7 +147,7 @@ export default function CentralMenuPage() {
               <button
                 key={cat._id || `category-${cat.name}-${index}`}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`border px-5 py-2 rounded-full font-semibold text-base transition-all
+                className={`border px-5 py-2 rounded-full font-semibold text-base transition-all font-lander
                   ${
                     activeMenu === cat.name
                       ? "border-red-600 text-red-600 font-bold bg-white"
@@ -165,7 +165,7 @@ export default function CentralMenuPage() {
         <div className="flex flex-wrap justify-center gap-3 mb-8">
           <button
             onClick={() => handleFilterClick("popular")}
-            className={`bg-gray-100 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-all
+            className={`bg-gray-100 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-all font-lander
               ${
                 filter === "popular"
                   ? "bg-red-600 text-white border-red-600 font-bold"
@@ -178,7 +178,7 @@ export default function CentralMenuPage() {
           </button>
           <button
             onClick={() => handleFilterClick("discount")}
-            className={`bg-gray-100 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-all
+            className={`bg-gray-100 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-all font-lander
               ${
                 filter === "discount"
                   ? "bg-red-600 text-white border-red-600 font-bold"
@@ -191,7 +191,7 @@ export default function CentralMenuPage() {
           </button>
           <button
             onClick={() => handleFilterClick("bogo")}
-            className={`bg-gray-100 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-all
+            className={`bg-gray-100 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium transition-all font-lander
               ${
                 filter === "bogo"
                   ? "bg-red-600 text-white border-red-600 font-bold"
@@ -207,7 +207,7 @@ export default function CentralMenuPage() {
         <div className="max-w-6xl mx-auto px-4">
           {filteredItems.length === 0 ? (
             <div className="text-center py-20">
-              <p className="text-gray-600 text-lg mb-4">
+              <p className="text-gray-600 text-lg mb-4 font-sodo">
                 {filter || activeMenu
                   ? `No items found in ${filter || activeMenu}`
                   : "No menu items available"}
@@ -217,7 +217,7 @@ export default function CentralMenuPage() {
                   setFilter("");
                   setActiveMenu("");
                 }}
-                className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors font-bold"
+                className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors font-bold font-pike"
               >
                 Show All Items
               </button>

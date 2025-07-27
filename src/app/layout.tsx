@@ -1,16 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Poppins, Montserrat } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// SoDo Sans alternative - Inter (clean, modern sans-serif)
+const sodoSans = Inter({
+  variable: "--font-sodo-sans",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+// Lander alternative - Poppins (friendly, geometric)
+const lander = Poppins({
+  variable: "--font-lander",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
+});
+
+// Pike alternative - Montserrat (bold, impactful)
+const pike = Montserrat({
+  variable: "--font-pike",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -36,7 +47,7 @@ export default function RootLayout({
         <link rel="preload" href="/images/3.webp" as="image" />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${sodoSans.variable} ${lander.variable} ${pike.variable} antialiased`}
       >
         {children}
         <Footer />

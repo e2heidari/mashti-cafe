@@ -13,10 +13,10 @@ const AIAssistant = dynamic(() => import("../../../components/AIAssistant"), {
 export default function CentralAboutPage() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900">
+    <div className="min-h-screen bg-white">
       <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
-      <div className="pt-56 pb-12">
-        <h1 className="text-5xl font-extrabold text-white text-center mb-8">
+      <div className="pt-64 pb-12">
+        <h1 className="text-5xl font-extrabold text-gray-900 text-center mb-8 font-pike">
           About Central Branch
         </h1>
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
@@ -33,7 +33,7 @@ export default function CentralAboutPage() {
             />
           </div>
           <div>
-            <p className="text-lg text-gray-300 mb-4">
+            <p className="text-lg text-gray-900 mb-4 font-sodo">
               Welcome to Mashti Central Branch! Experience the authentic taste
               of Iran in the heart of North Vancouver. Our menu features a wide
               variety of fresh juices, smoothies, shakes, ice creams, and
@@ -41,13 +41,13 @@ export default function CentralAboutPage() {
               drink, a sweet treat, or a cozy place to relax, Mashti has
               something for everyone.
             </p>
-            <ul className="list-disc list-inside text-gray-300 mb-4">
+            <ul className="list-disc list-inside text-gray-900 mb-4 font-sodo">
               <li>Premium quality ingredients</li>
               <li>Unique Persian flavors</li>
               <li>Friendly and welcoming atmosphere</li>
               <li>Perfect for families and friends</li>
             </ul>
-            <p className="text-lg text-gray-300">
+            <p className="text-lg text-gray-900 font-sodo">
               Visit us and enjoy a memorable experience at Mashti Central
               Branch!
             </p>
