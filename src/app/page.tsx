@@ -162,7 +162,7 @@ export default function Home() {
                     Coquitlam Branch
                   </h3>
                   <p className="text-red-300 font-semibold tracking-wide font-lander">
-                    Food Truck
+                    Mashti On The Wheel
                   </p>
                 </div>
 
@@ -247,7 +247,7 @@ export default function Home() {
                     Wholesale
                   </h3>
                   <p className="text-red-300 font-semibold tracking-wide font-lander">
-                    Bulk Orders
+                    Go big. Go kilo. Go MASHTI!
                   </p>
                 </div>
 
