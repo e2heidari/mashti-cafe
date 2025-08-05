@@ -21,6 +21,11 @@ Message: ${message || 'No additional message provided'}
     // Check if Resend API key is available
     const resendApiKey = process.env.RESEND_API_KEY;
     
+    console.log('🔍 Environment Check:');
+    console.log('🔍 RESEND_API_KEY:', resendApiKey ? `${resendApiKey.substring(0, 10)}...` : 'Not set');
+    console.log('🔍 NODE_ENV:', process.env.NODE_ENV);
+    console.log('🔍 NETLIFY:', process.env.NETLIFY);
+    
     if (!resendApiKey || resendApiKey === 'your_resend_api_key_here' || resendApiKey.length < 10) {
       // Fallback: Log the booking data (for development/testing)
       console.log('📧 Booking Request Received (API Key Not Set):');
@@ -31,11 +36,12 @@ Message: ${message || 'No additional message provided'}
       console.log('💡 To enable actual email sending:');
       console.log('1. Get your API key from https://resend.com');
       console.log('2. Add RESEND_API_KEY=your_key_here to .env.local');
+      console.log('3. For Netlify: Add RESEND_API_KEY in Netlify environment variables');
       console.log('');
 
       return NextResponse.json({ 
         success: true, 
-        message: 'Booking request logged successfully! (Email sending not configured)' 
+        message: 'Booking request logged successfully! (Email sending not configured - check environment variables)' 
       });
     }
 
