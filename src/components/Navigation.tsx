@@ -3,22 +3,38 @@
 import { useState, memo } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 interface NavigationProps {
   onAIOpen: () => void;
   showMenu?: boolean;
+  cartItemCount?: number;
+  onCartClick?: () => void;
 }
 
 const Navigation = memo(function Navigation({
   onAIOpen,
   showMenu = false,
+  cartItemCount = 0,
+  onCartClick,
 }: NavigationProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const menuHref = pathname.startsWith("/central") ? "/central/menu" : "/";
   const aboutHref = pathname.startsWith("/central") ? "/central/about" : "/";
   const homeHref = pathname.startsWith("/central") ? "/central" : "/";
+
+  // For wholesale page, show Order instead of Menu and About
+  const isWholesalePage = pathname.startsWith("/wholesale");
+  const orderHref = "/wholesale?showProducts=true";
+  const wholesaleHomeHref = "/wholesale";
+
+  // Check if we're on products page to show different home href
+  const isOnProductsPage =
+    pathname.startsWith("/wholesale") &&
+    searchParams?.get("showProducts") === "true";
+  const homeHrefForWholesale = isOnProductsPage ? "/wholesale" : "/wholesale";
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#e80812]">
@@ -149,7 +165,7 @@ const Navigation = memo(function Navigation({
               </div>
             </div>
 
-            {/* Second Line: Mashti AI Button - Improved mobile design */}
+            {/* Second Line: Mashti AI Button */}
             <div className="flex justify-end">
               <button
                 onClick={onAIOpen}
@@ -181,25 +197,71 @@ const Navigation = memo(function Navigation({
               <div className="w-full">
                 <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
                   {/* Desktop Navigation Links */}
-                  <div className="hidden md:flex items-center space-x-8">
-                    <Link
-                      href={homeHref}
-                      className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                    >
-                      Home
-                    </Link>
-                    <Link
-                      href={menuHref}
-                      className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                    >
-                      Menu
-                    </Link>
-                    <Link
-                      href={aboutHref}
-                      className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                    >
-                      About
-                    </Link>
+                  <div className="hidden md:flex items-center justify-between w-full">
+                    <div className="flex items-center space-x-8">
+                      {isWholesalePage ? (
+                        <>
+                          <Link
+                            href={homeHrefForWholesale}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          >
+                            Home
+                          </Link>
+                          <Link
+                            href={orderHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          >
+                            Order
+                          </Link>
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            href={homeHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          >
+                            Home
+                          </Link>
+                          <Link
+                            href={menuHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          >
+                            Menu
+                          </Link>
+                          <Link
+                            href={aboutHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          >
+                            About
+                          </Link>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Cart Icon - Only show on wholesale page when there are items */}
+                    {isWholesalePage && cartItemCount > 0 && (
+                      <button
+                        onClick={onCartClick}
+                        className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
+                      >
+                        <svg
+                          className="w-6 h-6 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                          />
+                        </svg>
+                        <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
+                          {cartItemCount}
+                        </span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Mobile Menu Button */}
@@ -227,27 +289,76 @@ const Navigation = memo(function Navigation({
                 {isMenuOpen && (
                   <div className="md:hidden bg-gray-700 border border-gray-600 backdrop-blur-sm rounded-lg p-4">
                     <div className="flex flex-col space-y-4">
-                      <Link
-                        href={homeHref}
-                        className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Home
-                      </Link>
-                      <Link
-                        href={menuHref}
-                        className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Menu
-                      </Link>
-                      <Link
-                        href={aboutHref}
-                        className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        About
-                      </Link>
+                      {isWholesalePage ? (
+                        <>
+                          <Link
+                            href={homeHrefForWholesale}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Home
+                          </Link>
+                          <Link
+                            href={orderHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Order
+                          </Link>
+                          {/* Cart Icon for Mobile - Only show on wholesale page when there are items */}
+                          {cartItemCount > 0 && (
+                            <button
+                              onClick={() => {
+                                onCartClick?.();
+                                setIsMenuOpen(false);
+                              }}
+                              className="text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-lg"
+                            >
+                              <svg
+                                className="w-6 h-6 mr-2"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                                />
+                              </svg>
+                              <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
+                                {cartItemCount}
+                              </span>
+                              <span className="ml-3 font-bold">Cart</span>
+                            </button>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <Link
+                            href={homeHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Home
+                          </Link>
+                          <Link
+                            href={menuHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            Menu
+                          </Link>
+                          <Link
+                            href={aboutHref}
+                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            onClick={() => setIsMenuOpen(false)}
+                          >
+                            About
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </div>
                 )}
