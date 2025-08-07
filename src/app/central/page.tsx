@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
 import dynamic from "next/dynamic";
@@ -52,7 +52,11 @@ export default function CentralBranch() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={true} />
+      <Suspense
+        fallback={<div className="text-white">Loading Navigation...</div>}
+      >
+        <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={true} />
+      </Suspense>
       <div className="pt-48">
         {/* News Section */}
         <section id="news" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">

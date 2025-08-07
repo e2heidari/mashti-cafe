@@ -1,7 +1,7 @@
 "use client";
 
+import { useState, useEffect, useRef, Suspense } from "react";
 import Navigation from "../components/Navigation";
-import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 
 // Dynamically import AI Assistant to reduce initial bundle size
@@ -18,15 +18,6 @@ export default function Home() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [bookingDetails, setBookingDetails] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    eventDate: "",
-    eventType: "",
-    guestCount: "",
-    message: "",
-  });
   const calendarRef = useRef<HTMLDivElement>(null);
   const [bookingForm, setBookingForm] = useState({
     name: "",
@@ -201,7 +192,9 @@ export default function Home() {
         }}
       ></div>
 
-      <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={false} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={false} />
+      </Suspense>
 
       <main className="flex-1 w-full pt-48 pb-16 px-4 sm:px-6 lg:px-8 relative z-10">
         <section id="locations" className="max-w-6xl mx-auto">

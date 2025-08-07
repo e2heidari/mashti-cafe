@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, Suspense } from "react";
 import Navigation from "@/components/Navigation";
 import AIAssistant from "@/components/AIAssistant";
 import { useSearchParams, useRouter } from "next/navigation";
 
-export default function OrderSuccessPage() {
+// Disable static generation for this page
+export const dynamic = "force-dynamic";
+
+function OrderSuccessContent() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -13,12 +16,14 @@ export default function OrderSuccessPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation
-        onAIOpen={() => setIsAIOpen(true)}
-        showMenu={true}
-        cartItemCount={0}
-        onCartClick={() => {}}
-      />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Navigation
+          onAIOpen={() => setIsAIOpen(true)}
+          showMenu={true}
+          cartItemCount={0}
+          onCartClick={() => {}}
+        />
+      </Suspense>
       <div className="pt-48">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="text-center">
@@ -40,7 +45,7 @@ export default function OrderSuccessPage() {
                 Order Submitted Successfully!
               </h1>
               <p className="text-xl text-gray-600 font-sodo mb-8">
-                Thank you for your wholesale order. We'll contact you soon.
+                Thank you for your wholesale order. We&apos;ll contact you soon.
               </p>
             </div>
 
@@ -60,11 +65,12 @@ export default function OrderSuccessPage() {
               <ul className="text-left text-gray-600 font-sodo space-y-2">
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
-                  We'll review your order and contact you within 24 hours
+                  We&apos;ll review your order and contact you within 24 hours
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
-                  You'll receive a confirmation email with your order details
+                  You&apos;ll receive a confirmation email with your order
+                  details
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
@@ -99,5 +105,19 @@ export default function OrderSuccessPage() {
 
       <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
     </div>
+  );
+}
+
+export default function OrderSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <OrderSuccessContent />
+    </Suspense>
   );
 }

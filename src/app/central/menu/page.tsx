@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Navigation from "../../../components/Navigation";
 import MenuItem from "../../../components/MenuItem";
 import dynamic from "next/dynamic";
@@ -102,7 +102,13 @@ export default function CentralMenuPage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+        <Suspense
+          fallback={
+            <div className="fixed top-0 w-full z-50 bg-[#e80812] h-16"></div>
+          }
+        >
+          <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+        </Suspense>
         <div className="pt-64 pb-12">
           <div className="text-gray-600 text-center py-20">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
@@ -116,7 +122,13 @@ export default function CentralMenuPage() {
   if (error) {
     return (
       <div className="min-h-screen bg-white">
-        <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+        <Suspense
+          fallback={
+            <div className="fixed top-0 w-full z-50 bg-[#e80812] h-16"></div>
+          }
+        >
+          <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+        </Suspense>
         <div className="pt-64 pb-12">
           <div className="text-gray-600 text-center py-20">
             <p className="text-lg mb-4">Failed to load menu</p>
@@ -134,7 +146,13 @@ export default function CentralMenuPage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+      <Suspense
+        fallback={
+          <div className="fixed top-0 w-full z-50 bg-[#e80812] h-16"></div>
+        }
+      >
+        <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+      </Suspense>
       <div className="pt-64 pb-12">
         <h1 className="text-4xl font-bold text-gray-900 text-center mb-2 font-pike">
           Menu
@@ -230,7 +248,6 @@ export default function CentralMenuPage() {
                   className="bg-white border border-gray-100 shadow-xs rounded-lg p-5 mb-4 flex flex-col h-full"
                 >
                   <MenuItem
-                    id={item.id}
                     name={item.name}
                     price={item.price}
                     description={item.description}

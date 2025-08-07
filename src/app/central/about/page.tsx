@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../../components/Navigation";
 import dynamic from "next/dynamic";
@@ -14,7 +14,13 @@ export default function CentralAboutPage() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   return (
     <div className="min-h-screen bg-white">
-      <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+      <Suspense
+        fallback={
+          <div className="fixed top-0 w-full z-50 bg-[#e80812] h-16"></div>
+        }
+      >
+        <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
+      </Suspense>
       <div className="pt-64 pb-12">
         <h1 className="text-5xl font-extrabold text-gray-900 text-center mb-8 font-pike">
           About Central Branch

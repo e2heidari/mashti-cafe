@@ -2,6 +2,7 @@
 
 import { useState, memo, useCallback } from "react";
 import { MenuItem, getRecommendations } from "../data/menuDatabase";
+import Image from "next/image";
 
 interface AIAssistantProps {
   isOpen: boolean;
@@ -322,9 +323,11 @@ const AIAssistant = memo(function AIAssistant({
           </button>
           <div className="flex items-center justify-center space-x-3 space-x-reverse">
             <div className="relative">
-              <img
+              <Image
                 src="/images/walnut.png"
                 alt="AI Mashti"
+                width={48}
+                height={48}
                 className="w-12 h-12 drop-shadow-lg"
               />
               <div className="absolute inset-0 bg-white/20 rounded-full blur-sm"></div>

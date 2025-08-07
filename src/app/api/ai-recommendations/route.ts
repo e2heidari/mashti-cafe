@@ -123,7 +123,7 @@ function generateReasoning(params: ReasoningParams) {
     reasoning += "و غنی از پروتئین برای عضله‌سازی. ";
   }
   
-  reasoning += "این محصولات ترکیبی از طعم عالی و فواید سلامتی هستند.";
+  reasoning += `این محصولات ترکیبی از طعم عالی و فواید سلامتی هستند. ${recommendations.length} محصول برای شما انتخاب شده است.`;
   
   return reasoning;
 }

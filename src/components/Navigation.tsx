@@ -28,7 +28,6 @@ const Navigation = memo(function Navigation({
   // For wholesale page, show Order instead of Menu and About
   const isWholesalePage = pathname.startsWith("/wholesale");
   const orderHref = "/wholesale?showProducts=true";
-  const wholesaleHomeHref = "/wholesale";
 
   // Check if we're on products page to show different home href
   const isOnProductsPage =

@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, email, phone, company, message, items, totalAmount, orderNumber } = body;
+    const { name, email, phone, message, items, totalAmount, orderNumber } = body;
 
     // Create email content for wholesale order
-    const itemsList = items.map((item: any) => 
+    const itemsList = items.map((item: { name: string; weight: string; quantity: number; price: number; total: number }) => 
       `• ${item.name} (${item.weight}) - Quantity: ${item.quantity} - Price: $${item.price.toFixed(2)} each - Total: $${item.total.toFixed(2)}`
     ).join('\n');
 
@@ -87,7 +87,7 @@ Additional Message: ${message || 'No additional message provided'}
 
                         <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
                           <h3 style="color: #333; margin-bottom: 15px;">Order Details</h3>
-                          ${items.map((item: any) => `
+                          ${items.map((item: { name: string; weight: string; quantity: number; price: number; total: number }) => `
                             <div style="border-bottom: 1px solid #ddd; padding: 10px 0;">
                               <p><strong>${item.name} (${item.weight})</strong></p>
                               <p>Quantity: ${item.quantity} | Price: $${item.price.toFixed(2)} each | Total: $${item.total.toFixed(2)}</p>

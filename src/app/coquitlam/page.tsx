@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
 import MenuItem from "../../components/MenuItem";
@@ -55,7 +55,9 @@ export default function CoquitlamBranch() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation onAIOpen={() => setIsAIOpen(true)} />
+      <Suspense fallback={<div>Loading...</div>}>
+        <Navigation onAIOpen={() => setIsAIOpen(true)} />
+      </Suspense>
 
       {/* Hero Section */}
       <section className="pt-48 pb-20 px-4 sm:px-6 lg:px-8 bg-white/20">
@@ -257,7 +259,6 @@ export default function CoquitlamBranch() {
                     {item.category}
                   </div>
                   <MenuItem
-                    id={item.title}
                     name={item.title}
                     price={parseFloat(item.price)}
                     description={item.description}
@@ -279,7 +280,6 @@ export default function CoquitlamBranch() {
                   menuItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -297,7 +297,6 @@ export default function CoquitlamBranch() {
                   coffeeTeaItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -315,7 +314,6 @@ export default function CoquitlamBranch() {
                   smoothieItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -333,7 +331,6 @@ export default function CoquitlamBranch() {
                   juiceItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -351,7 +348,6 @@ export default function CoquitlamBranch() {
                   proteinShakeItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -369,7 +365,6 @@ export default function CoquitlamBranch() {
                   iceCreamItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -387,7 +382,6 @@ export default function CoquitlamBranch() {
                   sweetsItems.map((item, index) => (
                     <MenuItem
                       key={index}
-                      id={item.title}
                       name={item.title}
                       price={parseFloat(item.price)}
                       description={item.description}
@@ -491,7 +485,9 @@ export default function CoquitlamBranch() {
             </div>
 
             <div className="bg-white/10 backdrop-blur-sm rounded-lg p-8">
-              <h3 className="text-2xl font-bold text-white font-pike mb-4">Hours</h3>
+              <h3 className="text-2xl font-bold text-white font-pike mb-4">
+                Hours
+              </h3>
               <div className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-gray-300">Monday - Sunday</span>

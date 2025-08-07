@@ -1,7 +1,6 @@
 import { memo } from "react";
 
 interface MenuItemProps {
-  id: string;
   name: string;
   price: number;
   description: string;
@@ -12,7 +11,6 @@ interface MenuItemProps {
 }
 
 const MenuItem = memo(function MenuItem({
-  id,
   name,
   price,
   description,

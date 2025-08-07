@@ -1,25 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
-import dynamic from "next/dynamic";
+import dynamicImport from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 
+// Disable static generation for this page
+export const dynamic = "force-dynamic";
+
 // Dynamically import AI Assistant to reduce initial bundle size
-const AIAssistant = dynamic(() => import("../../components/AIAssistant"), {
-  loading: () => <div className="text-white">Loading AI Assistant...</div>,
-  ssr: false,
-});
+const AIAssistant = dynamicImport(
+  () => import("../../components/AIAssistant"),
+  {
+    loading: () => <div className="text-white">Loading AI Assistant...</div>,
+    ssr: false,
+  }
+);
 
 interface WholesaleProduct {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   ingredients: string[];
   weight: string;
   price: number;
   imageUrl: string;
+  imageAlt?: string;
+  order: number;
+  active: boolean;
 }
 
 interface CartItem {
@@ -38,110 +47,64 @@ interface WholesaleSection {
   active: boolean;
 }
 
-const wholesaleProducts: WholesaleProduct[] = [
+// Fallback sections if CMS is not available
+const fallbackSections: WholesaleSection[] = [
   {
-    id: "1",
-    name: "AKBAR MASHTI ICE CREAM",
-    description: "Traditional Persian ice cream with saffron and rose water",
-    ingredients: ["Milk", "Saffron", "Rose Water", "Cream", "Pistachios"],
-    weight: "~4Kg",
-    price: 65.0,
+    _id: "fallback-1",
+    title: "Wholesale Division",
+    description:
+      "Discover our premium wholesale ice cream and juice products. Perfect for restaurants, cafes, and retail businesses looking for authentic Persian flavors.",
     imageUrl: "/images/wholesales.jpeg",
+    buttonText: "View Products",
+    order: 1,
+    active: true,
   },
   {
-    id: "2",
-    name: "AKBAR MASHTI ICE CREAM",
-    description: "Traditional Persian ice cream with saffron and rose water",
-    ingredients: ["Milk", "Saffron", "Rose Water", "Cream", "Pistachios"],
-    weight: "~10Kg",
-    price: 130.0,
-    imageUrl: "/images/wholesales.jpeg",
+    _id: "fallback-2",
+    title: "Bulk Orders & Distribution",
+    description:
+      "We specialize in bulk orders and reliable distribution services. From small cafes to large restaurants, we deliver quality products on time.",
+    imageUrl: "/images/northvan.jpeg",
+    buttonText: "Order Now",
+    order: 2,
+    active: true,
   },
   {
-    id: "3",
-    name: "MILK ICE CREAM",
-    description: "Creamy milk ice cream with rose water",
-    ingredients: ["Milk", "Rose Water", "Cream"],
-    weight: "~4Kg",
-    price: 45.0,
-    imageUrl: "/images/wholesales.jpeg",
-  },
-  {
-    id: "4",
-    name: "MILK ICE CREAM",
-    description: "Creamy milk ice cream with rose water",
-    ingredients: ["Milk", "Rose Water", "Cream"],
-    weight: "~10Kg",
-    price: 90.0,
-    imageUrl: "/images/wholesales.jpeg",
-  },
-  {
-    id: "5",
-    name: "SAFFRON ICE CREAM",
-    description: "Premium saffron ice cream with authentic Persian flavors",
-    ingredients: ["Milk", "Saffron", "Rose Water", "Cream"],
-    weight: "~4Kg",
-    price: 55.0,
-    imageUrl: "/images/wholesales.jpeg",
-  },
-  {
-    id: "6",
-    name: "SAFFRON ICE CREAM",
-    description: "Premium saffron ice cream with authentic Persian flavors",
-    ingredients: ["Milk", "Saffron", "Rose Water", "Cream"],
-    weight: "~10Kg",
-    price: 110.0,
-    imageUrl: "/images/wholesales.jpeg",
+    _id: "fallback-3",
+    title: "Quality & Authenticity",
+    description:
+      "Every product is crafted with authentic Persian recipes and premium ingredients. Experience the true taste of Iran in every bite.",
+    imageUrl: "/images/about.jpeg",
+    buttonText: "Learn More",
+    order: 3,
+    active: true,
   },
 ];
 
-export default function WholesaleBranch() {
+function WholesaleContent() {
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const [cart, setCart] = useState<CartItem[]>([]);
   const [showProducts, setShowProducts] = useState(false);
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const [wholesaleSections, setWholesaleSections] = useState<
     WholesaleSection[]
   >([]);
+  const [wholesaleProducts, setWholesaleProducts] = useState<
+    WholesaleProduct[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Check if we should show products (from URL or Order button click)
+  // Check URL parameters for showProducts
   useEffect(() => {
     const showProductsParam = searchParams.get("showProducts");
-    console.log("URL changed, showProductsParam:", showProductsParam);
     if (showProductsParam === "true") {
-      console.log("Setting showProducts to true");
       setShowProducts(true);
     } else {
-      console.log("Setting showProducts to false");
       setShowProducts(false);
     }
   }, [searchParams]);
-  const [cart, setCart] = useState<CartItem[]>([]);
-
-  useEffect(() => {
-    const fetchWholesaleSections = async () => {
-      try {
-        const response = await fetch("/api/wholesale-sections");
-        if (!response.ok) {
-          throw new Error("Failed to fetch wholesale sections");
-        }
-        const data = await response.json();
-        setWholesaleSections(data.wholesaleSections || []);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch wholesale sections"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWholesaleSections();
-  }, []);
 
   // Load cart from localStorage on component mount
   useEffect(() => {
@@ -153,96 +116,65 @@ export default function WholesaleBranch() {
     }
   }, []);
 
-  // Fallback data if no content from Sanity
-  const fallbackSections: WholesaleSection[] = [
-    {
-      _id: "fallback-1",
-      title: "Wholesale Division",
-      description:
-        "Premium Persian ice cream for your business. We offer bulk orders, events, and distribution services. Our wholesale division provides high-quality ice cream products perfect for restaurants, cafes, events, and retail businesses.",
-      imageUrl: "/images/wholesales.jpeg",
-      imageAlt: "Wholesale Division",
-      buttonText: "View Products",
-      order: 1,
-      active: true,
-    },
-    {
-      _id: "fallback-2",
-      title: "Bulk Orders & Distribution",
-      description:
-        "From small cafes to large events, we provide reliable bulk ice cream solutions. Our distribution network ensures timely delivery across the region. Perfect for weddings, corporate events, and retail establishments.",
-      imageUrl: "/images/wholesales.jpeg",
-      imageAlt: "Bulk Orders",
-      buttonText: "Order Now",
-      order: 2,
-      active: true,
-    },
-    {
-      _id: "fallback-3",
-      title: "Quality & Authenticity",
-      description:
-        "Every batch is crafted with traditional Persian recipes using premium ingredients. Saffron, rose water, and authentic flavors that set us apart. Consistent quality and taste that your customers will love.",
-      imageUrl: "/images/wholesales.jpeg",
-      imageAlt: "Quality & Authenticity",
-      buttonText: "Learn More",
-      order: 3,
-      active: true,
-    },
-  ];
+  // Fetch wholesale sections from CMS
+  useEffect(() => {
+    const fetchWholesaleSections = async () => {
+      try {
+        const response = await fetch("/api/wholesale-sections");
+        if (!response.ok) throw new Error("Failed to fetch sections");
+        const data = await response.json();
+        setWholesaleSections(data.wholesaleSections || []);
+      } catch (error) {
+        console.error("Error fetching wholesale sections:", error);
+        setError("Failed to load sections");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWholesaleSections();
+  }, []);
+
+  // Fetch wholesale products from CMS
+  useEffect(() => {
+    const fetchWholesaleProducts = async () => {
+      try {
+        const response = await fetch("/api/wholesale-products");
+        if (!response.ok) throw new Error("Failed to fetch products");
+        const data = await response.json();
+        setWholesaleProducts(data.wholesaleProducts || []);
+      } catch (error) {
+        console.error("Error fetching wholesale products:", error);
+        // Keep using fallback data if CMS fails
+      }
+    };
+
+    fetchWholesaleProducts();
+  }, []);
 
   const addToCart = (product: WholesaleProduct) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find(
-        (item) => item.product.id === product.id
+        (item) => item.product._id === product._id
       );
-      let newCart;
       if (existingItem) {
-        newCart = prevCart.map((item) =>
-          item.product.id === product.id
+        const newCart = prevCart.map((item) =>
+          item.product._id === product._id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
+        if (typeof window !== "undefined") {
+          localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
+        }
+        return newCart;
       } else {
-        newCart = [...prevCart, { product, quantity: 1 }];
+        const newCart = [...prevCart, { product, quantity: 1 }];
+        if (typeof window !== "undefined") {
+          localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
+        }
+        return newCart;
       }
-      if (typeof window !== "undefined") {
-        localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-      }
-      return newCart;
     });
-  };
-
-  const removeFromCart = (productId: string) => {
-    setCart((prevCart) => {
-      const newCart = prevCart.filter((item) => item.product.id !== productId);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-      }
-      return newCart;
-    });
-  };
-
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    setCart((prevCart) => {
-      const newCart = prevCart.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
-      );
-      if (typeof window !== "undefined") {
-        localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-      }
-      return newCart;
-    });
-  };
-
-  const getTotalPrice = () => {
-    return cart.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    );
   };
 
   const getCartItemCount = () => {
@@ -258,12 +190,16 @@ export default function WholesaleBranch() {
 
   return (
     <div className="min-h-screen bg-white">
-      <Navigation
-        onAIOpen={() => setIsAIOpen(true)}
-        showMenu={true}
-        cartItemCount={getCartItemCount()}
-        onCartClick={handleCartClick}
-      />
+      <Suspense
+        fallback={<div className="text-white">Loading Navigation...</div>}
+      >
+        <Navigation
+          onAIOpen={() => setIsAIOpen(true)}
+          showMenu={true}
+          cartItemCount={getCartItemCount()}
+          onCartClick={handleCartClick}
+        />
+      </Suspense>
 
       <div className="pt-48">
         {/* Main Content - Similar to Central Branch */}
@@ -324,8 +260,8 @@ export default function WholesaleBranch() {
                           alt={section.imageAlt || section.title}
                           width={600}
                           height={400}
-                          className="w-full h-[400px] object-cover rounded-lg shadow-lg"
-                          priority={index === 0}
+                          className="w-full h-auto rounded-2xl shadow-2xl object-cover"
+                          priority
                         />
                       </div>
                       <div className="w-full lg:w-1/2 text-center lg:text-left">
@@ -372,18 +308,31 @@ export default function WholesaleBranch() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {wholesaleProducts.map((product, index) => (
+                  {wholesaleProducts.map((product) => (
                     <div
-                      key={product.id}
+                      key={product._id}
                       className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300"
                     >
                       <div className="relative h-64">
-                        <Image
-                          src={product.imageUrl}
-                          alt={product.name}
-                          fill
-                          className="object-cover"
-                        />
+                        {product.imageUrl ? (
+                          <Image
+                            src={product.imageUrl}
+                            alt={product.imageAlt || product.name}
+                            fill
+                            className="object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <div className="text-center">
+                              <div className="text-gray-400 text-4xl mb-2">
+                                🍦
+                              </div>
+                              <p className="text-gray-500 text-sm font-sodo">
+                                No Image
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       <div className="p-6">
@@ -425,5 +374,19 @@ export default function WholesaleBranch() {
         <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
       </div>
     </div>
+  );
+}
+
+export default function WholesaleBranch() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <WholesaleContent />
+    </Suspense>
   );
 }
