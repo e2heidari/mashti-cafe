@@ -263,25 +263,53 @@ const Navigation = memo(function Navigation({
                     )}
                   </div>
 
-                  {/* Mobile Menu Button */}
-                  <button
-                    onClick={() => setIsMenuOpen(!isMenuOpen)}
-                    className="md:hidden text-white hover:text-gray-300 transition-colors"
-                  >
-                    <svg
-                      className="w-6 h-6"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                  {/* Mobile Navigation */}
+                  <div className="md:hidden flex items-center justify-between w-full">
+                    {/* Mobile Menu Button */}
+                    <button
+                      onClick={() => setIsMenuOpen(!isMenuOpen)}
+                      className="text-white hover:text-gray-300 transition-colors"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 6h16M4 12h16M4 18h16"
-                      />
-                    </svg>
-                  </button>
+                      <svg
+                        className="w-6 h-6"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 6h16M4 12h16M4 18h16"
+                        />
+                      </svg>
+                    </button>
+
+                    {/* Cart Icon for Mobile - Only show on wholesale page when there are items */}
+                    {isWholesalePage && cartItemCount > 0 && (
+                      <button
+                        onClick={onCartClick}
+                        className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                          />
+                        </svg>
+                        <span className="bg-white text-red-600 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                          {cartItemCount}
+                        </span>
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Mobile Menu */}
@@ -304,34 +332,6 @@ const Navigation = memo(function Navigation({
                           >
                             Order
                           </Link>
-                          {/* Cart Icon for Mobile - Only show on wholesale page when there are items */}
-                          {cartItemCount > 0 && (
-                            <button
-                              onClick={() => {
-                                onCartClick?.();
-                                setIsMenuOpen(false);
-                              }}
-                              className="text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg shadow-lg"
-                            >
-                              <svg
-                                className="w-6 h-6 mr-2"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  strokeWidth={2}
-                                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                                />
-                              </svg>
-                              <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
-                                {cartItemCount}
-                              </span>
-                              <span className="ml-3 font-bold">Cart</span>
-                            </button>
-                          )}
                         </>
                       ) : (
                         <>

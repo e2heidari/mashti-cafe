@@ -1,12 +1,16 @@
 import { memo } from "react";
+import Image from "next/image";
 
 interface MenuItemProps {
   name: string;
   price: number;
   description: string;
+  category?: string;
+  imageUrl?: string;
+  imageAlt?: string;
   popular?: boolean;
   discount?: boolean;
-  promotion?: boolean;
+  bogo?: boolean;
   originalPrice?: number;
 }
 
@@ -14,9 +18,12 @@ const MenuItem = memo(function MenuItem({
   name,
   price,
   description,
+  category,
+  imageUrl,
+  imageAlt,
   popular = false,
   discount = false,
-  promotion = false,
+  bogo = false,
   originalPrice,
 }: MenuItemProps) {
   // Determine if there is a real discount
@@ -28,9 +35,30 @@ const MenuItem = memo(function MenuItem({
 
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all">
-      <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center">
-        <span className="text-2xl">🥤</span>
+      {/* Image or Icon */}
+      <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={imageAlt || name}
+            width={64}
+            height={64}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <span className="text-2xl">🥤</span>
+        )}
       </div>
+
+      {/* Category Badge */}
+      {category && (
+        <div className="text-center mb-2">
+          <span className="bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded-full font-pike">
+            {category}
+          </span>
+        </div>
+      )}
+
       <h3 className="text-xl font-bold text-gray-900 text-center mb-2 font-lander">
         {name}
       </h3>
@@ -43,7 +71,7 @@ const MenuItem = memo(function MenuItem({
         </div>
       )}
 
-      {promotion && (
+      {bogo && (
         <div className="text-center mb-2">
           <span className="bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full font-pike">
             BUY 1 GET 1 FREE

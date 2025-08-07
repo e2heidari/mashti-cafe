@@ -253,7 +253,7 @@ export default function CentralMenuPage() {
                     description={item.description}
                     popular={item.popular}
                     discount={item.discount}
-                    promotion={item.bogo}
+                    bogo={item.bogo}
                     originalPrice={item.originalPrice}
                   />
                 </div>

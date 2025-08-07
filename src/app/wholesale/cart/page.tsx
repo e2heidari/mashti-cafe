@@ -169,11 +169,11 @@ function CartContent() {
           />
         </Suspense>
         <div className="pt-48">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <div className="text-center">
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8">
                 <svg
-                  className="w-20 h-20 text-gray-400 mx-auto mb-6"
+                  className="w-16 sm:w-20 h-16 sm:h-20 text-gray-400 mx-auto mb-4 sm:mb-6"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -185,16 +185,16 @@ function CartContent() {
                     d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
                   />
                 </svg>
-                <h1 className="text-3xl font-bold text-gray-900 font-pike mb-4">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-pike mb-3 sm:mb-4">
                   Your Cart is Empty
                 </h1>
-                <p className="text-xl text-gray-600 font-sodo mb-8">
+                <p className="text-lg sm:text-xl text-gray-600 font-sodo mb-6 sm:mb-8">
                   Add some products to your cart to get started.
                 </p>
               </div>
               <button
                 onClick={() => router.push("/wholesale?showProducts=true")}
-                className="bg-red-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike"
+                className="bg-red-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike text-sm sm:text-base"
               >
                 Browse Products
               </button>
@@ -221,18 +221,18 @@ function CartContent() {
         />
       </Suspense>
       <div className="pt-48">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900 font-pike mb-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 font-pike mb-6 sm:mb-8">
             Your Cart ({cart.length} items)
           </h1>
-          <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
             {cart.map((item) => (
               <div
                 key={item.product._id}
-                className="flex items-center justify-between py-4 border-b border-gray-200 last:border-b-0"
+                className="flex flex-col sm:flex-row sm:items-center justify-between py-4 border-b border-gray-200 last:border-b-0 gap-3 sm:gap-4"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="relative w-16 h-16">
+                <div className="flex items-center space-x-3 sm:space-x-4">
+                  <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
                     {item.product.imageUrl ? (
                       <Image
                         src={item.product.imageUrl}
@@ -243,65 +243,69 @@ function CartContent() {
                     ) : (
                       <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
                         <div className="text-center">
-                          <div className="text-gray-400 text-lg">🍦</div>
+                          <div className="text-gray-400 text-sm sm:text-lg">
+                            🍦
+                          </div>
                         </div>
                       </div>
                     )}
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 font-pike">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 font-pike text-sm sm:text-base">
                       {item.product.name}
                     </h3>
-                    <p className="text-sm text-gray-600 font-sodo">
+                    <p className="text-xs sm:text-sm text-gray-600 font-sodo">
                       {item.product.weight}
                     </p>
-                    <p className="text-sm text-gray-500 font-sodo">
+                    <p className="text-xs sm:text-sm text-gray-500 font-sodo">
                       ${item.product.price.toFixed(2)} each
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                   <div className="flex items-center space-x-2">
                     <button
                       onClick={() =>
                         updateQuantity(item.product._id, item.quantity - 1)
                       }
-                      className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors text-gray-900 font-bold"
+                      className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors text-gray-900 font-bold text-sm sm:text-base"
                     >
                       -
                     </button>
-                    <span className="w-12 text-center font-semibold text-gray-900">
+                    <span className="w-8 sm:w-12 text-center font-semibold text-gray-900 text-sm sm:text-base">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() =>
                         updateQuantity(item.product._id, item.quantity + 1)
                       }
-                      className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors text-gray-900 font-bold"
+                      className="w-6 h-6 sm:w-8 sm:h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors text-gray-900 font-bold text-sm sm:text-base"
                     >
                       +
                     </button>
                   </div>
-                  <span className="font-semibold text-gray-900">
-                    ${(item.product.price * item.quantity).toFixed(2)}
-                  </span>
-                  <button
-                    onClick={() => removeFromCart(item.product._id)}
-                    className="text-red-600 hover:text-red-800 transition-colors"
-                  >
-                    Remove
-                  </button>
+                  <div className="flex items-center space-x-3 sm:space-x-4">
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                      ${(item.product.price * item.quantity).toFixed(2)}
+                    </span>
+                    <button
+                      onClick={() => removeFromCart(item.product._id)}
+                      className="text-red-600 hover:text-red-800 transition-colors text-xs sm:text-sm"
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="flex justify-between items-center">
-                <span className="text-xl font-bold text-gray-900 font-pike">
+            <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+                <span className="text-lg sm:text-xl font-bold text-gray-900 font-pike">
                   Total: ${getTotalPrice().toFixed(2)}
                 </span>
                 <button
                   onClick={() => setIsOrderModalOpen(true)}
-                  className="bg-green-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-green-700 transition-colors font-pike"
+                  className="w-full sm:w-auto bg-green-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-green-700 transition-colors font-pike text-sm sm:text-base"
                 >
                   Submit Order
                 </button>
@@ -311,7 +315,7 @@ function CartContent() {
           <div className="text-center">
             <button
               onClick={() => router.push("/wholesale?showProducts=true")}
-              className="bg-gray-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike"
+              className="bg-gray-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base"
             >
               Continue Shopping
             </button>
@@ -322,17 +326,19 @@ function CartContent() {
       {/* Order Modal */}
       {isOrderModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold mb-4 font-pike">Submit Order</h2>
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <h2 className="text-xl sm:text-2xl font-bold mb-4 font-pike">
+              Submit Order
+            </h2>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSubmitOrder();
               }}
-              className="space-y-4"
+              className="space-y-3 sm:space-y-4"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Name *
                 </label>
                 <input
@@ -341,12 +347,12 @@ function CartContent() {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, name: e.target.value })
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Email *
                 </label>
                 <input
@@ -355,12 +361,12 @@ function CartContent() {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, email: e.target.value })
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Phone *
                 </label>
                 <input
@@ -369,12 +375,12 @@ function CartContent() {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, phone: e.target.value })
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
                   Message (Optional)
                 </label>
                 <textarea
@@ -382,13 +388,13 @@ function CartContent() {
                   onChange={(e) =>
                     setOrderForm({ ...orderForm, message: e.target.value })
                   }
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
                   rows={3}
                 />
               </div>
               {submitMessage && (
                 <div
-                  className={`p-3 rounded-lg ${
+                  className={`p-2 sm:p-3 rounded-lg text-sm sm:text-base ${
                     submitMessage.includes("Error")
                       ? "bg-red-100 text-red-700"
                       : "bg-green-100 text-green-700"
@@ -397,18 +403,18 @@ function CartContent() {
                   {submitMessage}
                 </div>
               )}
-              <div className="flex gap-4 pt-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-3 sm:pt-4">
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors font-pike disabled:opacity-50"
+                  className="flex-1 bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-green-700 transition-colors font-pike disabled:opacity-50 text-sm sm:text-base"
                 >
                   {isSubmitting ? "Submitting..." : "Submit Order"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setIsOrderModalOpen(false)}
-                  className="flex-1 bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors font-pike"
+                  className="flex-1 bg-gray-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base"
                 >
                   Cancel
                 </button>

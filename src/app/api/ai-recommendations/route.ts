@@ -1,187 +1,273 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getRecommendations } from "../../../data/menuDatabase";
+
+interface MenuItem {
+  title: string;
+  description: string;
+  icon: string;
+  category: string;
+  price: string;
+  temperature: "hot" | "cold" | "both";
+  flavors: string[];
+  caffeine: boolean;
+  healthBenefits: string[];
+  timeOfDay: string[];
+  seasonality: string[];
+  popularity: number;
+  reason: string;
+  ingredients: string[];
+  vitamins: string[];
+  minerals: string[];
+  calories: number;
+  sugar: number;
+  protein: number;
+  fat: number;
+  tasteProfile: {
+    sweetness: number;
+    acidity: number;
+    bitterness: number;
+    creaminess: number;
+    spiciness: number;
+    freshness: number;
+  };
+  allergens: string[];
+  dietaryInfo: string[];
+  preparationTime: number;
+  servingSize: string;
+  origin: string;
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const {
-      temperature,
-      timeOfDay,
-      flavor,
-      caffeine,
-      healthGoal,
-      tastePreference,
-      dietaryRestrictions
-    } = body;
+    const { temperature, timeOfDay, flavor, caffeine, healthGoal, dietaryRestrictions } = body;
 
-    console.log("AI Recommendation Request:", {
-      temperature,
-      timeOfDay,
-      flavor,
-      caffeine,
-      healthGoal,
-      tastePreference,
-      dietaryRestrictions
-    });
+    console.log('AI Recommendation Request:', body);
 
-    // Get recommendations using the enhanced database
-    const recommendations = getRecommendations(
-      temperature,
-      timeOfDay,
-      flavor,
-      caffeine,
-      healthGoal,
-      tastePreference,
-      dietaryRestrictions
-    );
+    // Fetch menu items from AI menu API
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/ai-menu`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch menu items: ${response.status}`);
+    }
+    const data = await response.json();
+    const menuItems = data.menuItems;
 
-    // Generate detailed reasoning based on user preferences
-    const reasoning = generateReasoning({
-      temperature,
-      timeOfDay,
-      flavor,
-      caffeine,
-      healthGoal,
-      tastePreference,
-      dietaryRestrictions,
-      recommendations
-    });
+    if (!menuItems || !Array.isArray(menuItems)) {
+      throw new Error('Invalid menu items data');
+    }
 
-    console.log("AI Recommendations Generated:", {
+    console.log('Fetched menu items count:', menuItems.length);
+
+    function getRecommendations() {
+      let filtered = [...menuItems];
+
+      // Step 1: Filter by temperature (most important)
+      if (temperature && temperature !== "both") {
+        if (temperature === "hot") {
+          // For hot drinks, only Coffee & Tea categories
+          filtered = filtered.filter(item => 
+            item.category.includes("Coffee") || 
+            item.category.includes("Tea") ||
+            item.title.toLowerCase().includes("tea") ||
+            item.title.toLowerCase().includes("coffee")
+          );
+        } else if (temperature === "cold") {
+          // For cold drinks, exclude Coffee & Tea (except iced versions)
+          filtered = filtered.filter(item => 
+            !item.category.includes("Coffee") && 
+            !item.category.includes("Tea") &&
+            !item.title.toLowerCase().includes("tea") &&
+            !item.title.toLowerCase().includes("coffee")
+          );
+        }
+      }
+
+      console.log('After temperature filter:', filtered.length);
+
+      // Step 2: Filter by caffeine preference
+      if (caffeine === "yes") {
+        filtered = filtered.filter(item => item.caffeine);
+      } else if (caffeine === "no") {
+        filtered = filtered.filter(item => !item.caffeine);
+      }
+
+      console.log('After caffeine filter:', filtered.length);
+
+      // Step 3: Filter by flavor with precise matching
+      if (flavor) {
+        filtered = filtered.filter(item => {
+          const itemName = item.title.toLowerCase();
+          const itemDescription = (item.description || "").toLowerCase();
+          
+          if (flavor === "rich") {
+            // Rich flavor: creamy, chocolate, caramel, nutty drinks
+            return itemName.includes("chocolate") || 
+                   itemName.includes("caramel") || 
+                   itemName.includes("nutella") ||
+                   itemName.includes("peanut") ||
+                   itemName.includes("cappuccino") ||
+                   itemName.includes("latte") ||
+                   itemName.includes("macchiato") ||
+                   itemDescription.includes("creamy") ||
+                   itemDescription.includes("rich");
+          }
+          
+          if (flavor === "sweet") {
+            // Sweet flavor: caramel, chocolate, vanilla, fruit drinks
+            return itemName.includes("caramel") || 
+                   itemName.includes("chocolate") || 
+                   itemName.includes("vanilla") ||
+                   itemName.includes("strawberry") ||
+                   itemName.includes("mango") ||
+                   itemName.includes("smoothie") ||
+                   itemName.includes("shake") ||
+                   itemDescription.includes("sweet");
+          }
+          
+          if (flavor === "sour") {
+            // Sour flavor: citrus, berry, tart drinks
+            return itemName.includes("lemon") || 
+                   itemName.includes("orange") || 
+                   itemName.includes("pomegranate") ||
+                   itemName.includes("strawberry") ||
+                   itemName.includes("lavashak") ||
+                   itemName.includes("barberry") ||
+                   itemName.includes("ginger") ||
+                   itemDescription.includes("sour") ||
+                   itemDescription.includes("tart");
+          }
+          
+          if (flavor === "refreshing") {
+            // Refreshing: mint, citrus, light drinks
+            return itemName.includes("mint") || 
+                   itemName.includes("lemon") || 
+                   itemName.includes("ginger") ||
+                   itemName.includes("pomegranate") ||
+                   itemName.includes("orange") ||
+                   itemDescription.includes("refreshing") ||
+                   itemDescription.includes("light");
+          }
+          
+          if (flavor === "soothing") {
+            // Soothing: herbal, calming drinks
+            return itemName.includes("chamomile") || 
+                   itemName.includes("mint") || 
+                   itemName.includes("herbal") ||
+                   itemName.includes("tea") ||
+                   itemDescription.includes("soothing") ||
+                   itemDescription.includes("calming");
+          }
+          
+          return item.flavors.includes(flavor);
+        });
+      }
+
+      console.log('After flavor filter:', filtered.length);
+
+      // Step 4: Filter by health goals
+      if (healthGoal && healthGoal !== "none") {
+        filtered = filtered.filter(item => item.healthBenefits.includes(healthGoal));
+      }
+
+      console.log('After health goal filter:', filtered.length);
+
+      // Step 5: Filter by time of day
+      if (timeOfDay) {
+        filtered = filtered.filter(item => item.timeOfDay.includes(timeOfDay));
+      }
+
+      console.log('After time of day filter:', filtered.length);
+
+      // If we have matches, return them with some randomness
+      if (filtered.length > 0) {
+        const shuffled = filtered.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 3);
+      }
+
+      // If no strict matches, try flexible matching
+      let flexibleFiltered = [...menuItems];
+      const matchCounts = new Map();
+
+      flexibleFiltered.forEach(item => {
+        let matches = 0;
+        
+        // Temperature matching
+        if (temperature && temperature !== "both") {
+          if (temperature === "hot" && (item.category.includes("Coffee") || item.category.includes("Tea"))) matches++;
+          if (temperature === "cold" && !item.category.includes("Coffee") && !item.category.includes("Tea")) matches++;
+        }
+        
+        // Caffeine matching
+        if (caffeine === "yes" && item.caffeine) matches++;
+        if (caffeine === "no" && !item.caffeine) matches++;
+        
+        // Flavor matching with bonus points
+        if (flavor) {
+          const itemName = item.title.toLowerCase();
+          if (flavor === "rich" && (itemName.includes("chocolate") || itemName.includes("caramel") || itemName.includes("cappuccino") || itemName.includes("latte"))) matches += 2;
+          if (flavor === "sweet" && (itemName.includes("caramel") || itemName.includes("chocolate") || itemName.includes("vanilla"))) matches += 2;
+          if (flavor === "sour" && (itemName.includes("lemon") || itemName.includes("pomegranate") || itemName.includes("lavashak"))) matches += 2;
+          if (flavor === "refreshing" && (itemName.includes("mint") || itemName.includes("lemon") || itemName.includes("ginger"))) matches += 2;
+          if (flavor === "soothing" && (itemName.includes("chamomile") || itemName.includes("mint") || itemName.includes("tea"))) matches += 2;
+        }
+        
+        // Health goal matching
+        if (healthGoal && healthGoal !== "none" && item.healthBenefits.includes(healthGoal)) matches++;
+        
+        // Time of day matching
+        if (timeOfDay && item.timeOfDay.includes(timeOfDay)) matches++;
+        
+        matchCounts.set(item, matches);
+      });
+
+      // Filter items with at least 1 match
+      flexibleFiltered = flexibleFiltered.filter(item => matchCounts.get(item) >= 1);
+
+      console.log('After flexible matching:', flexibleFiltered.length);
+
+      if (flexibleFiltered.length === 0) {
+        // If still no matches, return random items from appropriate temperature
+        let fallbackItems = [...menuItems];
+        if (temperature === "hot") {
+          fallbackItems = fallbackItems.filter(item => 
+            item.category.includes("Coffee") || item.category.includes("Tea")
+          );
+        } else if (temperature === "cold") {
+          fallbackItems = fallbackItems.filter(item => 
+            !item.category.includes("Coffee") && !item.category.includes("Tea")
+          );
+        }
+        const shuffled = fallbackItems.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, 3);
+      }
+
+      // Sort by match count and add randomness
+      const sorted = flexibleFiltered
+        .sort((a, b) => {
+          const aMatches = matchCounts.get(a);
+          const bMatches = matchCounts.get(b);
+          return bMatches - aMatches;
+        });
+      
+      const topResults = sorted.slice(0, 6);
+      const shuffled = topResults.sort(() => Math.random() - 0.5);
+      
+      return shuffled.slice(0, 3);
+    }
+
+    const recommendations = getRecommendations();
+    
+    console.log('AI Recommendations Generated:', {
       count: recommendations.length,
       items: recommendations.map(r => r.title)
     });
 
-    return NextResponse.json({
-      success: true,
-      recommendations,
-      reasoning,
-      analysis: {
-        totalProducts: recommendations.length,
-        nutritionalSummary: generateNutritionalSummary(recommendations),
-        tasteAnalysis: generateTasteAnalysis(recommendations),
-        healthBenefits: generateHealthBenefitsSummary(recommendations)
-      }
-    });
-
+    return NextResponse.json({ recommendations });
   } catch (error) {
-    console.error("AI Recommendation API Error:", error);
+    console.error('Error generating AI recommendations:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "Failed to generate recommendations",
-        recommendations: []
-      },
+      { error: 'Failed to generate recommendations' },
       { status: 500 }
     );
   }
-}
-
-interface ReasoningParams {
-  recommendations: MenuItem[];
-  temperature?: string;
-  timeOfDay?: string;
-  flavor?: string;
-  healthGoal?: string;
-  caffeine?: string;
-  tastePreference?: string;
-  dietaryRestrictions?: string[];
-}
-
-function generateReasoning(params: ReasoningParams) {
-  const { recommendations, temperature, timeOfDay, flavor, healthGoal } = params;
-  
-  let reasoning = "بر اساس ترجیحات شما، این محصولات را پیشنهاد می‌دهم: ";
-  
-  if (temperature === "hot") {
-    reasoning += "محصولات داغ برای گرم کردن شما در ";
-  } else if (temperature === "cold") {
-    reasoning += "محصولات خنک برای طراوت و تازگی در ";
-  }
-  
-  if (timeOfDay === "morning") {
-    reasoning += "صبح، ";
-  } else if (timeOfDay === "afternoon") {
-    reasoning += "ظهر، ";
-  } else if (timeOfDay === "evening") {
-    reasoning += "عصر، ";
-  }
-  
-  if (flavor === "fruity") {
-    reasoning += "با طعم میوه‌ای طبیعی ";
-  } else if (flavor === "sweet") {
-    reasoning += "با شیرینی متعادل ";
-  } else if (flavor === "creamy") {
-    reasoning += "با بافت خامه‌ای نرم ";
-  }
-  
-  if (healthGoal === "energy") {
-    reasoning += "و انرژی‌بخش برای فعالیت‌های روزانه. ";
-  } else if (healthGoal === "vitamins") {
-    reasoning += "و سرشار از ویتامین‌های ضروری. ";
-  } else if (healthGoal === "protein") {
-    reasoning += "و غنی از پروتئین برای عضله‌سازی. ";
-  }
-  
-  reasoning += `این محصولات ترکیبی از طعم عالی و فواید سلامتی هستند. ${recommendations.length} محصول برای شما انتخاب شده است.`;
-  
-  return reasoning;
-}
-
-interface MenuItem {
-  calories: number;
-  protein: number;
-  sugar: number;
-  tasteProfile: {
-    sweetness: number;
-    acidity: number;
-    creaminess: number;
-  };
-  healthBenefits: string[];
-}
-
-function generateNutritionalSummary(recommendations: MenuItem[]) {
-  const totalCalories = recommendations.reduce((sum, item) => sum + item.calories, 0);
-  const totalProtein = recommendations.reduce((sum, item) => sum + item.protein, 0);
-  const totalSugar = recommendations.reduce((sum, item) => sum + item.sugar, 0);
-  const avgCalories = Math.round(totalCalories / recommendations.length);
-  
-  return {
-    averageCalories: avgCalories,
-    totalProtein: Math.round(totalProtein * 10) / 10,
-    totalSugar: Math.round(totalSugar * 10) / 10,
-    proteinRich: totalProtein > 20,
-    lowSugar: totalSugar < 30
-  };
-}
-
-function generateTasteAnalysis(recommendations: MenuItem[]) {
-  const avgSweetness = recommendations.reduce((sum, item) => sum + item.tasteProfile.sweetness, 0) / recommendations.length;
-  const avgAcidity = recommendations.reduce((sum, item) => sum + item.tasteProfile.acidity, 0) / recommendations.length;
-  const avgCreaminess = recommendations.reduce((sum, item) => sum + item.tasteProfile.creaminess, 0) / recommendations.length;
-  
-  return {
-    sweetnessLevel: avgSweetness > 7 ? "شیرین" : avgSweetness > 4 ? "متوسط" : "کم شیرین",
-    acidityLevel: avgAcidity > 6 ? "ترش" : avgAcidity > 3 ? "متوسط" : "ملایم",
-    creaminessLevel: avgCreaminess > 7 ? "خامه‌ای" : avgCreaminess > 4 ? "نرم" : "سبک"
-  };
-}
-
-function generateHealthBenefitsSummary(recommendations: MenuItem[]) {
-  const allBenefits = recommendations.flatMap(item => item.healthBenefits);
-  const benefitCounts = allBenefits.reduce((acc, benefit) => {
-    acc[benefit] = (acc[benefit] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const topBenefits = Object.entries(benefitCounts)
-    .sort(([,a], [,b]) => (b as number) - (a as number))
-    .slice(0, 3)
-    .map(([benefit]) => benefit);
-  
-  return {
-    primaryBenefits: topBenefits,
-    totalBenefits: allBenefits.length,
-    uniqueBenefits: Object.keys(benefitCounts).length
-  };
 } 
