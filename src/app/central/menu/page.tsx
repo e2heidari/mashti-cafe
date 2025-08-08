@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Navigation from "../../../components/Navigation";
 import MenuItem from "../../../components/MenuItem";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 
 const AIAssistant = dynamic(() => import("../../../components/AIAssistant"), {
   loading: () => <div className="text-black">Loading AI Assistant...</div>,
@@ -28,6 +29,7 @@ export default function CentralMenuPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAIOpen, setIsAIOpen] = useState(false);
+  const router = useRouter();
 
   const fetchData = useCallback(async () => {
     try {
@@ -153,7 +155,15 @@ export default function CentralMenuPage() {
       >
         <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
       </Suspense>
-      <div className="pt-64 pb-12">
+      <div className="pt-48">
+        <div className="max-w-6xl mx-auto px-4 mb-6">
+          <button
+            onClick={() => router.push("/central")}
+            className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base"
+          >
+            ← Back to Home
+          </button>
+        </div>
         <h1 className="text-4xl font-bold text-gray-900 text-center mb-2 font-pike">
           Menu
         </h1>
