@@ -117,7 +117,7 @@ function CartContent() {
 
       // Generate order number
       const randomNum = Math.floor(Math.random() * 9999);
-      const newOrderNumber = `WH-${randomNum}`;
+      const newOrderNumber = `EH-${randomNum}`;
       const orderDataWithNumber = { ...orderData, orderNumber: newOrderNumber };
 
       const response = await fetch("/api/wholesale-order", {
@@ -334,7 +334,7 @@ function CartContent() {
       {isOrderModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl sm:text-2xl font-bold mb-4 font-pike">
+            <h2 className="text-xl text-gray-900 sm:text-2xl font-bold mb-4 font-pike">
               Submit Order
             </h2>
             <form
