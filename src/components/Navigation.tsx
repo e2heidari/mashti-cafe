@@ -237,30 +237,45 @@ const Navigation = memo(function Navigation({
                       )}
                     </div>
 
-                    {/* Cart Icon - Only show on wholesale page when there are items */}
-                    {isWholesalePage && cartItemCount > 0 && (
-                      <button
-                        onClick={onCartClick}
-                        className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
-                      >
-                        <svg
-                          className="w-6 h-6 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    {/* Cart Icon - reserve space to avoid layout shift */}
+                    <div
+                      className="flex items-center justify-end"
+                      style={{ minWidth: 120 }}
+                    >
+                      {isWholesalePage && cartItemCount > 0 ? (
+                        <button
+                          onClick={onCartClick}
+                          className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                          />
-                        </svg>
-                        <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
-                          {cartItemCount}
-                        </span>
-                      </button>
-                    )}
+                          <svg
+                            className="w-6 h-6 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                            />
+                          </svg>
+                          <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
+                            {cartItemCount}
+                          </span>
+                        </button>
+                      ) : (
+                        <div
+                          aria-hidden
+                          className="opacity-0 pointer-events-none select-none"
+                        >
+                          <div className="relative flex items-center bg-red-600 px-3 py-2 rounded-full">
+                            <div className="w-6 h-6 mr-2" />
+                            <span className="h-6 w-6" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Mobile Navigation */}
@@ -285,30 +300,45 @@ const Navigation = memo(function Navigation({
                       </svg>
                     </button>
 
-                    {/* Cart Icon for Mobile - Only show on wholesale page when there are items */}
-                    {isWholesalePage && cartItemCount > 0 && (
-                      <button
-                        onClick={onCartClick}
-                        className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
-                      >
-                        <svg
-                          className="w-5 h-5 mr-2"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    {/* Cart Icon for Mobile - reserve space to avoid layout shift */}
+                    <div
+                      className="flex items-center justify-end"
+                      style={{ minWidth: 96 }}
+                    >
+                      {isWholesalePage && cartItemCount > 0 ? (
+                        <button
+                          onClick={onCartClick}
+                          className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                          />
-                        </svg>
-                        <span className="bg-white text-red-600 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
-                          {cartItemCount}
-                        </span>
-                      </button>
-                    )}
+                          <svg
+                            className="w-5 h-5 mr-2"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                            />
+                          </svg>
+                          <span className="bg-white text-red-600 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                            {cartItemCount}
+                          </span>
+                        </button>
+                      ) : (
+                        <div
+                          aria-hidden
+                          className="opacity-0 pointer-events-none select-none"
+                        >
+                          <div className="relative flex items-center bg-red-600 px-3 py-2 rounded-full">
+                            <div className="w-5 h-5 mr-2" />
+                            <span className="h-5 w-5" />
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
