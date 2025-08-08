@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, memo } from "react";
+import { useState, memo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams, useRouter } from "next/navigation";
 
 interface NavigationProps {
   onAIOpen: () => void;
@@ -24,6 +24,7 @@ const Navigation = memo(function Navigation({
   const menuHref = pathname.startsWith("/central") ? "/central/menu" : "/";
   const aboutHref = pathname.startsWith("/central") ? "/central/about" : "/";
   const homeHref = pathname.startsWith("/central") ? "/central" : "/";
+  const router = useRouter();
 
   // For wholesale page, show Order instead of Menu and About
   const isWholesalePage = pathname.startsWith("/wholesale");
@@ -34,6 +35,11 @@ const Navigation = memo(function Navigation({
     pathname.startsWith("/wholesale") &&
     searchParams?.get("showProducts") === "true";
   const homeHrefForWholesale = isOnProductsPage ? "/wholesale" : "/wholesale";
+
+  // Ensure mobile menu auto-closes on route change
+  useEffect(() => {
+    if (isMenuOpen) setIsMenuOpen(false);
+  }, [pathname]);
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#e80812]">
@@ -349,14 +355,14 @@ const Navigation = memo(function Navigation({
                       {isWholesalePage ? (
                         <>
                           <Link
-                            href={homeHrefForWholesale}
+                            href="/wholesale"
                             className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
                             onClick={() => setIsMenuOpen(false)}
                           >
                             Home
                           </Link>
                           <Link
-                            href={orderHref}
+                            href="/wholesale?showProducts=true"
                             className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
                             onClick={() => setIsMenuOpen(false)}
                           >

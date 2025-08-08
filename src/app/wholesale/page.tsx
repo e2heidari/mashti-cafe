@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
-import MobileCartModal from "../../components/MobileCartModal";
 import dynamicImport from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
 
@@ -86,7 +85,6 @@ function WholesaleContent() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showProducts, setShowProducts] = useState(false);
-  const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [wholesaleSections, setWholesaleSections] = useState<
     WholesaleSection[]
   >([]);
@@ -217,19 +215,11 @@ function WholesaleContent() {
   };
 
   const handleCartClick = () => {
-    if (cart.length > 0) {
-      // Check if we're on mobile (screen width < 768px)
-      if (typeof window !== "undefined" && window.innerWidth < 768) {
-        setIsMobileCartOpen(true);
-      } else {
-        // Navigate to cart page on desktop
-        router.push("/wholesale/cart");
-      }
-    }
+    router.push("/wholesale/cart");
   };
 
   const handleSubmitOrder = () => {
-    // This will be handled by the MobileCartModal component
+    // This will be handled by the cart page component
   };
 
   return (
@@ -334,7 +324,7 @@ function WholesaleContent() {
         ) : (
           <>
             {/* Products Section */}
-            <section className="py-8 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white">
+            <section className="sm:py-16 px-4 sm:px-6 lg:px-8 bg-white">
               <div className="max-w-7xl mx-auto">
                 <div className="mb-8 sm:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
                   <button
@@ -342,11 +332,11 @@ function WholesaleContent() {
                       setShowProducts(false);
                       router.push("/wholesale");
                     }}
-                    className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base order-2 sm:order-1"
+                    className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base order-1 sm:order-1"
                   >
                     ← Back to Home
                   </button>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-pike text-center flex-1 order-1 sm:order-2">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-pike text-center w-full sm:flex-1 order-2 sm:order-2">
                     Our Wholesale Products
                   </h2>
                 </div>
@@ -417,16 +407,7 @@ function WholesaleContent() {
         {/* AI Assistant Modal */}
         <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
 
-        {/* Mobile Cart Modal */}
-        <MobileCartModal
-          isOpen={isMobileCartOpen}
-          onClose={() => setIsMobileCartOpen(false)}
-          cart={cart}
-          onUpdateQuantity={updateQuantity}
-          onRemoveFromCart={removeFromCart}
-          onSubmitOrder={handleSubmitOrder}
-          totalPrice={getTotalPrice()}
-        />
+        {/* Mobile cart modal removed: cart uses dedicated route */}
       </div>
     </div>
   );
