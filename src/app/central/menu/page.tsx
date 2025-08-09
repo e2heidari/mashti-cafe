@@ -155,7 +155,7 @@ export default function CentralMenuPage() {
       >
         <Navigation showMenu={true} onAIOpen={() => setIsAIOpen(true)} />
       </Suspense>
-      <div className="pt-48">
+      <div className="pt-48 md:pt-64 pb-10">
         <div className="max-w-6xl mx-auto px-4 mb-6">
           <button
             onClick={() => router.push("/central")}
