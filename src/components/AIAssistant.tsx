@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo, useCallback } from "react";
+import { drinkFlow } from "@/data/drinkFlow";
 
 interface AIAssistantProps {
   isOpen: boolean;
@@ -59,6 +60,89 @@ const AIAssistant = memo(function AIAssistant({
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  // Hot-drink flow state
+  // Fixed to hot-drink flow for now; language can be toggled later if needed
+  const [useHotDrinkFlow] = useState<boolean>(true);
+  // Currently unused; questions/options render bilingual automatically
+  // const [flowLang] = useState<"en" | "fa">("en");
+  const [currentNodeKey, setCurrentNodeKey] = useState<string>("start");
+  const [visitedNodeKeys, setVisitedNodeKeys] = useState<string[]>(["start"]);
+
+  // English translations aligned with the combined (FA) drink flow
+  const englishQuestions: Record<string, string> = {
+    start: "Are you craving a cold refreshment or a hot drink?",
+    // Cold branch
+    cold_start: "What style of cold drink do you want?",
+    juice_or_smoothie: "For a light drink, which base do you want?",
+    juice_profile: "What vibe for your fresh juice?",
+    smoothie_profile: "What flavor profile for your smoothie?",
+    protein_base: "Preferred flavor for recovery?",
+    creamy_base: "What are you in the mood for?",
+    shake_by_flavor: "Shake flavor?",
+    dessert_by_style: "Which style do you want?",
+    icecream_pick: "Which ice cream flavor?",
+    dessert_traditional: "Pick a traditional dessert:",
+    // Hot branch
+    hot_start:
+      "Are you more in the mood for coffee or tea/herbal infusion today?",
+    coffee_strength:
+      "Do you want your coffee very strong and energizing, or milder?",
+    coffee_pure_or_sweet:
+      "Do you prefer pure coffee or something a bit sweet and aromatic?",
+    coffee_final: "Are you okay waiting a bit for milk foam and silky cream?",
+    tea_caffeine:
+      "Would you like some caffeine for energy, or completely caffeine‑free?",
+    tea_function: "What effect are you looking for from your drink?",
+    tea_flavour:
+      "Do you prefer a herbal/mild taste or something a bit tangy and fruity?",
+  };
+
+  const englishOptions: Record<string, string[]> = {
+    // Cold branch
+    start: ["❄️ Cold Drink", "☕ Hot Drink"],
+    cold_start: [
+      "🥤 Cool & Light",
+      "💪 Filling / Post‑workout",
+      "🍧 Creamy & Dessert‑like",
+    ],
+    juice_or_smoothie: ["Fresh Juice", "Fruit Smoothie"],
+    juice_profile: [
+      "Citrusy / Tart & Energizing",
+      "Sweet & Light",
+      "High Antioxidants",
+    ],
+    smoothie_profile: ["Berry / Red", "More Tart / Antioxidant", "Tropical"],
+    protein_base: ["Fruity Protein", "Nutty Protein", "Nutty + Fruity"],
+    creamy_base: ["Creamy Drink (Shake)", "Ice cream / Spoon Dessert"],
+    shake_by_flavor: [
+      "Classic Creamy",
+      "Cookie",
+      "Chocolate",
+      "Fruity",
+      "Nutty / Sesame",
+      "Caffeinated",
+    ],
+    dessert_by_style: [
+      "Ice‑cream cups",
+      "Traditional Persian Desserts",
+      "Fusion / Cafe‑style",
+    ],
+    icecream_pick: ["Persian Classics", "Classics", "Fruity"],
+    dessert_traditional: ["Traditional Ice‑creams", "Traditional Desserts"],
+    // Hot branch
+    hot_start: ["☕ Coffee", "🍵 Tea / Herbal"],
+    coffee_strength: ["Very strong", "Mild"],
+    coffee_pure_or_sweet: ["Pure", "Sweet"],
+    coffee_final: ["Yes", "No"],
+    tea_caffeine: ["With caffeine", "Caffeine‑free"],
+    tea_flavour: ["Herbal", "Fruity"],
+    tea_function: [
+      "Relaxing / Calm",
+      "Refreshing / Alert",
+      "Digestion / Warming",
+      "Immune support / Antioxidants",
+    ],
+  };
 
   // Load menu items from CMS on component mount
   const loadMenuItems = useCallback(async () => {
@@ -249,6 +333,35 @@ const AIAssistant = memo(function AIAssistant({
 
   const questions = getDynamicQuestions();
 
+  // Map terminal results (list of names) to menu items, preserving order
+  const mapResultNamesToMenuItems = useCallback(
+    (names: string[]): MenuItem[] => {
+      const results: MenuItem[] = [];
+      const seen = new Set<string>();
+
+      for (const name of names) {
+        const target = name.toLowerCase();
+        // Exact match
+        let item = menuItems.find((mi) => mi.title.toLowerCase() === target);
+        // Fallback: partial match
+        if (!item) {
+          item = menuItems.find(
+            (mi) =>
+              mi.title.toLowerCase().includes(target) ||
+              target.includes(mi.title.toLowerCase())
+          );
+        }
+        if (item && !seen.has(item.title)) {
+          results.push(item);
+          seen.add(item.title);
+        }
+      }
+
+      return results;
+    },
+    [menuItems]
+  );
+
   // Function to get recommendations from CMS data
   const getRecommendations = useCallback(
     (
@@ -438,6 +551,47 @@ const AIAssistant = memo(function AIAssistant({
     [menuItems]
   );
 
+  const handleFlowAnswer = useCallback(
+    (option: { next?: string; result?: string[] }) => {
+      if (option.next) {
+        setCurrentNodeKey(option.next);
+        setVisitedNodeKeys((prev) => [...prev, option.next as string]);
+        return;
+      }
+
+      if (option.result) {
+        setIsLoading(true);
+        // Small delay to mimic async processing, consistent with existing UX
+        setTimeout(() => {
+          let recs = mapResultNamesToMenuItems(option.result as string[]);
+          // Fallback: if nothing matched, use broader hot recommendations
+          if (recs.length === 0) {
+            const inferredTemp = visitedNodeKeys.includes("hot_start")
+              ? "hot"
+              : visitedNodeKeys.includes("cold_start")
+                ? "cold"
+                : undefined;
+            recs = getRecommendations(
+              inferredTemp,
+              undefined,
+              undefined,
+              undefined,
+              undefined,
+              []
+            );
+          }
+          setRecommendations(recs);
+          setIsLoading(false);
+          setShowResults(true);
+        }, 600);
+      }
+    },
+    [getRecommendations, mapResultNamesToMenuItems, visitedNodeKeys]
+  );
+
+  // Helpers to extract emoji (if any) and plain text from a label like "☕ Coffee"
+  // (helper removed; inlined where needed)
+
   const handleAnswer = useCallback(
     (questionId: string, answer: string) => {
       setAnswers((prev) => ({ ...prev, [questionId]: answer }));
@@ -578,59 +732,108 @@ const AIAssistant = memo(function AIAssistant({
         {/* Content */}
         <div className="p-6 max-h-[60vh] overflow-y-auto">
           {!showResults ? (
-            <div>
-              {/* Progress Bar */}
-              <div className="mb-6">
-                <div className="flex justify-between text-xs text-gray-500 mb-2 font-sodo">
-                  <span>Progress</span>
-                  <span>
-                    Question {currentStep + 1} of {questions.length}
-                  </span>
+            useHotDrinkFlow ? (
+              // Hot drink flow UI
+              <div>
+                {/* Progress Bar */}
+                <div className="mb-6">
+                  <div className="flex justify-between text-xs text-gray-500 mb-2 font-sodo">
+                    <span>Progress</span>
+                    <span>Step {visitedNodeKeys.length}</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-[#e80812] h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${Math.min(visitedNodeKeys.length * 20, 100)}%`,
+                      }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="bg-[#e80812] h-2 rounded-full transition-all duration-500"
-                    style={{
-                      width: `${((currentStep + 1) / questions.length) * 100}%`,
+
+                {/* Question (bilingual) */}
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 whitespace-pre-line font-pike leading-snug">
+                    {englishQuestions[currentNodeKey]}
+                  </h3>
+                  <div className="text-sm text-gray-600 mt-2 font-sodo whitespace-pre-line leading-snug">
+                    {drinkFlow[currentNodeKey]?.question}
+                  </div>
+                </div>
+
+                {/* Options (bilingual) */}
+                <div className="space-y-3">
+                  {drinkFlow[currentNodeKey].options.map((optFa, idx) => {
+                    const enLabel = englishOptions[currentNodeKey]?.[idx] || "";
+                    const labelForEmoji = enLabel || optFa.label;
+                    const match = labelForEmoji.match(/^([^A-Za-z0-9\s]+)\s*/);
+                    const emoji = match?.[1] || "👉";
+                    const textEn = enLabel.replace(/^([^A-Za-z0-9\s]+)\s*/, "");
+                    return (
+                      <button
+                        key={`${currentNodeKey}-${idx}`}
+                        onClick={() =>
+                          handleFlowAnswer({
+                            next: optFa.next,
+                            result: optFa.result,
+                          })
+                        }
+                        className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#e80812]/60 hover:bg-red-50 transition-all duration-300 text-right flex items-center justify-between group"
+                      >
+                        <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                          {emoji}
+                        </span>
+                        <span className="text-right">
+                          <span className="block font-medium text-gray-700 group-hover:text-[#e80812] transition-colors duration-200 font-sodo">
+                            {textEn || enLabel || optFa.label}
+                          </span>
+                          <span className="block text-gray-600 text-sm font-sodo">
+                            {optFa.label}
+                          </span>
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Controls */}
+                <div className="flex gap-3 mt-6">
+                  {/* Back */}
+                  {visitedNodeKeys.length > 1 && (
+                    <button
+                      onClick={() => {
+                        setVisitedNodeKeys((prev) => prev.slice(0, -1));
+                        setCurrentNodeKey(
+                          visitedNodeKeys[visitedNodeKeys.length - 2]
+                        );
+                      }}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      <span>Previous</span>
+                    </button>
+                  )}
+
+                  {/* Reset */}
+                  <button
+                    onClick={() => {
+                      resetConversation();
+                      setCurrentNodeKey("start");
+                      setVisitedNodeKeys(["start"]);
                     }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Question */}
-              <div className="text-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 whitespace-pre-line font-pike">
-                  {questions[currentStep].question}
-                </h3>
-              </div>
-
-              {/* Options */}
-              <div className="space-y-3">
-                {questions[currentStep].options.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() =>
-                      handleAnswer(questions[currentStep].id, option.value)
-                    }
-                    className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#e80812]/60 hover:bg-red-50 transition-all duration-300 text-right flex items-center justify-between group"
-                  >
-                    <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                      {option.emoji}
-                    </span>
-                    <span className="font-medium text-gray-700 group-hover:text-[#e80812] transition-colors duration-200 font-sodo">
-                      {option.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Navigation Buttons */}
-              <div className="flex gap-3 mt-6">
-                {/* Back Button - Only show if not on first question */}
-                {currentStep > 0 && (
-                  <button
-                    onClick={() => setCurrentStep(currentStep - 1)}
-                    className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                    className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
                   >
                     <svg
                       className="w-5 h-5"
@@ -642,50 +845,139 @@ const AIAssistant = memo(function AIAssistant({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M15 19l-7-7 7-7"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                       />
                     </svg>
-                    <span>Previous Question</span>
+                    <span>Start Over</span>
                   </button>
-                )}
-
-                {/* Reset Button - Always show */}
-                <button
-                  onClick={resetConversation}
-                  className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
-                >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    />
-                  </svg>
-                  <span>Start Over</span>
-                </button>
-              </div>
-
-              {/* Loading */}
-              {isLoading && (
-                <div className="text-center py-8">
-                  <div className="relative mx-auto mb-4">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-200 border-t-[#e80812] mx-auto"></div>
-                  </div>
-                  <p className="text-gray-600 font-medium font-sodo">
-                    Analyzing your preferences...
-                  </p>
-                  <p className="text-gray-400 text-sm mt-2 font-sodo">
-                    Mashti AI is selecting the best products for you
-                  </p>
                 </div>
-              )}
-            </div>
+
+                {/* Loading */}
+                {isLoading && (
+                  <div className="text-center py-8">
+                    <div className="relative mx-auto mb-4">
+                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-200 border-t-[#e80812] mx-auto"></div>
+                    </div>
+                    <p className="text-gray-600 font-medium font-sodo">
+                      Analyzing your preferences...
+                    </p>
+                    <p className="text-gray-400 text-sm mt-2 font-sodo">
+                      Mashti AI is selecting the best products for you
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Existing dynamic flow UI (kept for potential future use)
+              <div>
+                {/* Progress Bar */}
+                <div className="mb-6">
+                  <div className="flex justify-between text-xs text-gray-500 mb-2 font-sodo">
+                    <span>Progress</span>
+                    <span>
+                      Question {currentStep + 1} of {questions.length}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                    <div
+                      className="bg-[#e80812] h-2 rounded-full transition-all duration-500"
+                      style={{
+                        width: `${((currentStep + 1) / questions.length) * 100}%`,
+                      }}
+                    ></div>
+                  </div>
+                </div>
+
+                {/* Question */}
+                <div className="text-center mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 whitespace-pre-line font-pike">
+                    {questions[currentStep].question}
+                  </h3>
+                </div>
+
+                {/* Options */}
+                <div className="space-y-3">
+                  {questions[currentStep].options.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() =>
+                        handleAnswer(questions[currentStep].id, option.value)
+                      }
+                      className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#e80812]/60 hover:bg-red-50 transition-all duration-300 text-right flex items-center justify-between group"
+                    >
+                      <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
+                        {option.emoji}
+                      </span>
+                      <span className="font-medium text-gray-700 group-hover:text-[#e80812] transition-colors duration-200 font-sodo">
+                        {option.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Navigation Buttons */}
+                <div className="flex gap-3 mt-6">
+                  {/* Back Button - Only show if not on first question */}
+                  {currentStep > 0 && (
+                    <button
+                      onClick={() => setCurrentStep(currentStep - 1)}
+                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                    >
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M15 19l-7-7 7-7"
+                        />
+                      </svg>
+                      <span>Previous Question</span>
+                    </button>
+                  )}
+
+                  {/* Reset Button - Always show */}
+                  <button
+                    onClick={resetConversation}
+                    className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                  >
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    <span>Start Over</span>
+                  </button>
+                </div>
+
+                {/* Loading */}
+                {isLoading && (
+                  <div className="text-center py-8">
+                    <div className="relative mx-auto mb-4">
+                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-200 border-t-[#e80812] mx-auto"></div>
+                    </div>
+                    <p className="text-gray-600 font-medium font-sodo">
+                      Analyzing your preferences...
+                    </p>
+                    <p className="text-gray-400 text-sm mt-2 font-sodo">
+                      Mashti AI is selecting the best products for you
+                    </p>
+                  </div>
+                )}
+              </div>
+            )
           ) : (
             /* Results */
             <div>
@@ -806,7 +1098,14 @@ const AIAssistant = memo(function AIAssistant({
                 <button
                   onClick={() => {
                     setShowResults(false);
-                    setCurrentStep(0);
+                    if (useHotDrinkFlow) {
+                      const lastKey =
+                        visitedNodeKeys[visitedNodeKeys.length - 1] || "start";
+                      setCurrentNodeKey(lastKey);
+                    } else {
+                      // Return to last answered step (before results)
+                      setCurrentStep(Math.max(questions.length - 1, 0));
+                    }
                   }}
                   className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
                 >
@@ -828,7 +1127,11 @@ const AIAssistant = memo(function AIAssistant({
 
                 {/* Reset Button */}
                 <button
-                  onClick={resetConversation}
+                  onClick={() => {
+                    resetConversation();
+                    setCurrentNodeKey("start");
+                    setVisitedNodeKeys(["start"]);
+                  }}
                   className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
                 >
                   <svg

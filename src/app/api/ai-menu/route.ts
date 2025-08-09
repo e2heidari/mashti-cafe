@@ -167,135 +167,175 @@ function getTimeOfDay(category: string, name: string): string[] {
 // Helper function to get taste profile
 function getTasteProfile(name: string, category: string): MenuItem['tasteProfile'] {
   const nameLower = name.toLowerCase();
-  
-  // Default profile
-  const profile = {
+
+  const clamp = (v: number) => Math.max(0, Math.min(10, v));
+
+  // Baseline by category to avoid creamy juices etc.
+  let profile = {
     sweetness: 5,
     acidity: 3,
     bitterness: 3,
-    creaminess: 5,
+    creaminess: 2,
     spiciness: 1,
-    freshness: 5
+    freshness: 5,
   };
-  
-  // Adjust based on name
-  if (nameLower.includes("chocolate")) {
-    profile.sweetness = 8;
+
+  if (category.includes('Juice') || nameLower.includes('juice')) {
+    profile = {
+      sweetness: 5,
+      acidity: 4,
+      bitterness: 1,
+      creaminess: 0,
+      spiciness: 1,
+      freshness: 9,
+    };
+  } else if (category.includes('Smoothie')) {
+    profile = {
+      sweetness: 6,
+      acidity: 4,
+      bitterness: 1,
+      creaminess: 4,
+      spiciness: 1,
+      freshness: 7,
+    };
+  } else if (category.includes('Shake')) {
+    profile = {
+      sweetness: 8,
+      acidity: 2,
+      bitterness: 1,
+      creaminess: 9,
+      spiciness: 1,
+      freshness: 3,
+    };
+  } else if (category.includes('Ice Cream')) {
+    profile = {
+      sweetness: 7,
+      acidity: 1,
+      bitterness: 1,
+      creaminess: 9,
+      spiciness: 1,
+      freshness: 2,
+    };
+  } else if (category.includes('Coffee')) {
+    profile = {
+      sweetness: 2,
+      acidity: 5,
+      bitterness: 7,
+      creaminess: 1,
+      spiciness: 1,
+      freshness: 3,
+    };
+  } else if (category.includes('Tea')) {
+    profile = {
+      sweetness: 1,
+      acidity: 4,
+      bitterness: 4,
+      creaminess: 0,
+      spiciness: 1,
+      freshness: 7,
+    };
+  } else if (category.includes('Protein')) {
+    profile = {
+      sweetness: 5,
+      acidity: 3,
+      bitterness: 2,
+      creaminess: 6,
+      spiciness: 1,
+      freshness: 5,
+    };
+  }
+
+  // Name-based refinements
+  if (nameLower.includes('latte') || nameLower.includes('cappuccino') || nameLower.includes('macchiato') || nameLower.includes('mocha') || nameLower.includes('flat white')) {
+    profile.creaminess = 7;
+    profile.sweetness = Math.max(profile.sweetness, 4);
+    profile.bitterness = Math.min(profile.bitterness, 4);
+  }
+  if (nameLower.includes('affogato')) {
     profile.creaminess = 8;
-    profile.bitterness = 5;
+    profile.sweetness = Math.max(profile.sweetness, 5);
+    profile.bitterness = Math.max(profile.bitterness, 3);
   }
-  if (nameLower.includes("vanilla")) {
-    profile.sweetness = 7;
-    profile.creaminess = 8;
+  if (nameLower.includes('chocolate') || nameLower.includes('nutella') || nameLower.includes('m & m')) {
+    profile.sweetness = Math.max(profile.sweetness, 8);
+    profile.creaminess = Math.max(profile.creaminess, 7);
+    profile.bitterness = Math.max(profile.bitterness, 4);
   }
-  if (nameLower.includes("strawberry")) {
-    profile.sweetness = 6;
-    profile.acidity = 5;
-    profile.freshness = 8;
+  if (nameLower.includes('vanilla')) {
+    profile.sweetness = Math.max(profile.sweetness, 7);
+    profile.creaminess = Math.max(profile.creaminess, 7);
   }
-  if (nameLower.includes("mango")) {
-    profile.sweetness = 7;
-    profile.freshness = 7;
+  if (nameLower.includes('strawberry') || nameLower.includes('berry') || nameLower.includes('shahtoot')) {
+    profile.sweetness = Math.max(profile.sweetness, 6);
+    profile.acidity = Math.max(profile.acidity, 5);
+    profile.freshness = Math.max(profile.freshness, 8);
+  }
+  if (nameLower.includes('mango') || nameLower.includes('pineapple') || nameLower.includes('peach')) {
+    profile.sweetness = Math.max(profile.sweetness, 7);
+    profile.freshness = Math.max(profile.freshness, 7);
+    profile.acidity = Math.max(profile.acidity, 3);
+  }
+  if (nameLower.includes('pomegranate') || nameLower.includes('barberry') || nameLower.includes('lavashak') || nameLower.includes('orange')) {
+    profile.acidity = Math.max(profile.acidity, 7);
+    profile.freshness = Math.max(profile.freshness, 8);
+    profile.sweetness = Math.min(profile.sweetness, 5);
+  }
+  if (nameLower.includes('apple')) {
+    profile.sweetness = Math.max(profile.sweetness, 5);
+    profile.acidity = 3; // apples are mildly tart
+    profile.freshness = Math.max(profile.freshness, 6);
+  }
+  if (nameLower.includes('carrot')) {
+    profile.sweetness = Math.max(profile.sweetness, 4);
+    profile.acidity = 2; // carrot juices are low-acid
+    profile.freshness = Math.max(profile.freshness, 5);
+  }
+  if (nameLower.includes('celery')) {
+    profile.sweetness = Math.min(profile.sweetness, 3);
     profile.acidity = 3;
+    profile.bitterness = Math.max(profile.bitterness, 2);
+    profile.freshness = Math.max(profile.freshness, 8);
   }
-  if (nameLower.includes("coffee")) {
-    profile.bitterness = 8;
-    profile.acidity = 6;
-    profile.sweetness = 2;
-    profile.creaminess = 3;
+  if (nameLower.includes('sour cherry')) {
+    profile.sweetness = Math.min(profile.sweetness, 5);
+    profile.acidity = Math.max(profile.acidity, 7);
+    profile.freshness = Math.max(profile.freshness, 8);
   }
-  if (nameLower.includes("tea")) {
-    profile.bitterness = 6;
-    profile.freshness = 7;
-    profile.sweetness = 2;
-    profile.creaminess = 1;
-    profile.acidity = 4;
-  }
-  if (nameLower.includes("caramel")) {
-    profile.sweetness = 9;
-    profile.creaminess = 7;
-  }
-  if (nameLower.includes("nutella")) {
-    profile.sweetness = 8;
-    profile.creaminess = 7;
-    profile.bitterness = 4;
-  }
-  if (nameLower.includes("oreo")) {
-    profile.sweetness = 7;
-    profile.creaminess = 6;
-    profile.bitterness = 3;
-  }
-  if (nameLower.includes("peanut")) {
-    profile.sweetness = 5;
-    profile.creaminess = 6;
-    profile.bitterness = 2;
-  }
-  if (nameLower.includes("tahini")) {
-    profile.creaminess = 5;
-    profile.sweetness = 3;
-    profile.bitterness = 2;
-  }
-  if (nameLower.includes("barberry")) {
-    profile.acidity = 8;
-    profile.freshness = 7;
-    profile.sweetness = 3;
-  }
-  if (nameLower.includes("lavashak")) {
-    profile.acidity = 9;
-    profile.freshness = 8;
-    profile.sweetness = 2;
-  }
-  if (nameLower.includes("shahtoot")) {
-    profile.sweetness = 6;
-    profile.freshness = 7;
-    profile.acidity = 4;
-  }
-  if (nameLower.includes("pomegranate")) {
-    profile.acidity = 7;
-    profile.freshness = 8;
-    profile.sweetness = 4;
-  }
-  if (nameLower.includes("orange")) {
-    profile.acidity = 8;
+  if (nameLower.includes('watermelon')) {
+    profile.sweetness = Math.max(profile.sweetness, 6);
+    profile.acidity = Math.min(profile.acidity, 3);
     profile.freshness = 9;
-    profile.sweetness = 5;
   }
-  if (nameLower.includes("apple")) {
-    profile.sweetness = 5;
-    profile.freshness = 6;
-    profile.acidity = 3;
+  if (nameLower.includes('peanut') || nameLower.includes('tahini') || nameLower.includes('pistachio') || nameLower.includes('fandogh') || nameLower.includes('pesteh') || nameLower.includes('shir ')) {
+    profile.creaminess = Math.max(profile.creaminess, 7);
+    profile.sweetness = Math.max(profile.sweetness, 5);
   }
-  if (nameLower.includes("carrot")) {
-    profile.sweetness = 4;
-    profile.freshness = 5;
-    profile.creaminess = 3;
+
+  // Coffee/tea textual hints if category mislabeled
+  if (nameLower.includes('coffee')) {
+    profile.bitterness = Math.max(profile.bitterness, 7);
+    profile.acidity = Math.max(profile.acidity, 5);
+    profile.sweetness = Math.min(profile.sweetness, 3);
+    profile.creaminess = Math.max(profile.creaminess, 1);
   }
-  if (nameLower.includes("berry")) {
-    profile.acidity = 6;
-    profile.freshness = 8;
-    profile.sweetness = 5;
+  if (nameLower.includes('tea')) {
+    profile.bitterness = Math.max(profile.bitterness, 4);
+    profile.freshness = Math.max(profile.freshness, 7);
+    profile.sweetness = Math.min(profile.sweetness, 2);
+    profile.creaminess = 0;
+    profile.acidity = Math.max(profile.acidity, 4);
   }
-  if (nameLower.includes("protein")) {
-    profile.sweetness = 5;
-    profile.creaminess = 6;
-    profile.bitterness = 2;
-  }
-  if (nameLower.includes("baklava")) {
-    profile.sweetness = 9;
-    profile.creaminess = 5;
-    profile.bitterness = 1;
-  }
-  if (nameLower.includes("zoolbia")) {
-    profile.sweetness = 9;
-    profile.creaminess = 4;
-    profile.bitterness = 1;
-  }
-  if (nameLower.includes("bamieh")) {
-    profile.sweetness = 9;
-    profile.creaminess = 4;
-    profile.bitterness = 1;
-  }
-  
+
+  // Clamp values to 0..10
+  profile = {
+    sweetness: clamp(profile.sweetness),
+    acidity: clamp(profile.acidity),
+    bitterness: clamp(profile.bitterness),
+    creaminess: clamp(profile.creaminess),
+    spiciness: clamp(profile.spiciness),
+    freshness: clamp(profile.freshness),
+  };
+
   return profile;
 }
 
@@ -313,12 +353,79 @@ function getNutritionalInfo(name: string, category: string): {
 } {
   const nameLower = name.toLowerCase();
   
+  // Curated vitamins for specific items (by exact name, case-insensitive)
+  const VITAMIN_MAP: Record<string, string[]> = {
+    // Juices
+    "orange juice": ["C", "B9", "A"],
+    "barberry juice": ["C"],
+    "sour cherry juice": ["A", "C"],
+    "apple juice": ["C"],
+    "coco juice": ["C"],
+    "carrot juice": ["A", "K", "B6"],
+    "pomegranate juice": ["C", "K", "B9"],
+    "celery juice": ["K", "A", "C"],
+    // Smoothies
+    "strawberry smoothie": ["C", "K", "B9"],
+    "watermelon strawberry smoothie": ["A", "C", "B9"],
+    "shahtootfarangi": ["C", "K"],
+    "pomegranate smoothie": ["C", "K", "B9"],
+    "lavashak smoothie": ["C"],
+    "mango smoothie": ["A", "C", "E", "B6"],
+    "pineapple smoothie": ["C", "B6"],
+    "peach smoothie": ["A", "C", "E"],
+    // Protein blends (approximate, fruit-forward)
+    "berry blast": ["C", "K", "B9"],
+    "green power": ["A", "C", "K", "B6"],
+    // Shakes & dairy
+    "vanilla cinnamon shake": ["A", "D", "B12"],
+    "caramel shake": ["A", "D", "B12"],
+    "oreo shake": ["A", "D", "B12"],
+    "ferrero": ["A", "D", "B12"],
+    "lotus shake": ["A", "D", "B12"],
+    "nutella shake": ["A", "D", "B12"],
+    "m & m shake": ["A", "D", "B12"],
+    "chocolate shake": ["A", "D", "B12"],
+    "londsgate shake": ["A", "D", "B12"],
+    "barberry shake": ["A", "D", "B12"],
+    "shir moz": ["A", "D", "B12"],
+    "shir moz anbe": ["A", "D", "B12"],
+    "peanut butter shake": ["A", "D", "B12"],
+    "tahini shake": ["A", "D", "B12"],
+    "nescafe shake": ["A", "D", "B12"],
+    // Traditional/fusion desserts (minimal vitamins)
+    "akbar mashti cup": ["A", "D", "B12"],
+    "saffron cup": ["A", "D", "B12"],
+    "havij bastani": ["A", "D", "B12"],
+    "vanilla cup": ["A", "D", "B12"],
+    "chocolate cup": ["A", "D", "B12"],
+    "strawberry cup": ["C", "B9"],
+    "mango cup": ["A", "C", "E"],
+    "faloodeh": [],
+    "faloodeh bastani": ["A", "D", "B12"],
+    "lavashak plate": ["C"],
+    "affogato": ["A", "D", "B12"],
+    // Coffee & Tea
+    "espresso": ["B2", "B3", "B5"],
+    "americano": ["B2", "B3", "B5"],
+    "latte": ["A", "D", "B12"],
+    "cappuccino": ["A", "D", "B12"],
+    "caramel macchiato": ["A", "D", "B12"],
+    "black tea": ["B2"],
+    "green tea": ["B2"],
+    "chamomile tea": [],
+    "mint medley tea": [],
+    "lemon & ginger tea": ["C"],
+    "mix fruit tea": ["C"],
+  };
+
+  const normalize = (s: string) => s.toLowerCase().trim();
+
   // Base nutritional info
   let calories = 200;
   let sugar = 20;
   let protein = 5;
   let fat = 8;
-  let vitamins = ["C"];
+  let vitamins = VITAMIN_MAP[normalize(name)] || ["C"];
   let minerals = ["potassium"];
   let ingredients = ["water"];
   let allergens: string[] = [];
@@ -330,7 +437,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 0;
     protein = 0.5;
     fat = 0;
-    vitamins = ["B3", "B5"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["B2", "B3", "B5"];
     minerals = ["magnesium", "potassium"];
     ingredients = ["coffee beans", "water"];
     allergens = [];
@@ -341,7 +448,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 0;
     protein = 0;
     fat = 0;
-    vitamins = ["B1", "B2", "C"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["B2"];
     minerals = ["manganese", "fluoride"];
     ingredients = ["tea leaves", "water"];
     allergens = [];
@@ -352,7 +459,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 25;
     protein = 6;
     fat = 4;
-    vitamins = ["C", "A", "B6"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["C", "A", "B6"];
     minerals = ["potassium", "calcium"];
     ingredients = ["fruits", "milk", "yogurt", "honey"];
     allergens = ["milk"];
@@ -363,7 +470,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 35;
     protein = 8;
     fat = 12;
-    vitamins = ["A", "D", "B12"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["A", "D", "B12"];
     minerals = ["calcium", "phosphorus"];
     ingredients = ["milk", "ice cream", "flavoring"];
     allergens = ["milk"];
@@ -374,7 +481,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 22;
     protein = 2;
     fat = 0;
-    vitamins = ["C", "A"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["C", "A"];
     minerals = ["potassium"];
     ingredients = ["fresh fruits"];
     allergens = [];
@@ -385,7 +492,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 28;
     protein = 4;
     fat = 14;
-    vitamins = ["A", "D", "B12"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["A", "D", "B12"];
     minerals = ["calcium", "phosphorus"];
     ingredients = ["milk", "cream", "sugar", "flavoring"];
     allergens = ["milk"];
@@ -396,7 +503,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar = 18;
     protein = 25;
     fat = 8;
-    vitamins = ["B12", "D", "E"];
+    vitamins = VITAMIN_MAP[normalize(name)] || ["B12", "D", "E"];
     minerals = ["calcium", "iron", "zinc"];
     ingredients = ["whey protein", "milk", "fruits"];
     allergens = ["milk"];
@@ -488,9 +595,7 @@ function getNutritionalInfo(name: string, category: string): {
 }
 
 // Helper function to get serving size based on category
-function getServingSize(category: string, name: string): string {
-  const nameLower = name.toLowerCase();
-  
+function getServingSize(category: string): string {
   if (category.includes("Coffee") || category.includes("Tea")) {
     return "250ml";
   }
@@ -541,7 +646,7 @@ export async function GET() {
       const timeOfDay = getTimeOfDay(category, item.name);
       const tasteProfile = getTasteProfile(item.name, category);
       const nutritional = getNutritionalInfo(item.name, category);
-      const servingSize = getServingSize(category, item.name);
+  const servingSize = getServingSize(category);
       
       // Determine caffeine based on category and name
       let caffeine = false;
@@ -560,9 +665,6 @@ export async function GET() {
           caffeine = false;
         }
       }
-      
-      // Create the title for the transformed item
-      const title = item.name;
       
       // Determine origin
       const origin = item.name.toLowerCase().includes("persian") || 
