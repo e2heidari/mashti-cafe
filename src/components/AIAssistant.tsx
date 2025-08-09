@@ -63,13 +63,28 @@ const AIAssistant = memo(function AIAssistant({
   // Load menu items from CMS on component mount
   const loadMenuItems = useCallback(async () => {
     try {
-      const response = await fetch("/api/ai-menu");
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+      const baseUrl =
+        process.env.NEXT_PUBLIC_BASE_URL &&
+        process.env.NEXT_PUBLIC_BASE_URL.startsWith("http")
+          ? process.env.NEXT_PUBLIC_BASE_URL
+          : typeof window !== "undefined"
+            ? window.location.origin
+            : "";
+      const url = `${baseUrl}/api/ai-menu`;
+      const response = await fetch(url, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (response.ok) {
         const data = await response.json();
         setMenuItems(data.menuItems || []);
+      } else {
+        console.error("Error loading menu items: ", response.status);
+        setMenuItems([]);
       }
     } catch (error) {
       console.error("Error loading menu items:", error);
+      setMenuItems([]);
     }
   }, []);
 
