@@ -5,7 +5,7 @@ const client = createClient({
   projectId: 'eh05fgze',
   dataset: 'mashti-menu',
   apiVersion: '2024-01-01',
-  useCdn: false,
+  useCdn: true,
 });
 
 interface MenuItem {
@@ -72,21 +72,69 @@ function getTemperature(category: string): "hot" | "cold" | "both" {
   return "both";
 }
 
-// Helper function to get icon based on category
-function getIcon(category: string): string {
-  const iconMap: Record<string, string> = {
-    "Coffee & Tea": "☕",
-    "Smoothies": "🥤",
-    "Shakes": "🥤",
-    "Juices": "🧃",
-    "Ice Cream": "🍨",
-    "Protein Shakes": "🏋️",
-    "Sweets": "🍰",
-    "Desserts": "🍰",
-    "Hot Drinks": "☕",
-    "Cold Drinks": "🥤"
-  };
-  return iconMap[category] || "🍽️";
+// Helper function to get icon based on category and name (more accurate)
+function getIcon(category: string, name: string): string {
+  const c = category.toLowerCase();
+  const n = name.toLowerCase();
+
+  // Strong name-based overrides first
+  // Protein/fitness shakes (even if they mention coffee)
+  if (n.includes('shake')) {
+    if (
+      n.includes('protein') ||
+      n.includes('boost') ||
+      n.includes('peanut') ||
+      n.includes('nescafe')
+    ) {
+      return '🏋️';
+    }
+    return '🥤';
+  }
+
+  // Explicit dessert-style drinks/plates
+  if (
+    n.includes('maajoon') ||
+    n.includes('vitamine akbar mashti') ||
+    n.includes('vitamin akbar mashti') ||
+    n.includes('shir pesteh moz nutella') ||
+    n.includes('shir pesteh moz')
+  ) {
+    return '🍰';
+  }
+
+  // Name-based priority (hot drinks / desserts)
+  if (n.includes('tea')) return '🍵';
+  if (
+    n.includes('coffee') ||
+    n.includes('espresso') ||
+    n.includes('americano') ||
+    n.includes('latte') ||
+    n.includes('cappuccino') ||
+    n.includes('macchiato') ||
+    n.includes('nescafe')
+  ) {
+    return '☕';
+  }
+  if (n.includes('affogato')) return '🍨';
+  if (n.includes('faloodeh')) return '🍧';
+  if (n.includes('lavashak')) return '🍋';
+  if (n.includes('baklava') || n.includes('zoolbia') || n.includes('bamieh')) return '🍰';
+  if (n.includes('bastani') || n.includes('havij bastani')) return '🍨';
+  if (n.includes('shir moz anbe') || n.includes('shir moz')) return '🥤';
+
+  // Category-based fallback
+  if (c.includes('juice') || category === 'Fresh Juice') return '🧃';
+  if (c.includes('smoothie')) return '🥤';
+  if (c.includes('shake')) return '🥤';
+  if (c.includes('ice cream')) return '🍨';
+  if (c.includes('protein')) return '🏋️';
+  if (c.includes('dessert') || c.includes('sweets')) return '🍰';
+  if (c.includes('cold drinks')) return '🥤';
+  if (c.includes('hot drinks')) return '☕';
+  if (c.includes('coffee')) return '☕';
+  if (c.includes('tea')) return '🍵';
+
+  return '🍽️';
 }
 
 // Helper function to get flavors based on name and category
@@ -640,7 +688,7 @@ export async function GET() {
     const aiMenuItems: MenuItem[] = menuItems.map((item: SanityMenuItem) => {
       const category = item.category?.name || "Other";
       const temperature = getTemperature(category);
-      const icon = getIcon(category);
+      const icon = getIcon(category, item.name);
       const flavors = getFlavors(item.name, category);
       const healthBenefits = getHealthBenefits(category, item.name);
       const timeOfDay = getTimeOfDay(category, item.name);
@@ -696,12 +744,76 @@ export async function GET() {
       };
     });
 
+    // If CMS returns nothing, provide a minimal fallback so UI still works
+    if (!aiMenuItems || aiMenuItems.length === 0) {
+      return NextResponse.json({ menuItems: getFallbackItems(), message: 'Using fallback items' });
+    }
     return NextResponse.json({ menuItems: aiMenuItems });
   } catch (error) {
     console.error('Error fetching AI menu data:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch AI menu data' },
-      { status: 500 }
-    );
+    // In dev or when offline, return a small fallback list instead of 500
+    return NextResponse.json({ menuItems: getFallbackItems(), message: 'Fallback due to fetch error' });
   }
 } 
+
+// Minimal fallback items to keep Mashti AI responsive even if CMS is unavailable
+function getFallbackItems(): MenuItem[] {
+  const mk = (
+    title: string,
+    category: string,
+    price: string,
+    temperature: 'hot' | 'cold' | 'both',
+  ): MenuItem => ({
+    title,
+    description: `Delicious ${title.toLowerCase()}`,
+    icon: getIcon(category, title),
+    category,
+    price,
+    temperature,
+    flavors: getFlavors(title, category),
+    caffeine: ['Coffee', 'Tea', 'Hot Drinks', 'Coffee & Tea'].some(c => category.includes(c))
+      ? !/chamomile|mint|ginger|fruit/i.test(title)
+      : false,
+    healthBenefits: getHealthBenefits(category, title),
+    timeOfDay: getTimeOfDay(category, title),
+    seasonality: ['all'],
+    popularity: 7,
+    reason: 'Great fit based on your choices',
+    ...getNutritionalInfo(title, category),
+    tasteProfile: getTasteProfile(title, category),
+    preparationTime: 5,
+    servingSize: getServingSize(category),
+    origin: 'International',
+  });
+
+  return [
+    // Hot coffee
+    mk('Espresso', 'Coffee & Tea', '$2.99', 'hot'),
+    mk('Americano', 'Coffee & Tea', '$3.49', 'hot'),
+    mk('Latte', 'Coffee & Tea', '$4.49', 'hot'),
+    mk('Cappuccino', 'Coffee & Tea', '$4.49', 'hot'),
+    mk('Caramel Macchiato', 'Coffee & Tea', '$4.99', 'hot'),
+    // Hot tea
+    mk('Black Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    mk('Green Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    mk('Chamomile Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    mk('Mint Medley Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    mk('Lemon & Ginger Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    mk('Mix Fruit Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    // Cold juice
+    mk('Orange Juice', 'Juices', '$5.49', 'cold'),
+    mk('Apple Juice', 'Juices', '$5.49', 'cold'),
+    mk('Pomegranate Juice', 'Juices', '$5.99', 'cold'),
+    mk('Sour Cherry Juice', 'Juices', '$5.99', 'cold'),
+    // Smoothies
+    mk('Strawberry Smoothie', 'Smoothies', '$6.99', 'cold'),
+    mk('Mango Smoothie', 'Smoothies', '$6.99', 'cold'),
+    // Protein/Nutty & Dessert examples
+    mk('Nescafe Shake', 'Protein Shakes', '$7.99', 'cold'),
+    mk('Peanut Butter Shake', 'Protein Shakes', '$7.99', 'cold'),
+    mk('Maajoon', 'Desserts', '$8.99', 'cold'),
+    mk('Vitamine Akbar Mashti', 'Desserts', '$8.99', 'cold'),
+    mk('Shir Pesteh Moz Nutella', 'Desserts', '$8.99', 'cold'),
+    mk('Shir Pesteh Moz', 'Desserts', '$8.49', 'cold'),
+  ];
+}

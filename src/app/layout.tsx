@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Poppins, Montserrat } from "next/font/google";
+import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
 
@@ -10,8 +10,8 @@ const sodoSans = Inter({
   weight: ["300", "400", "500", "600", "700"],
 });
 
-// Lander alternative - Poppins (friendly, geometric)
-const lander = Poppins({
+// Lander alternative - reuse Inter for stability under Turbopack
+const lander = Inter({
   variable: "--font-lander",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
@@ -42,11 +42,9 @@ export default function RootLayout({
       <head>
         {/* Preload critical resources for better performance */}
         <link rel="preload" href="/images/newmashti-logo.png" as="image" />
-        <link rel="preload" href="/images/1.webp" as="image" />
-        <link rel="preload" href="/images/2.webp" as="image" />
-        <link rel="preload" href="/images/3.webp" as="image" />
       </head>
       <body
+        suppressHydrationWarning
         className={`${sodoSans.variable} ${lander.variable} ${pike.variable} antialiased`}
       >
         {children}

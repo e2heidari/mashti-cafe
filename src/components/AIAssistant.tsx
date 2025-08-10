@@ -8,11 +8,7 @@ interface AIAssistantProps {
   onClose: () => void;
 }
 
-interface QuestionOption {
-  value: string;
-  label: string;
-  emoji: string;
-}
+// Legacy dynamic-question types removed; new flow uses drinkFlow only
 
 interface MenuItem {
   title: string;
@@ -54,15 +50,14 @@ const AIAssistant = memo(function AIAssistant({
   isOpen,
   onClose,
 }: AIAssistantProps) {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
+  // Dynamic-question state removed; flow-based only
   const [recommendations, setRecommendations] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   // Hot-drink flow state
   // Fixed to hot-drink flow for now; language can be toggled later if needed
-  const [useHotDrinkFlow] = useState<boolean>(true);
+  // Always use the structured drinkFlow
   // Currently unused; questions/options render bilingual automatically
   // const [flowLang] = useState<"en" | "fa">("en");
   const [currentNodeKey, setCurrentNodeKey] = useState<string>("start");
@@ -144,6 +139,28 @@ const AIAssistant = memo(function AIAssistant({
     ],
   };
 
+  // Explicit emoji stickers for clearer visual cues, especially where labels have no emoji
+  const optionEmojis: Record<string, string[]> = {
+    // Cold branch
+    cold_start: ["🥤", "💪", "🍧"],
+    juice_or_smoothie: ["🧃", "🥤"],
+    juice_profile: ["🍊", "🍎", "🛡️"],
+    smoothie_profile: ["🍓", "🍒", "🥭"],
+    protein_base: ["🍓", "🥜", "🥜"],
+    creamy_base: ["🥤", "🍨"],
+    shake_by_flavor: ["🍦", "🍪", "🍫", "🍑", "🥜", "☕"],
+    dessert_by_style: ["🍨", "🧁", "✨"],
+    icecream_pick: ["🍨", "🍦", "🍓"],
+    dessert_traditional: ["🍨", "🍧"],
+    // Hot branch
+    coffee_strength: ["⚡", "🙂"],
+    coffee_pure_or_sweet: ["☕", "🍯"],
+    coffee_final: ["✅", "🚫"],
+    tea_caffeine: ["⚡", "🌿"],
+    tea_function: ["😌", "✨", "🫚", "🛡️"],
+    tea_flavour: ["🌿", "🍋"],
+  };
+
   // Load menu items from CMS on component mount
   const loadMenuItems = useCallback(async () => {
     try {
@@ -172,166 +189,14 @@ const AIAssistant = memo(function AIAssistant({
     }
   }, []);
 
-  // Load menu items when component mounts
-  useCallback(() => {
+  // Load menu items when modal opens (only once while empty)
+  useEffect(() => {
     if (isOpen && menuItems.length === 0) {
       loadMenuItems();
     }
   }, [isOpen, menuItems.length, loadMenuItems]);
 
-  // Dynamic questions based on previous answers
-  const getDynamicQuestions = useCallback(() => {
-    const baseQuestions = [
-      {
-        id: "temperature",
-        question:
-          "How would you like your drink?\nنوشیدنی خود را چگونه می‌خواهید؟",
-        options: [
-          { value: "hot", label: "Hot (گرم)", emoji: "🔥" },
-          { value: "cold", label: "Cold (سرد)", emoji: "❄️" },
-          { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
-        ],
-      },
-      {
-        id: "timeOfDay",
-        question: "What time of day is it?\nچه زمانی از روز می‌خواهید؟",
-        options: [
-          { value: "morning", label: "Morning (صبح)", emoji: "🌅" },
-          { value: "afternoon", label: "Afternoon (ظهر)", emoji: "☀️" },
-          { value: "evening", label: "Evening (عصر)", emoji: "🌆" },
-          { value: "night", label: "Night (شب)", emoji: "🌙" },
-        ],
-      },
-    ];
-
-    // Add flavor question with optimized options based on temperature
-    const flavorQuestion = {
-      id: "flavor",
-      question: "What flavor do you prefer?\nچه طعمی را ترجیح می‌دهید؟",
-      options: [] as QuestionOption[],
-    };
-
-    if (answers.temperature === "hot") {
-      flavorQuestion.options = [
-        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
-        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
-        { value: "rich", label: "Rich (پر و غنی)", emoji: "💎" },
-      ];
-    } else if (answers.temperature === "cold") {
-      flavorQuestion.options = [
-        { value: "fruity", label: "Fruity (میوه‌ای)", emoji: "🍓" },
-        { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
-        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
-        { value: "tart", label: "Tart (ترش)", emoji: "🍋" },
-      ];
-    } else {
-      // Both or no answer yet - show all options
-      flavorQuestion.options = [
-        { value: "fruity", label: "Fruity (میوه‌ای)", emoji: "🍓" },
-        { value: "sweet", label: "Sweet (شیرین)", emoji: "🍯" },
-        { value: "creamy", label: "Creamy (خامه‌ای)", emoji: "🥛" },
-        { value: "refreshing", label: "Refreshing (خنک کننده)", emoji: "🌊" },
-        { value: "rich", label: "Rich (پر و غنی)", emoji: "💎" },
-        { value: "tart", label: "Tart (ترش)", emoji: "🍋" },
-      ];
-    }
-
-    // Add caffeine question with optimized options based on time of day
-    const caffeineQuestion = {
-      id: "caffeine",
-      question: "Do you want caffeine?\nآیا کافئین می‌خواهید؟",
-      options: [] as QuestionOption[],
-    };
-
-    if (answers.timeOfDay === "morning") {
-      caffeineQuestion.options = [
-        { value: "yes", label: "Yes (بله)", emoji: "☕" },
-        { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
-      ];
-    } else if (answers.timeOfDay === "night") {
-      caffeineQuestion.options = [
-        { value: "no", label: "No (نه)", emoji: "🚫" },
-        { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
-      ];
-    } else {
-      caffeineQuestion.options = [
-        { value: "yes", label: "Yes (بله)", emoji: "☕" },
-        { value: "no", label: "No (نه)", emoji: "🚫" },
-        { value: "both", label: "Doesn't matter (مهم نیست)", emoji: "🤷" },
-      ];
-    }
-
-    // Add health goal question with optimized options based on flavor
-    const healthGoalQuestion = {
-      id: "healthGoal",
-      question: "What's your health goal?\nهدف سلامتی شما چیست؟",
-      options: [] as QuestionOption[],
-    };
-
-    if (answers.flavor === "fruity" || answers.flavor === "refreshing") {
-      healthGoalQuestion.options = [
-        { value: "vitamins", label: "Vitamins (ویتامین‌ها)", emoji: "🥬" },
-        {
-          value: "antioxidants",
-          label: "Antioxidants (آنتی اکسیدان)",
-          emoji: "🛡️",
-        },
-        { value: "energy", label: "Energy (انرژی)", emoji: "💪" },
-        { value: "none", label: "None (هیچ کدام)", emoji: "🎯" },
-      ];
-    } else if (answers.flavor === "creamy" || answers.flavor === "rich") {
-      healthGoalQuestion.options = [
-        { value: "protein", label: "Protein (پروتئین)", emoji: "🏋️" },
-        { value: "energy", label: "Energy (انرژی)", emoji: "💪" },
-        { value: "relaxation", label: "Relaxation (آرامش)", emoji: "😌" },
-        { value: "none", label: "None (هیچ کدام)", emoji: "🎯" },
-      ];
-    } else {
-      healthGoalQuestion.options = [
-        { value: "energy", label: "Energy (انرژی)", emoji: "💪" },
-        { value: "vitamins", label: "Vitamins (ویتامین‌ها)", emoji: "🥬" },
-        {
-          value: "antioxidants",
-          label: "Antioxidants (آنتی اکسیدان)",
-          emoji: "🛡️",
-        },
-        { value: "protein", label: "Protein (پروتئین)", emoji: "🏋️" },
-        { value: "relaxation", label: "Relaxation (آرامش)", emoji: "😌" },
-        { value: "none", label: "None (هیچ کدام)", emoji: "🎯" },
-      ];
-    }
-
-    // Add dietary restrictions question
-    const dietaryQuestion = {
-      id: "dietaryRestrictions",
-      question: "Do you have dietary restrictions?\nآیا محدودیت غذایی دارید؟",
-      options: [
-        { value: "vegan", label: "Vegan (وگان)", emoji: "🌱" },
-        { value: "vegetarian", label: "Vegetarian (گیاهخوار)", emoji: "🥗" },
-        {
-          value: "gluten-free",
-          label: "Gluten-free (بدون گلوتن)",
-          emoji: "🌾",
-        },
-        {
-          value: "high-protein",
-          label: "High protein (پروتئین بالا)",
-          emoji: "🏋️",
-        },
-        { value: "none", label: "None (هیچ کدام)", emoji: "✅" },
-      ],
-    };
-
-    return [
-      ...baseQuestions,
-      flavorQuestion,
-      caffeineQuestion,
-      healthGoalQuestion,
-      dietaryQuestion,
-    ];
-  }, [answers]);
-
-  const questions = getDynamicQuestions();
+  // Legacy dynamic-question builder removed
 
   // Map terminal results (list of names) to menu items, preserving order
   const mapResultNamesToMenuItems = useCallback(
@@ -592,43 +457,9 @@ const AIAssistant = memo(function AIAssistant({
   // Helpers to extract emoji (if any) and plain text from a label like "☕ Coffee"
   // (helper removed; inlined where needed)
 
-  const handleAnswer = useCallback(
-    (questionId: string, answer: string) => {
-      setAnswers((prev) => ({ ...prev, [questionId]: answer }));
-
-      if (currentStep < questions.length - 1) {
-        setCurrentStep((prev) => prev + 1);
-      } else {
-        // Get recommendations
-        setIsLoading(true);
-
-        // Simulate API call
-        setTimeout(() => {
-          const dietaryRestrictions =
-            answers.dietaryRestrictions === "none"
-              ? []
-              : [answers.dietaryRestrictions];
-          const recs = getRecommendations(
-            answers.temperature,
-            answers.timeOfDay,
-            answers.flavor,
-            answers.caffeine,
-            answers.healthGoal,
-            dietaryRestrictions
-          );
-
-          setRecommendations(recs);
-          setIsLoading(false);
-          setShowResults(true);
-        }, 1500);
-      }
-    },
-    [currentStep, answers, questions.length, getRecommendations]
-  );
+  // Legacy dynamic-answer handler removed
 
   const resetConversation = useCallback(() => {
-    setCurrentStep(0);
-    setAnswers({});
     setRecommendations([]);
     setShowResults(false);
   }, []);
@@ -699,10 +530,7 @@ const AIAssistant = memo(function AIAssistant({
     );
   };
 
-  // Load menu items when modal opens
-  if (isOpen && menuItems.length === 0) {
-    loadMenuItems();
-  }
+  // Remove eager calls in render to avoid multiple fetches
 
   // Prevent background scroll when modal is open
   useEffect(() => {
@@ -719,9 +547,9 @@ const AIAssistant = memo(function AIAssistant({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 max-w-md w-full max-h-[90vh] overflow-hidden">
+      <div className="bg-white rounded-2xl md:rounded-3xl shadow-2xl border border-gray-200 max-w-lg md:max-w-xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="bg-[#e80812] p-6 text-white text-center relative rounded-t-2xl">
+        <div className="bg-[#e80812] p-6 md:p-7 text-white text-center relative rounded-t-2xl md:rounded-t-3xl">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-white/80 hover:text-white text-xl transition-colors duration-200 hover:scale-110"
@@ -730,10 +558,10 @@ const AIAssistant = memo(function AIAssistant({
           </button>
           <div className="flex items-center justify-center">
             <div>
-              <h2 className="text-xl font-bold drop-shadow-sm font-pike">
+              <h2 className="text-2xl md:text-3xl font-extrabold drop-shadow-sm font-pike leading-tight">
                 Mashti AI
               </h2>
-              <p className="text-sm opacity-90 font-sodo">
+              <p className="text-[13px] md:text-base opacity-95 font-sodo">
                 Smart Product Selection Assistant
               </p>
             </div>
@@ -741,110 +569,85 @@ const AIAssistant = memo(function AIAssistant({
         </div>
 
         {/* Content */}
-        <div className="p-6 max-h-[60vh] overflow-y-auto">
+        <div className="p-6 md:p-8 max-h-[65vh] md:max-h-[70vh] overflow-y-auto">
           {!showResults ? (
-            useHotDrinkFlow ? (
-              // Hot drink flow UI
-              <div>
-                {/* Progress Bar */}
-                <div className="mb-6">
-                  <div className="flex justify-between text-xs text-gray-500 mb-2 font-sodo">
-                    <span>Progress</span>
-                    <span>Step {visitedNodeKeys.length}</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-[#e80812] h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.min(visitedNodeKeys.length * 20, 100)}%`,
-                      }}
-                    ></div>
-                  </div>
+            <div>
+              {/* Progress Bar */}
+              <div className="mb-6">
+                <div className="flex justify-between text-[13px] text-gray-600 mb-2 font-sodo">
+                  <span>Progress</span>
+                  <span>Step {visitedNodeKeys.length}</span>
                 </div>
-
-                {/* Question (bilingual) */}
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 whitespace-pre-line font-pike leading-snug">
-                    {englishQuestions[currentNodeKey]}
-                  </h3>
-                  <div className="text-sm text-gray-600 mt-2 font-sodo whitespace-pre-line leading-snug">
-                    {drinkFlow[currentNodeKey]?.question}
-                  </div>
+                <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="bg-[#e80812] h-2 rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.min(visitedNodeKeys.length * 20, 100)}%`,
+                    }}
+                  ></div>
                 </div>
+              </div>
 
-                {/* Options (bilingual) */}
-                <div className="space-y-3">
-                  {drinkFlow[currentNodeKey].options.map((optFa, idx) => {
-                    const enLabel = englishOptions[currentNodeKey]?.[idx] || "";
-                    const labelForEmoji = enLabel || optFa.label;
-                    const match = labelForEmoji.match(/^([^A-Za-z0-9\s]+)\s*/);
-                    const emoji = match?.[1] || "👉";
-                    const textEn = enLabel.replace(/^([^A-Za-z0-9\s]+)\s*/, "");
-                    return (
-                      <button
-                        key={`${currentNodeKey}-${idx}`}
-                        onClick={() =>
-                          handleFlowAnswer({
-                            next: optFa.next,
-                            result: optFa.result,
-                          })
-                        }
-                        className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#e80812]/60 hover:bg-red-50 transition-all duration-300 text-right flex items-center justify-between group"
-                      >
-                        <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                          {emoji}
-                        </span>
-                        <span className="text-right">
-                          <span className="block font-medium text-gray-700 group-hover:text-[#e80812] transition-colors duration-200 font-sodo">
-                            {textEn || enLabel || optFa.label}
-                          </span>
-                          <span className="block text-gray-600 text-sm font-sodo">
-                            {optFa.label}
-                          </span>
-                        </span>
-                      </button>
-                    );
-                  })}
+              {/* Question (bilingual) */}
+              <div className="text-center mb-6">
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 whitespace-pre-line font-pike leading-relaxed">
+                  {englishQuestions[currentNodeKey]}
+                </h3>
+                <div className="text-base md:text-lg text-gray-700 mt-2 font-sodo whitespace-pre-line leading-relaxed">
+                  {drinkFlow[currentNodeKey]?.question}
                 </div>
+              </div>
 
-                {/* Controls */}
-                <div className="flex gap-3 mt-6">
-                  {/* Back */}
-                  {visitedNodeKeys.length > 1 && (
+              {/* Options (bilingual) */}
+              <div className="space-y-3">
+                {drinkFlow[currentNodeKey].options.map((optFa, idx) => {
+                  const enLabel = englishOptions[currentNodeKey]?.[idx] || "";
+                  // Prefer our curated emoji set; fallback to emoji embedded in label; otherwise use pointer
+                  const curated = optionEmojis[currentNodeKey]?.[idx];
+                  const labelForEmoji = enLabel || optFa.label;
+                  const match = labelForEmoji.match(/^([^A-Za-z0-9\s]+)\s*/);
+                  const inferred = match?.[1];
+                  const emoji = curated || inferred || "👉";
+                  const textEn = enLabel.replace(/^([^A-Za-z0-9\s]+)\s*/, "");
+                  return (
                     <button
-                      onClick={() => {
-                        setVisitedNodeKeys((prev) => prev.slice(0, -1));
-                        setCurrentNodeKey(
-                          visitedNodeKeys[visitedNodeKeys.length - 2]
-                        );
-                      }}
-                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                      key={`${currentNodeKey}-${idx}`}
+                      onClick={() =>
+                        handleFlowAnswer({
+                          next: optFa.next,
+                          result: optFa.result,
+                        })
+                      }
+                      className="w-full p-5 md:p-6 border-2 border-gray-200 rounded-2xl hover:border-[#e80812]/60 hover:bg-red-50 transition-all duration-300 text-right flex items-center justify-between group focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                     >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                      <span>Previous</span>
+                      <span className="text-3xl md:text-4xl group-hover:scale-110 transition-transform duration-200">
+                        {emoji}
+                      </span>
+                      <span className="text-right">
+                        <span className="block text-base md:text-lg font-semibold text-gray-800 group-hover:text-[#e80812] transition-colors duration-200 font-sodo leading-snug">
+                          {textEn || enLabel || optFa.label}
+                        </span>
+                        <span className="block text-gray-600 text-sm md:text-base font-sodo leading-snug">
+                          {optFa.label}
+                        </span>
+                      </span>
                     </button>
-                  )}
+                  );
+                })}
+              </div>
 
-                  {/* Reset */}
+              {/* Controls */}
+              <div className="flex gap-3 mt-6">
+                {/* Back */}
+                {visitedNodeKeys.length > 1 && (
                   <button
                     onClick={() => {
-                      resetConversation();
-                      setCurrentNodeKey("start");
-                      setVisitedNodeKeys(["start"]);
+                      setVisitedNodeKeys((prev) => prev.slice(0, -1));
+                      setCurrentNodeKey(
+                        visitedNodeKeys[visitedNodeKeys.length - 2]
+                      );
                     }}
-                    className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                    className="flex-1 bg-gray-100 text-gray-800 py-3.5 md:py-4 px-4 rounded-xl font-semibold hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-300"
                   >
                     <svg
                       className="w-5 h-5"
@@ -856,147 +659,62 @@ const AIAssistant = memo(function AIAssistant({
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                        d="M15 19l-7-7 7-7"
                       />
                     </svg>
-                    <span>Start Over</span>
+                    <span>Previous</span>
                   </button>
-                </div>
-
-                {/* Loading */}
-                {isLoading && (
-                  <div className="text-center py-8">
-                    <div className="relative mx-auto mb-4">
-                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-200 border-t-[#e80812] mx-auto"></div>
-                    </div>
-                    <p className="text-gray-600 font-medium font-sodo">
-                      Analyzing your preferences...
-                    </p>
-                    <p className="text-gray-400 text-sm mt-2 font-sodo">
-                      Mashti AI is selecting the best products for you
-                    </p>
-                  </div>
                 )}
-              </div>
-            ) : (
-              // Existing dynamic flow UI (kept for potential future use)
-              <div>
-                {/* Progress Bar */}
-                <div className="mb-6">
-                  <div className="flex justify-between text-xs text-gray-500 mb-2 font-sodo">
-                    <span>Progress</span>
-                    <span>
-                      Question {currentStep + 1} of {questions.length}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-                    <div
-                      className="bg-[#e80812] h-2 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${((currentStep + 1) / questions.length) * 100}%`,
-                      }}
-                    ></div>
-                  </div>
-                </div>
 
-                {/* Question */}
-                <div className="text-center mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4 whitespace-pre-line font-pike">
-                    {questions[currentStep].question}
-                  </h3>
-                </div>
-
-                {/* Options */}
-                <div className="space-y-3">
-                  {questions[currentStep].options.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() =>
-                        handleAnswer(questions[currentStep].id, option.value)
-                      }
-                      className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-[#e80812]/60 hover:bg-red-50 transition-all duration-300 text-right flex items-center justify-between group"
-                    >
-                      <span className="text-2xl group-hover:scale-110 transition-transform duration-200">
-                        {option.emoji}
-                      </span>
-                      <span className="font-medium text-gray-700 group-hover:text-[#e80812] transition-colors duration-200 font-sodo">
-                        {option.label}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-
-                {/* Navigation Buttons */}
-                <div className="flex gap-3 mt-6">
-                  {/* Back Button - Only show if not on first question */}
-                  {currentStep > 0 && (
-                    <button
-                      onClick={() => setCurrentStep(currentStep - 1)}
-                      className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
-                    >
-                      <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M15 19l-7-7 7-7"
-                        />
-                      </svg>
-                      <span>Previous Question</span>
-                    </button>
-                  )}
-
-                  {/* Reset Button - Always show */}
-                  <button
-                    onClick={resetConversation}
-                    className="flex-1 bg-red-100 text-red-600 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
+                {/* Reset */}
+                <button
+                  onClick={() => {
+                    resetConversation();
+                    setCurrentNodeKey("start");
+                    setVisitedNodeKeys(["start"]);
+                  }}
+                  className="flex-1 bg-red-100 text-red-600 py-3.5 md:py-4 px-4 rounded-xl font-semibold hover:bg-red-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                >
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                      />
-                    </svg>
-                    <span>Start Over</span>
-                  </button>
-                </div>
-
-                {/* Loading */}
-                {isLoading && (
-                  <div className="text-center py-8">
-                    <div className="relative mx-auto mb-4">
-                      <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-200 border-t-[#e80812] mx-auto"></div>
-                    </div>
-                    <p className="text-gray-600 font-medium font-sodo">
-                      Analyzing your preferences...
-                    </p>
-                    <p className="text-gray-400 text-sm mt-2 font-sodo">
-                      Mashti AI is selecting the best products for you
-                    </p>
-                  </div>
-                )}
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <span>Start Over</span>
+                </button>
               </div>
-            )
+
+              {/* Loading */}
+              {isLoading && (
+                <div className="text-center py-8">
+                  <div className="relative mx-auto mb-4">
+                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-red-200 border-t-[#e80812] mx-auto"></div>
+                  </div>
+                  <p className="text-gray-700 font-semibold font-sodo">
+                    Analyzing your preferences...
+                  </p>
+                  <p className="text-gray-500 text-sm md:text-base mt-2 font-sodo">
+                    Mashti AI is selecting the best products for you
+                  </p>
+                </div>
+              )}
+            </div>
           ) : (
             /* Results */
             <div>
               <div className="text-center mb-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-2 font-pike">
+                <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 mb-2 font-pike">
                   Mashti Recommendations
                 </h3>
-                <p className="text-gray-600 font-sodo">
+                <p className="text-gray-600 font-sodo text-sm md:text-base">
                   Based on your preferences
                 </p>
               </div>
@@ -1011,14 +729,14 @@ const AIAssistant = memo(function AIAssistant({
                       <div className="text-3xl">{item.icon}</div>
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-2">
-                          <h4 className="font-semibold text-gray-800 font-pike">
+                          <h4 className="font-semibold text-gray-900 font-pike text-lg md:text-xl">
                             {item.title}
                           </h4>
                           <span className="text-[#e80812] font-bold">
                             {item.price}
                           </span>
                         </div>
-                        <p className="text-gray-600 text-sm mb-3 font-sodo">
+                        <p className="text-gray-700 text-sm md:text-base mb-3 font-sodo leading-relaxed">
                           {item.description}
                         </p>
 
@@ -1032,13 +750,13 @@ const AIAssistant = memo(function AIAssistant({
                         {/* Nutritional Info */}
                         <div className="grid grid-cols-2 gap-4 mb-3">
                           <div className="bg-gray-50 p-3 rounded-lg">
-                            <h5 className="font-semibold text-xs text-gray-700 mb-2 font-sodo">
+                            <h5 className="font-semibold text-sm text-gray-800 mb-2 font-sodo">
                               Nutritional Info
                             </h5>
                             {getNutritionalInfo(item)}
                           </div>
                           <div className="bg-gray-50 p-3 rounded-lg">
-                            <h5 className="font-semibold text-xs text-gray-700 mb-2 font-sodo">
+                            <h5 className="font-semibold text-sm text-gray-800 mb-2 font-sodo">
                               Taste Profile
                             </h5>
                             {getTasteProfile(item)}
@@ -1047,17 +765,17 @@ const AIAssistant = memo(function AIAssistant({
 
                         {/* Ingredients */}
                         <div className="mb-3">
-                          <h5 className="font-semibold text-xs text-gray-700 mb-1 font-sodo">
+                          <h5 className="font-semibold text-sm text-gray-800 mb-1 font-sodo">
                             Ingredients:
                           </h5>
-                          <div className="text-xs text-gray-600 font-sodo">
+                          <div className="text-sm text-gray-700 font-sodo">
                             {item.ingredients.join(", ")}
                           </div>
                         </div>
 
                         {/* Health Benefits */}
                         <div className="mb-3">
-                          <h5 className="font-semibold text-xs text-gray-700 mb-1 font-sodo">
+                          <h5 className="font-semibold text-sm text-red-700 mb-1 font-sodo">
                             Health Benefits:
                           </h5>
                           <div className="flex flex-wrap gap-1">
@@ -1091,7 +809,7 @@ const AIAssistant = memo(function AIAssistant({
                           </div>
                         )}
 
-                        <div className="text-sm text-gray-500 mt-2 font-sodo">
+                        <div className="text-sm md:text-base text-gray-600 mt-2 font-sodo leading-relaxed">
                           <span className="font-semibold">
                             Why we chose this:
                           </span>{" "}
@@ -1109,14 +827,9 @@ const AIAssistant = memo(function AIAssistant({
                 <button
                   onClick={() => {
                     setShowResults(false);
-                    if (useHotDrinkFlow) {
-                      const lastKey =
-                        visitedNodeKeys[visitedNodeKeys.length - 1] || "start";
-                      setCurrentNodeKey(lastKey);
-                    } else {
-                      // Return to last answered step (before results)
-                      setCurrentStep(Math.max(questions.length - 1, 0));
-                    }
+                    const lastKey =
+                      visitedNodeKeys[visitedNodeKeys.length - 1] || "start";
+                    setCurrentNodeKey(lastKey);
                   }}
                   className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-xl font-medium hover:bg-gray-200 transition-all duration-300 flex items-center justify-center space-x-2 space-x-reverse font-sodo"
                 >

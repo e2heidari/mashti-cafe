@@ -117,7 +117,7 @@ export const drinkFlow: FlowMap = {
   },
 
   dessert_by_style: {
-    question: "چه سبکی می‌خوای؟",
+    question: "چه مدل بستنی یا دسری مدنظرت هست؟",
     options: [
       { label: "کاپ بستنی‌ها", next: "icecream_pick" },
       { label: "دسر سنتی ایرانی", next: "dessert_traditional" },

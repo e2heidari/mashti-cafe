@@ -164,6 +164,13 @@ export default function CareersPage() {
       setErrorMessage(msg);
     } finally {
       setIsSubmitting(false);
+      // Ensure we scroll to top of the box to see any messages, then hide them after a short delay
+      setTimeout(() => {
+        const container = document.getElementById("apply");
+        if (container) {
+          container.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 0);
     }
   }
 
@@ -184,6 +191,8 @@ export default function CareersPage() {
               onClick={() => {
                 setShowForm(false);
                 setSelectedRole(null);
+                setSuccessMessage(null);
+                setErrorMessage(null);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
               className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base"
