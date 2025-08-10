@@ -1,9 +1,120 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-[#F0131E] py-8 mt-16">
-      <div className="max-w-4xl mx-auto flex flex-col items-center justify-center space-y-4 px-4">
+    <footer className="w-full bg-[#F0131E] pt-10 pb-8 mt-16">
+      {/* Pre-footer links (professional site style) */}
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6 text-white">
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-3 opacity-90">
+              Company
+            </h4>
+            <ul className="space-y-2 text-sm opacity-95">
+              <li>
+                <Link href="/central/about" className="hover:underline">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link href="/careers" className="hover:underline">
+                  Careers
+                </Link>
+              </li>
+              <li>
+                <Link href="/wholesale" className="hover:underline">
+                  Wholesale
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-3 opacity-90">
+              Locations
+            </h4>
+            <ul className="space-y-2 text-sm opacity-95">
+              <li>
+                <Link href="/central" className="hover:underline">
+                  Central
+                </Link>
+              </li>
+              <li>
+                <Link href="/coquitlam" className="hover:underline">
+                  Coquitlam
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-3 opacity-90">
+              Menu
+            </h4>
+            <ul className="space-y-2 text-sm opacity-95">
+              <li>
+                <Link href="/central/menu" className="hover:underline">
+                  Our Menu
+                </Link>
+              </li>
+              <li>
+                <Link href="/wholesale" className="hover:underline">
+                  Wholesale Products
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-3 opacity-90">
+              Support
+            </h4>
+            <ul className="space-y-2 text-sm opacity-95">
+              <li>
+                <a
+                  href="mailto:hello@mashticafe.com"
+                  className="hover:underline"
+                >
+                  Contact
+                </a>
+              </li>
+              <li>
+                <a href="tel:+16045555555" className="hover:underline">
+                  Call Us
+                </a>
+              </li>
+              <li>
+                <Link href="/faq" className="hover:underline">
+                  FAQ
+                </Link>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold uppercase tracking-wide mb-3 opacity-90">
+              Legal
+            </h4>
+            <ul className="space-y-2 text-sm opacity-95">
+              <li>
+                <Link href="/policies/privacy" className="hover:underline">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href="/policies/terms" className="hover:underline">
+                  Terms of Service
+                </Link>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="max-w-6xl mx-auto px-4 mt-8">
+        <div className="h-px w-full bg-white/20" />
+      </div>
+
+      {/* Bottom section */}
+      <div className="max-w-6xl mx-auto flex flex-col items-center justify-center space-y-4 px-4 mt-6">
         <Image
           src="/images/newmashti-logo.png"
           alt="Mashti Logo"

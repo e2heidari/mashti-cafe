@@ -20,6 +20,9 @@ Message: ${message || 'No additional message provided'}
 
     // Check if Resend API key is available
     const resendApiKey = process.env.RESEND_API_KEY;
+    const toEmail = process.env.BOOKING_TO_EMAIL || 'ehsan.heydari@gmail.com';
+    const fromEmail = process.env.BOOKING_FROM_EMAIL || 'Mashti Events <onboarding@resend.dev>';
+    const subjectPrefix = process.env.BOOKING_SUBJECT_PREFIX || 'Mashti Events';
     
     console.log('🔍 Environment Check:');
     console.log('🔍 RESEND_API_KEY:', resendApiKey ? `${resendApiKey.substring(0, 10)}...` : 'Not set');
@@ -29,8 +32,8 @@ Message: ${message || 'No additional message provided'}
     if (!resendApiKey || resendApiKey === 'your_resend_api_key_here' || resendApiKey.length < 10) {
       // Fallback: Log the booking data (for development/testing)
       console.log('📧 Booking Request Received (API Key Not Set):');
-      console.log('To:', 'info.yelstar@gmail.com');
-      console.log('Subject:', `New Event Booking Request - ${name}`);
+      console.log('To:', toEmail);
+      console.log('Subject:', `${subjectPrefix}: ${name}`);
       console.log('Content:', emailContent);
       console.log('');
       console.log('💡 To enable actual email sending:');
@@ -51,14 +54,14 @@ Message: ${message || 'No additional message provided'}
       const resend = new Resend(resendApiKey);
 
       console.log('📧 Attempting to send email with Resend...');
-      console.log('📧 From: onboarding@resend.dev');
-      console.log('📧 To: ehsan.heydari@gmail.com');
+      console.log('📧 From: ' + fromEmail);
+      console.log('📧 To: ' + toEmail);
 
       // Send email directly to the working address
       const { data, error } = await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: 'ehsan.heydari@gmail.com',
-        subject: `New Event Booking Request - ${name}`,
+        from: fromEmail,
+        to: toEmail,
+        subject: `${subjectPrefix}: ${name}`,
         text: emailContent,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">

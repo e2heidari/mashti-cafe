@@ -30,6 +30,9 @@ Additional Message: ${message || 'No additional message provided'}
 
     // Check if Resend API key is available
     const resendApiKey = process.env.RESEND_API_KEY;
+    const toEmail = process.env.WHOLESALE_TO_EMAIL || 'ehsan.heydari@gmail.com';
+    const fromEmail = process.env.WHOLESALE_FROM_EMAIL || 'Mashti Wholesale <onboarding@resend.dev>';
+    const subjectPrefix = process.env.WHOLESALE_SUBJECT_PREFIX || 'Mashti Wholesale';
     
     console.log('🔍 Environment Check for Wholesale Order:');
     console.log('🔍 RESEND_API_KEY:', resendApiKey ? `${resendApiKey.substring(0, 10)}...` : 'Not set');
@@ -39,8 +42,8 @@ Additional Message: ${message || 'No additional message provided'}
     if (!resendApiKey || resendApiKey === 'your_resend_api_key_here' || resendApiKey.length < 10) {
       // Fallback: Log the wholesale order data (for development/testing)
       console.log('📧 Wholesale Order Received (API Key Not Set):');
-      console.log('To:', 'ehsan.heydari@gmail.com');
-      console.log('Subject:', `New Wholesale Order - ${name}`);
+      console.log('To:', toEmail);
+      console.log('Subject:', `${subjectPrefix}: ${name}`);
       console.log('Content:', emailContent);
       console.log('');
       console.log('💡 To enable actual email sending:');
@@ -61,14 +64,14 @@ Additional Message: ${message || 'No additional message provided'}
       const resend = new Resend(resendApiKey);
 
       console.log('📧 Attempting to send wholesale order email with Resend...');
-      console.log('📧 From: onboarding@resend.dev');
-      console.log('📧 To: ehsan.heydari@gmail.com');
+      console.log('📧 From: ' + fromEmail);
+      console.log('📧 To: ' + toEmail);
 
       // Send email to the specified address
       const { data, error } = await resend.emails.send({
-        from: 'onboarding@resend.dev',
-        to: 'ehsan.heydari@gmail.com',
-        subject: `New Wholesale Order - ${name}`,
+        from: fromEmail,
+        to: toEmail,
+        subject: `${subjectPrefix}: ${name}`,
         text: emailContent,
                             html: `
                       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
