@@ -196,7 +196,7 @@ const Navigation = memo(function Navigation({
         </div>
 
         {/* Navigation Menu */}
-        <>
+        {showMenu && (
           <div className="bg-gray-800 w-full">
             <div className="w-full">
               <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
@@ -410,7 +410,7 @@ const Navigation = memo(function Navigation({
               )}
             </div>
           </div>
-        </>
+        )}
       </div>
     </nav>
   );

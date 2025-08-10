@@ -91,16 +91,21 @@ function getIcon(category: string, name: string): string {
     return '🥤';
   }
 
-  // Explicit dessert-style drinks/plates
+  // Specific items requested as shake icons
   if (
-    n.includes('maajoon') ||
+    n.includes('shir pesteh moz nutella') ||
+    n.includes('shir pesteh moz') ||
+    n.includes('shir pesteh') ||
+    n.includes('shir fandogh') ||
     n.includes('vitamine akbar mashti') ||
     n.includes('vitamin akbar mashti') ||
-    n.includes('shir pesteh moz nutella') ||
-    n.includes('shir pesteh moz')
+    n.includes('maajoon')
   ) {
-    return '🍰';
+    return '🥤';
   }
+
+  // Explicit dessert-style drinks/plates
+  // (keep other dessert items below)
 
   // Name-based priority (hot drinks / desserts)
   if (n.includes('tea')) return '🍵';
@@ -115,6 +120,7 @@ function getIcon(category: string, name: string): string {
   ) {
     return '☕';
   }
+  if (n.includes('ferrero')) return '🍨';
   if (n.includes('affogato')) return '🍨';
   if (n.includes('faloodeh')) return '🍧';
   if (n.includes('lavashak')) return '🍋';

@@ -74,7 +74,7 @@ export const drinkFlow: FlowMap = {
   protein_base: {
     question: "طعم غالب برای ریکاوری؟",
     options: [
-      { label: "میوه‌ای پروتئینی", result: ["Berry Blast", "Green Power", "Mango Smoothie"] },
+      { label: "میوه‌ای پروتئینی", result: ["Berry Blast", "Green Power"] },
       {
         label: "آجیلی پروتئینی",
         result: [
