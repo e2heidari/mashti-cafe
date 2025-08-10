@@ -38,8 +38,8 @@ const Navigation = memo(function Navigation({
 
   // Ensure mobile menu auto-closes on route change
   useEffect(() => {
-    if (isMenuOpen) setIsMenuOpen(false);
-  }, [pathname, isMenuOpen]);
+    setIsMenuOpen(false);
+  }, [pathname]);
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#e80812]">
@@ -195,212 +195,222 @@ const Navigation = memo(function Navigation({
           </div>
         </div>
 
-        {/* Navigation Menu - Only show if showMenu is true */}
-        {showMenu && (
-          <>
-            <div className="bg-gray-800 w-full">
-              <div className="w-full">
-                <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
-                  {/* Desktop Navigation Links */}
-                  <div className="hidden md:flex items-center justify-between w-full">
-                    <div className="flex items-center space-x-8">
-                      {isWholesalePage ? (
-                        <>
-                          <Link
-                            href={homeHrefForWholesale}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                          >
-                            Home
-                          </Link>
-                          <Link
-                            href={orderHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                          >
-                            Order
-                          </Link>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            href={homeHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                          >
-                            Home
-                          </Link>
-                          <Link
-                            href={menuHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                          >
-                            Menu
-                          </Link>
-                          <Link
-                            href={aboutHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                          >
-                            About
-                          </Link>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Cart Icon - reserve space to avoid layout shift */}
-                    <div
-                      className="flex items-center justify-end"
-                      style={{ minWidth: 120 }}
-                    >
-                      {isWholesalePage && cartItemCount > 0 ? (
-                        <button
-                          onClick={onCartClick}
-                          className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
-                        >
-                          <svg
-                            className="w-6 h-6 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                            />
-                          </svg>
-                          <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
-                            {cartItemCount}
-                          </span>
-                        </button>
-                      ) : (
-                        <div
-                          aria-hidden
-                          className="opacity-0 pointer-events-none select-none"
-                        >
-                          <div className="relative flex items-center bg-red-600 px-3 py-2 rounded-full">
-                            <div className="w-6 h-6 mr-2" />
-                            <span className="h-6 w-6" />
-                          </div>
-                        </div>
-                      )}
-                    </div>
+        {/* Navigation Menu */}
+        <>
+          <div className="bg-gray-800 w-full">
+            <div className="w-full">
+              <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
+                {/* Desktop Navigation Links */}
+                <div className="hidden md:flex items-center justify-between w-full">
+                  <div className="flex items-center space-x-8">
+                    {showMenu && (
+                      <>
+                        {isWholesalePage ? (
+                          <>
+                            <Link
+                              href={homeHrefForWholesale}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            >
+                              Home
+                            </Link>
+                            <Link
+                              href={orderHref}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            >
+                              Order
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href={homeHref}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            >
+                              Home
+                            </Link>
+                            <Link
+                              href={menuHref}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            >
+                              Menu
+                            </Link>
+                            <Link
+                              href={aboutHref}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                            >
+                              About
+                            </Link>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
 
-                  {/* Mobile Navigation */}
-                  <div className="md:hidden flex items-center justify-between w-full">
-                    {/* Mobile Menu Button */}
-                    <button
-                      onClick={() => setIsMenuOpen(!isMenuOpen)}
-                      className="text-white hover:text-gray-300 transition-colors"
-                    >
-                      <svg
-                        className="w-6 h-6"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                  {/* Cart Icon - reserve space to avoid layout shift */}
+                  <div
+                    className="flex items-center justify-end"
+                    style={{ minWidth: 120 }}
+                  >
+                    {isWholesalePage && cartItemCount > 0 ? (
+                      <button
+                        onClick={onCartClick}
+                        className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 6h16M4 12h16M4 18h16"
-                        />
-                      </svg>
-                    </button>
-
-                    {/* Cart Icon for Mobile - reserve space to avoid layout shift */}
-                    <div
-                      className="flex items-center justify-end"
-                      style={{ minWidth: 96 }}
-                    >
-                      {isWholesalePage && cartItemCount > 0 ? (
-                        <button
-                          onClick={onCartClick}
-                          className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
+                        <svg
+                          className="w-6 h-6 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
-                          <svg
-                            className="w-5 h-5 mr-2"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
-                            />
-                          </svg>
-                          <span className="bg-white text-red-600 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
-                            {cartItemCount}
-                          </span>
-                        </button>
-                      ) : (
-                        <div
-                          aria-hidden
-                          className="opacity-0 pointer-events-none select-none"
-                        >
-                          <div className="relative flex items-center bg-red-600 px-3 py-2 rounded-full">
-                            <div className="w-5 h-5 mr-2" />
-                            <span className="h-5 w-5" />
-                          </div>
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                          />
+                        </svg>
+                        <span className="bg-white text-red-600 text-xs rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-md">
+                          {cartItemCount}
+                        </span>
+                      </button>
+                    ) : (
+                      <div
+                        aria-hidden
+                        className="opacity-0 pointer-events-none select-none"
+                      >
+                        <div className="relative flex items-center bg-red-600 px-3 py-2 rounded-full">
+                          <div className="w-6 h-6 mr-2" />
+                          <span className="h-6 w-6" />
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Mobile Menu */}
-                {isMenuOpen && (
-                  <div className="md:hidden bg-gray-700 border border-gray-600 backdrop-blur-sm rounded-lg p-4">
-                    <div className="flex flex-col space-y-4">
-                      {isWholesalePage ? (
-                        <>
-                          <Link
-                            href="/wholesale"
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Home
-                          </Link>
-                          <Link
-                            href="/wholesale?showProducts=true"
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Order
-                          </Link>
-                        </>
-                      ) : (
-                        <>
-                          <Link
-                            href={homeHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Home
-                          </Link>
-                          <Link
-                            href={menuHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            Menu
-                          </Link>
-                          <Link
-                            href={aboutHref}
-                            className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
-                            onClick={() => setIsMenuOpen(false)}
-                          >
-                            About
-                          </Link>
-                        </>
-                      )}
-                    </div>
+                {/* Mobile Navigation */}
+                <div className="md:hidden flex items-center justify-between w-full">
+                  {/* Mobile Menu Button */}
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setIsMenuOpen((v) => !v);
+                    }}
+                    className="text-white hover:text-gray-300 transition-colors"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6h16M4 12h16M4 18h16"
+                      />
+                    </svg>
+                  </button>
+
+                  {/* Cart Icon for Mobile - reserve space to avoid layout shift */}
+                  <div
+                    className="flex items-center justify-end"
+                    style={{ minWidth: 96 }}
+                  >
+                    {isWholesalePage && cartItemCount > 0 ? (
+                      <button
+                        onClick={onCartClick}
+                        className="relative text-white hover:text-gray-300 transition-all duration-300 font-medium font-lander flex items-center bg-red-600 hover:bg-red-700 px-3 py-2 rounded-full shadow-lg hover:shadow-xl"
+                      >
+                        <svg
+                          className="w-5 h-5 mr-2"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                          />
+                        </svg>
+                        <span className="bg-white text-red-600 text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold shadow-md">
+                          {cartItemCount}
+                        </span>
+                      </button>
+                    ) : (
+                      <div
+                        aria-hidden
+                        className="opacity-0 pointer-events-none select-none"
+                      >
+                        <div className="relative flex items-center bg-red-600 px-3 py-2 rounded-full">
+                          <div className="w-5 h-5 mr-2" />
+                          <span className="h-5 w-5" />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
+
+              {/* Mobile Menu */}
+              {isMenuOpen && (
+                <div className="md:hidden bg-gray-700 border border-gray-600 backdrop-blur-sm rounded-lg p-4 z-50 relative">
+                  <div className="flex flex-col space-y-4">
+                    {isWholesalePage ? (
+                      <>
+                        <Link
+                          href="/wholesale"
+                          className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Home
+                        </Link>
+                        <Link
+                          href="/wholesale?showProducts=true"
+                          className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Order
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link
+                          href={homeHref}
+                          className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          Home
+                        </Link>
+                        {showMenu && (
+                          <>
+                            <Link
+                              href={menuHref}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              Menu
+                            </Link>
+                            <Link
+                              href={aboutHref}
+                              className="text-white hover:text-gray-300 transition-colors font-medium font-lander"
+                              onClick={() => setIsMenuOpen(false)}
+                            >
+                              About
+                            </Link>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          </>
-        )}
+          </div>
+        </>
       </div>
     </nav>
   );

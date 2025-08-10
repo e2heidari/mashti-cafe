@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-interface MenuItem {
+type MenuItem = {
   title: string;
   description: string;
   icon: string;
@@ -39,7 +39,7 @@ interface MenuItem {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { temperature, timeOfDay, flavor, caffeine, healthGoal, dietaryRestrictions } = body;
+    const { temperature, timeOfDay, flavor, caffeine, healthGoal } = body;
 
     console.log('AI Recommendation Request:', body);
 
