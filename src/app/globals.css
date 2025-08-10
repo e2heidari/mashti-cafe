@@ -29,7 +29,7 @@
 }
 
 body {
-  background: var(--background);
+  background: var(--foreground);
   color: var(--foreground);
   font-family: var(--font-sans), 'Tahoma', 'Arial', sans-serif;
 }
