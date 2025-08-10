@@ -120,7 +120,9 @@ function CartContent() {
       const newOrderNumber = `EH-${randomNum}`;
       const orderDataWithNumber = { ...orderData, orderNumber: newOrderNumber };
 
-      const response = await fetch("/api/wholesale-order", {
+      const baseUrl =
+        typeof window !== "undefined" ? window.location.origin : "";
+      const response = await fetch(`${baseUrl}/api/wholesale-order`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -128,9 +130,16 @@ function CartContent() {
         body: JSON.stringify(orderDataWithNumber),
       });
 
-      const result = await response.json();
+      if (!response.ok) {
+        const text = await response.text().catch(() => "");
+        throw new Error(`Request failed: ${response.status} ${text}`);
+      }
 
-      if (result.success) {
+      const result = await response
+        .json()
+        .catch(() => ({ success: false, message: "Invalid JSON response" }));
+
+      if (result && result.success) {
         // Clear cart
         setCart([]);
         if (typeof window !== "undefined") {
