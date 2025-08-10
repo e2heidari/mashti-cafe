@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo, useCallback } from "react";
+import { useState, memo, useCallback, useEffect } from "react";
 import { drinkFlow } from "@/data/drinkFlow";
 
 interface AIAssistantProps {
@@ -703,6 +703,17 @@ const AIAssistant = memo(function AIAssistant({
   if (isOpen && menuItems.length === 0) {
     loadMenuItems();
   }
+
+  // Prevent background scroll when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const original = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = original;
+      };
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
