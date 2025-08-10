@@ -3,7 +3,7 @@
 import { useState, memo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 
 interface NavigationProps {
   onAIOpen: () => void;
@@ -24,7 +24,7 @@ const Navigation = memo(function Navigation({
   const menuHref = pathname.startsWith("/central") ? "/central/menu" : "/";
   const aboutHref = pathname.startsWith("/central") ? "/central/about" : "/";
   const homeHref = pathname.startsWith("/central") ? "/central" : "/";
-  const router = useRouter();
+  // const router = useRouter();
 
   // For wholesale page, show Order instead of Menu and About
   const isWholesalePage = pathname.startsWith("/wholesale");
@@ -39,7 +39,7 @@ const Navigation = memo(function Navigation({
   // Ensure mobile menu auto-closes on route change
   useEffect(() => {
     if (isMenuOpen) setIsMenuOpen(false);
-  }, [pathname]);
+  }, [pathname, isMenuOpen]);
 
   return (
     <nav className="fixed top-0 w-full z-50 bg-[#e80812]">

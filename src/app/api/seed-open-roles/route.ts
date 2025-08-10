@@ -73,17 +73,17 @@ export async function POST(request: NextRequest) {
       },
     ]
 
-    const results = [] as any[]
+    const results: string[] = []
     for (const doc of samples) {
-      const created = await c.createOrReplace(doc as any)
+      const created = await c.createOrReplace<{ _id: string }>(doc as { _id: string; _type: string })
       results.push(created._id)
     }
 
     return NextResponse.json({ success: true, created: results })
-  } catch (err: any) {
+  } catch (err) {
     console.error('Seed open roles error:', err)
     return NextResponse.json(
-      { success: false, message: err?.message || 'Failed to seed roles' },
+      { success: false, message: err instanceof Error ? err.message : 'Failed to seed roles' },
       { status: 500 }
     )
   }

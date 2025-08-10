@@ -177,21 +177,21 @@ function WholesaleContent() {
     });
   };
 
-  const updateQuantity = (productId: string, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(productId);
-      return;
-    }
-    setCart((prevCart) => {
-      const newCart = prevCart.map((item) =>
-        item.product._id === productId ? { ...item, quantity } : item
-      );
-      if (typeof window !== "undefined") {
-        localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-      }
-      return newCart;
-    });
-  };
+  // const updateQuantity = (productId: string, quantity: number) => {
+  //   if (quantity <= 0) {
+  //     removeFromCart(productId);
+  //     return;
+  //   }
+  //   setCart((prevCart) => {
+  //     const newCart = prevCart.map((item) =>
+  //       item.product._id === productId ? { ...item, quantity } : item
+  //     );
+  //     if (typeof window !== "undefined") {
+  //       localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
+  //     }
+  //     return newCart;
+  //   });
+  // };
 
   const removeFromCart = (productId: string) => {
     setCart((prevCart) => {
@@ -207,20 +207,20 @@ function WholesaleContent() {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const getTotalPrice = () => {
-    return cart.reduce(
-      (total, item) => total + item.product.price * item.quantity,
-      0
-    );
-  };
+  // const getTotalPrice = () => {
+  //   return cart.reduce(
+  //     (total, item) => total + item.product.price * item.quantity,
+  //     0
+  //   );
+  // };
 
   const handleCartClick = () => {
     router.push("/wholesale/cart");
   };
 
-  const handleSubmitOrder = () => {
-    // This will be handled by the cart page component
-  };
+  // const handleSubmitOrder = () => {
+  //   // This will be handled by the cart page component
+  // };
 
   return (
     <div className="min-h-screen bg-white">

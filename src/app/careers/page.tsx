@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import Navigation from "@/components/Navigation";
+
+// Disable static prerendering to avoid build-time errors
+export const dynamic = "force-dynamic";
 
 export default function CareersPage() {
   const [showForm, setShowForm] = useState(false);
@@ -166,7 +169,13 @@ export default function CareersPage() {
 
   return (
     <div className="min-h-[70vh] bg-neutral-50 text-neutral-900">
-      <Navigation onAIOpen={() => {}} showMenu={false} />
+      <Suspense
+        fallback={
+          <div className="w-full text-center py-4">Loading header…</div>
+        }
+      >
+        <Navigation onAIOpen={() => {}} showMenu={false} />
+      </Suspense>
       <div className="h-[110px] md:h-[140px] lg:h-[150px]" />
       <div className="max-w-4xl mx-auto px-4 py-12">
         {showForm && (
