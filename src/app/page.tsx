@@ -28,6 +28,7 @@ export default function Home() {
     guestCount: "",
     message: "",
   });
+  const [isEventTypeOpen, setIsEventTypeOpen] = useState(false);
 
   // Close calendar when clicking outside
   useEffect(() => {
@@ -778,25 +779,68 @@ export default function Home() {
                 </p>
               </div>
 
-              <div>
+              <div className="relative">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Event Type *
                 </label>
-                <select
-                  name="eventType"
-                  value={bookingForm.eventType}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900"
+                <button
+                  type="button"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 flex items-center justify-between"
+                  onClick={() => setIsEventTypeOpen((v) => !v)}
+                  aria-haspopup="listbox"
+                  aria-expanded={isEventTypeOpen}
                 >
-                  <option value="">Select Event Type</option>
-                  <option value="Birthday Party">Birthday Party</option>
-                  <option value="Wedding">Wedding</option>
-                  <option value="Corporate Event">Corporate Event</option>
-                  <option value="Graduation">Graduation</option>
-                  <option value="Anniversary">Anniversary</option>
-                  <option value="Other">Other</option>
-                </select>
+                  <span>{bookingForm.eventType || "Select Event Type"}</span>
+                  <svg
+                    className={`w-4 h-4 transition-transform ${isEventTypeOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                {isEventTypeOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-xl z-50 max-h-60 overflow-auto">
+                    {[
+                      "Birthday Party",
+                      "Wedding",
+                      "Corporate Event",
+                      "Graduation",
+                      "Anniversary",
+                      "Other",
+                    ].map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        className={`w-full text-left px-3 py-2 hover:bg-gray-100 ${bookingForm.eventType === opt ? "bg-gray-50" : ""}`}
+                        role="option"
+                        aria-selected={bookingForm.eventType === opt}
+                        onClick={() => {
+                          setBookingForm((prev) => ({
+                            ...prev,
+                            eventType: opt,
+                          }));
+                          setIsEventTypeOpen(false);
+                        }}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {isEventTypeOpen && (
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsEventTypeOpen(false)}
+                    aria-hidden
+                  />
+                )}
               </div>
 
               <div>
