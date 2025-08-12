@@ -180,7 +180,6 @@ const AIAssistant = memo(function AIAssistant({
         const data = await response.json();
         setMenuItems(data.menuItems || []);
       } else {
-        console.error("Error loading menu items: ", response.status);
         setMenuItems([]);
       }
     } catch (error) {
@@ -242,43 +241,27 @@ const AIAssistant = memo(function AIAssistant({
       // Apply strict filters with better logic
       if (temperature && temperature !== "both") {
         filtered = filtered.filter((item) => item.temperature === temperature);
-        console.log(
-          `Temperature filter (${temperature}): ${filtered.length} items remaining`
-        );
       }
 
       if (timeOfDay) {
         filtered = filtered.filter((item) =>
           item.timeOfDay.includes(timeOfDay)
         );
-        console.log(
-          `Time filter (${timeOfDay}): ${filtered.length} items remaining`
-        );
       }
 
       if (flavor) {
         filtered = filtered.filter((item) => item.flavors.includes(flavor));
-        console.log(
-          `Flavor filter (${flavor}): ${filtered.length} items remaining`
-        );
       }
 
       if (caffeine === "yes") {
         filtered = filtered.filter((item) => item.caffeine);
-        console.log(
-          `Caffeine filter (yes): ${filtered.length} items remaining`
-        );
       } else if (caffeine === "no") {
         filtered = filtered.filter((item) => !item.caffeine);
-        console.log(`Caffeine filter (no): ${filtered.length} items remaining`);
       }
 
       if (healthGoal && healthGoal !== "none") {
         filtered = filtered.filter((item) =>
           item.healthBenefits.includes(healthGoal)
-        );
-        console.log(
-          `Health goal filter (${healthGoal}): ${filtered.length} items remaining`
         );
       }
 
@@ -293,7 +276,6 @@ const AIAssistant = memo(function AIAssistant({
                 !item.allergens.includes("eggs"))
           );
         });
-        console.log(`Dietary filter: ${filtered.length} items remaining`);
       }
 
       // If we have strict matches, use them
@@ -301,12 +283,10 @@ const AIAssistant = memo(function AIAssistant({
         const sorted = filtered
           .sort((a, b) => b.popularity - a.popularity)
           .slice(0, 3);
-        console.log(`Using strict matches: ${sorted.length} items`);
         return sorted;
       }
 
       // If no strict matches, use intelligent fallback
-      console.log("No strict matches found, using intelligent fallback");
 
       // Create a scoring system
       const scoredItems = menuItems.map((item) => {
@@ -401,11 +381,8 @@ const AIAssistant = memo(function AIAssistant({
         .slice(0, 3)
         .map(({ item }) => item);
 
-      console.log(`Intelligent fallback: ${validItems.length} items`);
-
       // If still no good matches, return popular items from the same category
       if (validItems.length === 0) {
-        console.log("No intelligent matches, returning popular items");
         return menuItems
           .sort((a, b) => b.popularity - a.popularity)
           .slice(0, 3);

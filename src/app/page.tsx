@@ -134,7 +134,7 @@ export default function Home() {
     setIsSubmitting(true);
     setSubmitMessage("");
 
-    console.log("🚀 Starting booking submission...");
+    // Submit booking request
 
     try {
       const response = await fetch("/api/booking", {
@@ -146,10 +146,9 @@ export default function Home() {
       });
 
       const data = await response.json();
-      console.log("📧 API Response:", data);
+      // Inspect response
 
       if (data.success) {
-        console.log("✅ Success! Setting showSuccess to true");
         setSubmitMessage(
           "Booking request sent successfully! We'll contact you soon."
         );
@@ -159,14 +158,11 @@ export default function Home() {
         // Don't reset form immediately - let user see their data in success notification
         // Form will be reset when they close the success notification
       } else {
-        console.log("❌ API returned success: false");
         setSubmitMessage("Failed to send booking request. Please try again.");
       }
     } catch (error) {
-      console.error("❌ Booking submission error:", error);
       setSubmitMessage("Failed to send booking request. Please try again.");
     } finally {
-      console.log("🏁 Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };
@@ -545,7 +541,6 @@ export default function Home() {
             {/* Close Button */}
             <button
               onClick={() => {
-                console.log("🔘 Close button clicked");
                 setShowSuccess(false);
                 setIsBookingOpen(false);
                 // Reset form when closing success notification

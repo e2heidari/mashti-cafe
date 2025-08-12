@@ -65,8 +65,24 @@ interface TransformedCategory {
   items: TransformedMenuItem[];
 }
 
-// Cache duration in seconds (15 minutes)
-const CACHE_DURATION = 15 * 60;
+// In-memory cache (per server instance)
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const DEFAULT_CACHE_TTL_MS = Number(process.env.MENU_CACHE_TTL_MS || ONE_HOUR_MS);
+const DEFAULT_FALLBACK_TTL_MS = Number(process.env.MENU_FALLBACK_TTL_MS || 5 * 60 * 1000);
+
+type CachedPayload = { categories: TransformedCategory[]; menuItems: TransformedMenuItem[]; message?: string };
+let menuCache: { payload: CachedPayload; expiresAt: number } | null = null;
+
+function buildCacheHeaders(ttlMs: number, status: 'HIT' | 'MISS' | 'FALLBACK'): HeadersInit {
+  const sMaxAge = Math.max(0, Math.floor(ttlMs / 1000));
+  const browserMaxAge = Math.min(600, sMaxAge); // cap browser at 10m
+  return {
+    'Cache-Control': `public, max-age=${browserMaxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=86400`,
+    'Content-Type': 'application/json',
+    'X-Cache': status,
+    'X-Cache-TTL': String(sMaxAge),
+  };
+}
 
 async function fetchMenuData() {
   try {
@@ -150,21 +166,32 @@ async function fetchMenuData() {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const now = Date.now();
+    const url = new URL(request.url);
+    const noCache = url.searchParams.get('nocache') === '1' || url.searchParams.get('refresh') === '1';
+
+    if (!noCache && menuCache && menuCache.expiresAt > now) {
+      return NextResponse.json(menuCache.payload, {
+        headers: buildCacheHeaders(menuCache.expiresAt - now, 'HIT'),
+      });
+    }
+
     const data = await fetchMenuData();
-    
-    return NextResponse.json(data, {
-      headers: {
-        'Cache-Control': `public, s-maxage=${CACHE_DURATION}, stale-while-revalidate=${CACHE_DURATION * 2}`,
-        'Content-Type': 'application/json',
-      },
+    const payload: CachedPayload = data;
+    menuCache = { payload, expiresAt: Date.now() + DEFAULT_CACHE_TTL_MS };
+
+    return NextResponse.json(payload, {
+      headers: buildCacheHeaders(DEFAULT_CACHE_TTL_MS, 'MISS'),
     });
   } catch (error) {
     console.error('API Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch menu data' },
-      { status: 500 }
-    );
+    const payload: CachedPayload = { categories: [], menuItems: [], message: 'Failed to fetch menu data' };
+    menuCache = { payload, expiresAt: Date.now() + DEFAULT_FALLBACK_TTL_MS };
+    return NextResponse.json(payload, {
+      status: 500,
+      headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, 'FALLBACK'),
+    });
   }
 } 

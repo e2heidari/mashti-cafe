@@ -56,6 +56,26 @@ interface SanityMenuItem {
   order: number;
 }
 
+// Simple in-memory cache for this API route (per server instance)
+const ONE_HOUR_MS = 60 * 60 * 1000;
+const DEFAULT_CACHE_TTL_MS = Number(process.env.AI_MENU_CACHE_TTL_MS || ONE_HOUR_MS);
+const DEFAULT_FALLBACK_TTL_MS = Number(
+  process.env.AI_MENU_FALLBACK_TTL_MS || 5 * 60 * 1000
+);
+
+type CachedPayload = { menuItems: MenuItem[]; message?: string };
+let aiMenuCache: { payload: CachedPayload; expiresAt: number } | null = null;
+
+function buildCacheHeaders(ttlMs: number, status: 'HIT' | 'MISS' | 'FALLBACK'): HeadersInit {
+  const sMaxAge = Math.max(0, Math.floor(ttlMs / 1000));
+  const browserMaxAge = Math.min(600, sMaxAge); // cap browser at 10m to keep UI fresh
+  return {
+    'Cache-Control': `public, max-age=${browserMaxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=86400`,
+    'X-Cache': status,
+    'X-Cache-TTL': String(sMaxAge),
+  };
+}
+
 // Helper function to determine temperature based on category
 function getTemperature(category: string): "hot" | "cold" | "both" {
   const hotCategories = ["Coffee & Tea", "Hot Drinks"];
@@ -673,8 +693,17 @@ function getServingSize(category: string): string {
   return "350ml";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Serve from cache if valid and not explicitly bypassed
+    const now = Date.now();
+    const url = new URL(request.url);
+    const noCache = url.searchParams.get('nocache') === '1' || url.searchParams.get('refresh') === '1';
+    if (!noCache && aiMenuCache && aiMenuCache.expiresAt > now) {
+      return NextResponse.json(aiMenuCache.payload, {
+        headers: buildCacheHeaders(aiMenuCache.expiresAt - now, 'HIT'),
+      });
+    }
     // Fetch all menu items from CMS
     const menuItems = await client.fetch<SanityMenuItem[]>(`
       *[_type == "menuItem" && active == true] | order(order asc) {
@@ -752,13 +781,24 @@ export async function GET() {
 
     // If CMS returns nothing, provide a minimal fallback so UI still works
     if (!aiMenuItems || aiMenuItems.length === 0) {
-      return NextResponse.json({ menuItems: getFallbackItems(), message: 'Using fallback items' });
+      const payload = { menuItems: getFallbackItems(), message: 'Using fallback items' };
+      aiMenuCache = { payload, expiresAt: Date.now() + DEFAULT_FALLBACK_TTL_MS };
+      return NextResponse.json(payload, {
+        headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, 'FALLBACK'),
+      });
     }
-    return NextResponse.json({ menuItems: aiMenuItems });
-  } catch (error) {
-    console.error('Error fetching AI menu data:', error);
-    // In dev or when offline, return a small fallback list instead of 500
-    return NextResponse.json({ menuItems: getFallbackItems(), message: 'Fallback due to fetch error' });
+    const payload = { menuItems: aiMenuItems };
+    aiMenuCache = { payload, expiresAt: Date.now() + DEFAULT_CACHE_TTL_MS };
+    return NextResponse.json(payload, {
+      headers: buildCacheHeaders(DEFAULT_CACHE_TTL_MS, 'MISS'),
+    });
+  } catch {
+    // Keep UI responsive if CMS fails; cache fallback briefly
+    const payload = { menuItems: getFallbackItems(), message: 'Fallback due to fetch error' };
+    aiMenuCache = { payload, expiresAt: Date.now() + DEFAULT_FALLBACK_TTL_MS };
+    return NextResponse.json(payload, {
+      headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, 'FALLBACK'),
+    });
   }
 } 
 
