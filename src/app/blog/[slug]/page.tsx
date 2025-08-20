@@ -1,17 +1,23 @@
 import type { Metadata } from "next";
 
-type Props = { params: { slug: string } };
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { slug } = params;
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
   return {
     title: `Blog: ${slug}`,
     description: `Post ${slug}`,
   };
 }
 
-export default async function BlogPostPage({ params }: Props) {
-  const { slug } = params;
+export default async function BlogPostPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
 
   // TODO: Fetch real content here (e.g., from Sanity) using `slug`.
   // If not found, you can show a friendly message instead of 404 for now.
