@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  images: { domains: ['cdn.sanity.io'], formats: ['image/webp','image/avif'] },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.sanity.io', pathname: '/**' },
+    ],
+    formats: ['image/webp','image/avif'],
+  },
   compress: true,
   experimental: { optimizePackageImports: ['next-sanity'] },
 

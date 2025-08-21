@@ -30,6 +30,11 @@ export const metadata: Metadata = {
     "Experience authentic Iranian flavors with our premium juices, ice cream, and coffee. The first Iranian juice and ice cream bar in British Columbia.",
   keywords:
     "Iranian cafe, juice bar, ice cream, coffee, B.C., Vancouver, Persian food",
+  icons: {
+    icon: [{ url: "/images/mashti-logo-1.png", type: "image/png" }],
+    shortcut: "/images/mashti-logo-1.png",
+    apple: "/images/mashti-logo-1.png",
+  },
 };
 
 export default function RootLayout({
@@ -42,6 +47,25 @@ export default function RootLayout({
       <head>
         {/* Preload critical resources for better performance */}
         <link rel="preload" href="/images/newmashti-logo.png" as="image" />
+        {/* Explicit favicon links for broad browser support */}
+        <link
+          rel="icon"
+          href="/images/mashti-logo-1.png"
+          type="image/png"
+          sizes="32x32"
+        />
+        <link
+          rel="icon"
+          href="/images/mashti-logo-1.png"
+          type="image/png"
+          sizes="16x16"
+        />
+        <link
+          rel="shortcut icon"
+          href="/images/mashti-logo-1.png"
+          type="image/png"
+        />
+        <link rel="apple-touch-icon" href="/images/mashti-logo-1.png" />
       </head>
       <body
         suppressHydrationWarning

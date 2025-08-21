@@ -90,9 +90,7 @@ export default function CentralBranch() {
               newsItems.map((item, index) => (
                 <div
                   key={item._id}
-                  className={`flex flex-col lg:flex-row items-center gap-8 ${
-                    index < newsItems.length - 1 ? "mb-16" : ""
-                  } ${index % 2 === 1 ? "lg:flex-row-reverse" : ""}`}
+                  className={`flex flex-col lg:flex-row items-center gap-8 ${index < newsItems.length - 1 ? "mb-16" : ""} ${index % 2 === 1 ? "lg:flex-row-reverse" : ""}`}
                 >
                   <div className="w-full lg:w-1/2">
                     <Image

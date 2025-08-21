@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import Navigation from "../../../components/Navigation";
 import MenuItem from "../../../components/MenuItem";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 const AIAssistant = dynamic(() => import("../../../components/AIAssistant"), {
@@ -270,6 +271,27 @@ export default function CentralMenuPage() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+      {/* Uber Eats CTA (compact) */}
+      <div className="max-w-6xl mx-auto px-4 pb-3 mt-6 md:mt-8">
+        <div className="flex justify-center">
+          <a
+            href="https://www.ubereats.com/ca/store/mashti-cafe/OTDxWR8iVwyOzfzA_HHxRA?diningMode=DELIVERY&pl=JTdCJTIyYWRkcmVzcyUyMiUzQSUyMjIwNDElMjBCZWxsd29vZCUyMEF2ZSUyMiUyQyUyMnJlZmVyZW5jZSUyMiUzQSUyMjUxMmE3YzBkLTNiMjUtOTY1ZS1lYmYzLThiZWM1NTRkMTA4NyUyMiUyQyUyMnJlZmVyZW5jZVR5cGUlMjIlM0ElMjJ1YmVyX3BsYWNlcyUyMiUyQyUyMmxhdGl0dWRlJTIyJTNBNDkuMjY1NzcyJTJDJTIybG9uZ2l0dWRlJTIyJTNBLTEyMi45ODg5MjMlN0Q%3D&sc=SEARCH_SUGGESTION"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-3 bg-[#06c167] text-white px-6 py-3 rounded-full hover:brightness-95 transition font-semibold text-base md:text-lg"
+            aria-label="Order on Uber Eats"
+          >
+            <Image
+              src="/images/uber-eats.png"
+              alt="Uber Eats"
+              width={300}
+              height={75}
+              className="h-14 md:h-16 w-auto"
+            />
+            <span>Order on Uber Eats</span>
+          </a>
         </div>
       </div>
       {/* AI Assistant */}
