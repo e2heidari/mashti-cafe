@@ -46,26 +46,26 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* Preload critical resources for better performance */}
-        <link rel="preload" href="/images/newmashti-logo.png" as="image" />
+        <link rel="preload" href="/images/favicon-icon.jpeg" as="image" />
         {/* Explicit favicon links for broad browser support */}
         <link
           rel="icon"
-          href="/images/mashti-logo-1.png"
+          href="/images/favicon-icon.jpeg"
           type="image/png"
           sizes="32x32"
         />
         <link
           rel="icon"
-          href="/images/mashti-logo-1.png"
+          href="/images/favicon-icon.jpeg"
           type="image/png"
           sizes="16x16"
         />
         <link
           rel="shortcut icon"
-          href="/images/mashti-logo-1.png"
+          href="/images/favicon-icon.jpeg"
           type="image/png"
         />
-        <link rel="apple-touch-icon" href="/images/mashti-logo-1.png" />
+        <link rel="apple-touch-icon" href="/images/favicon-icon.jpeg" />
       </head>
       <body
         suppressHydrationWarning
