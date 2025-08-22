@@ -48,7 +48,7 @@ export async function POST(request: Request) {
     const bytes = Buffer.from(arrayBuffer);
 
     const resendApiKey = process.env.RESEND_API_KEY;
-    const toEmail = process.env.CAREERS_TO_EMAIL || "ehsan.heydari@gmail.com";
+    const toEmail = process.env.CAREERS_TO_EMAIL || "mashticafevancouver@gmail.com";
     const fromEmail = process.env.CAREERS_FROM_EMAIL || "Mashti Careers <onboarding@resend.dev>";
     const subjectPrefix = process.env.CAREERS_SUBJECT_PREFIX || "Mashti Careers";
     const isEmailEnabled = Boolean(resendApiKey);

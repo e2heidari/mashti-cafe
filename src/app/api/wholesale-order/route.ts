@@ -30,7 +30,7 @@ Additional Message: ${message || 'No additional message provided'}
 
     // Check if Resend API key is available
     const resendApiKey = process.env.RESEND_API_KEY;
-    const toEmail = process.env.WHOLESALE_TO_EMAIL || 'ehsan.heydari@gmail.com';
+    const toEmail = process.env.WHOLESALE_TO_EMAIL || 'mashticafevancouver@gmail.com';
     const fromEmail = process.env.WHOLESALE_FROM_EMAIL || 'Mashti Wholesale <onboarding@resend.dev>';
     const subjectPrefix = process.env.WHOLESALE_SUBJECT_PREFIX || 'Mashti Wholesale';
     
