@@ -49,8 +49,6 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Preload critical resources for better performance */}
-        <link rel="preload" href="/images/favicon-icon.jpeg" as="image" />
         {/* Explicit favicon links for broad browser support */}
         <link
           rel="icon"
