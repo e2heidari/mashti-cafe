@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
 import dynamicImport from "next/dynamic";
@@ -193,15 +193,7 @@ function WholesaleContent() {
   //   });
   // };
 
-  const removeFromCart = useCallback((productId: string) => {
-    setCart((prevCart) => {
-      const newCart = prevCart.filter((item) => item.product._id !== productId);
-      if (typeof window !== "undefined") {
-        localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-      }
-      return newCart;
-    });
-  }, []);
+  // removeFromCart will be reintroduced when cart UI supports removal actions
 
   const getCartItemCount = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);

@@ -1,11 +1,14 @@
 "use client";
 
+// Opt out of prerendering for the home page to avoid prerender-time errors
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect, useRef, Suspense } from "react";
 import Navigation from "../components/Navigation";
-import dynamic from "next/dynamic";
+import NextDynamic from "next/dynamic";
 
 // Dynamically import AI Assistant to reduce initial bundle size
-const AIAssistant = dynamic(() => import("../components/AIAssistant"), {
+const AIAssistant = NextDynamic(() => import("../components/AIAssistant"), {
   loading: () => <div className="text-white">Loading AI Assistant...</div>,
   ssr: false,
 });
@@ -160,7 +163,7 @@ export default function Home() {
       } else {
         setSubmitMessage("Failed to send booking request. Please try again.");
       }
-    } catch (error) {
+    } catch {
       setSubmitMessage("Failed to send booking request. Please try again.");
     } finally {
       setIsSubmitting(false);

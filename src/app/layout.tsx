@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Inter, Montserrat } from "next/font/google";
 import "./globals.css";
 import Footer from "@/components/Footer";
@@ -96,7 +97,9 @@ export default function RootLayout({
           </>
         )}
         {children}
-        <GTMPageView />
+        <Suspense fallback={null}>
+          <GTMPageView />
+        </Suspense>
         <Footer />
       </body>
     </html>

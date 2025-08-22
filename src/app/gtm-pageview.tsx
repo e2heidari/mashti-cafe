@@ -2,14 +2,22 @@
 import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
+declare global {
+  interface Window {
+    dataLayer: Array<Record<string, unknown>>;
+  }
+}
+
 export default function GTMPageView() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    (window as any).dataLayer = (window as any).dataLayer || [];
+    if (!Array.isArray(window.dataLayer)) {
+      window.dataLayer = [];
+    }
     const url = pathname + (searchParams?.toString() ? `?${searchParams}` : "");
-    (window as any).dataLayer.push({
+    window.dataLayer.push({
       event: "pageview",
       page_path: pathname,
       page_location: `${window.location.origin}${url}`,
