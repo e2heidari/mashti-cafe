@@ -34,9 +34,9 @@ export const metadata: Metadata = {
   keywords:
     "Iranian cafe, juice bar, ice cream, coffee, B.C., Vancouver, Persian food",
   icons: {
-    icon: [{ url: "/images/mashti-logo-1.png", type: "image/png" }],
-    shortcut: "/images/mashti-logo-1.png",
-    apple: "/images/mashti-logo-1.png",
+    icon: [{ url: "/images/favicon-icon.jpeg", type: "image/jpeg" }],
+    shortcut: "/images/favicon-icon.jpeg",
+    apple: "/images/favicon-icon.jpeg",
   },
 };
 
@@ -53,19 +53,19 @@ export default function RootLayout({
         <link
           rel="icon"
           href="/images/favicon-icon.jpeg"
-          type="image/png"
+          type="image/jpeg"
           sizes="32x32"
         />
         <link
           rel="icon"
           href="/images/favicon-icon.jpeg"
-          type="image/png"
+          type="image/jpeg"
           sizes="16x16"
         />
         <link
           rel="shortcut icon"
           href="/images/favicon-icon.jpeg"
-          type="image/png"
+          type="image/jpeg"
         />
         <link rel="apple-touch-icon" href="/images/favicon-icon.jpeg" />
       </head>
