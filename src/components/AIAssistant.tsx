@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo, useCallback, useEffect } from "react";
+import { pushGTMEvent } from "@/lib/gtm";
 import { drinkFlow } from "@/data/drinkFlow";
 
 interface AIAssistantProps {
@@ -395,6 +396,11 @@ const AIAssistant = memo(function AIAssistant({
 
   const handleFlowAnswer = useCallback(
     (option: { next?: string; result?: string[] }) => {
+      pushGTMEvent("mashtiai_answer", {
+        node: currentNodeKey,
+        hasNext: Boolean(option.next),
+        hasResult: Boolean(option.result),
+      });
       if (option.next) {
         setCurrentNodeKey(option.next);
         setVisitedNodeKeys((prev) => [...prev, option.next as string]);
@@ -428,7 +434,12 @@ const AIAssistant = memo(function AIAssistant({
         }, 600);
       }
     },
-    [getRecommendations, mapResultNamesToMenuItems, visitedNodeKeys]
+    [
+      currentNodeKey,
+      getRecommendations,
+      mapResultNamesToMenuItems,
+      visitedNodeKeys,
+    ]
   );
 
   // Helpers to extract emoji (if any) and plain text from a label like "☕ Coffee"
@@ -437,6 +448,7 @@ const AIAssistant = memo(function AIAssistant({
   // Legacy dynamic-answer handler removed
 
   const resetConversation = useCallback(() => {
+    pushGTMEvent("mashtiai_reset");
     setRecommendations([]);
     setShowResults(false);
   }, []);

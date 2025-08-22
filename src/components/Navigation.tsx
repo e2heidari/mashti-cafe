@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo, useEffect } from "react";
+import { pushGTMEvent } from "@/lib/gtm";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
@@ -173,7 +174,10 @@ const Navigation = memo(function Navigation({
             {/* Second Line: Mashti AI Button */}
             <div className="flex justify-end">
               <button
-                onClick={onAIOpen}
+                onClick={() => {
+                  pushGTMEvent("mashtiai_open", { location: "navigation" });
+                  onAIOpen();
+                }}
                 className="bg-white text-red-600 px-3 py-2 md:px-6 md:py-3 rounded-full font-bold hover:bg-gray-100 transition-all duration-300 shadow-md hover:shadow-lg flex items-center space-x-1 md:space-x-3 border-2 border-white hover:border-gray-200 text-s md:text-base whitespace-nowrap"
               >
                 <svg

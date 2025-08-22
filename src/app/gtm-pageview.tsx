@@ -4,7 +4,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 
 declare global {
   interface Window {
-    dataLayer: Array<Record<string, unknown>>;
+    dataLayer?: Array<Record<string, unknown>>;
   }
 }
 
