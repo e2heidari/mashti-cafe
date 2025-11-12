@@ -1,82 +1,59 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import Image from "next/image";
-import Navigation from "../../components/Navigation";
+import { useState, Suspense } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
+import Navigation from "@/components/Navigation";
 
-const AIAssistant = dynamic(() => import("../../components/AIAssistant"), {
+const AIAssistant = dynamic(() => import("@/components/AIAssistant"), {
   loading: () => <div className="text-white">Loading AI Assistant...</div>,
   ssr: false,
 });
 
-interface NewsItem {
+export interface NewsItem {
   _id: string;
   title: string;
   description: string;
   imageUrl: string;
   imageAlt?: string;
-  buttonText: string;
+  buttonText?: string;
   order: number;
   active: boolean;
 }
 
-export default function CentralBranch() {
+interface CentralPageClientProps {
+  newsItems: NewsItem[];
+  error?: string | null;
+}
+
+export default function CentralPageClient({
+  newsItems,
+  error = null,
+}: CentralPageClientProps) {
   const [isAIOpen, setIsAIOpen] = useState(false);
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchNewsItems = async () => {
-      try {
-        const response = await fetch("/api/news");
-        if (!response.ok) {
-          throw new Error("Failed to fetch news items");
-        }
-        const data = await response.json();
-        setNewsItems(data.newsItems || []);
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : "Failed to fetch news items"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchNewsItems();
-  }, []);
 
   return (
     <div className="min-h-screen bg-white">
       <Suspense
         fallback={<div className="text-white">Loading Navigation...</div>}
       >
-        <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu={true} />
+        <Navigation onAIOpen={() => setIsAIOpen(true)} showMenu />
       </Suspense>
       <div className="pt-48">
         <section id="news" className="py-16 px-4 sm:px-6 lg:px-8 bg-white">
           <div className="max-w-7xl mx-auto">
-            {loading ? (
-              <div className="text-center py-20">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                <p className="text-gray-600 text-lg font-sodo">
-                  Loading news...
-                </p>
-              </div>
-            ) : error ? (
+            {error ? (
               <div className="text-center py-20">
                 <p className="text-red-600 text-lg mb-4 font-sodo">
                   Failed to load news
                 </p>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition-colors font-pike"
+                <Link
+                  href="/central?refresh=1"
+                  className="bg-red-600 text-white px-6 py-3 rounded-full hover:bg-red-700 transition-colors font-pike inline-flex items-center justify-center"
                 >
                   Try Again
-                </button>
+                </Link>
               </div>
             ) : newsItems.length === 0 ? (
               <div className="text-center py-20">
@@ -111,7 +88,7 @@ export default function CentralBranch() {
                     </p>
                     <Link href="/central/menu">
                       <button className="bg-red-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike">
-                        {item.buttonText}
+                        {item.buttonText ?? "View Menu"}
                       </button>
                     </Link>
                   </div>
@@ -120,7 +97,6 @@ export default function CentralBranch() {
             )}
           </div>
         </section>
-
         <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
       </div>
     </div>

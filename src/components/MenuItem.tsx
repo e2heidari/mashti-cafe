@@ -36,19 +36,21 @@ const MenuItem = memo(function MenuItem({
   return (
     <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all">
       {/* Image or Icon */}
-      <div className="w-16 h-16 bg-orange-500 rounded-full mx-auto mb-4 flex items-center justify-center overflow-hidden">
-        {imageUrl ? (
+      {imageUrl ? (
+        <div className="w-42 h-42 rounded-full mx-auto mb-1.5 overflow-hidden">
           <Image
             src={imageUrl}
             alt={imageAlt || name}
-            width={64}
-            height={64}
-            className="w-full h-full object-cover"
+            width={168}
+            height={168}
+            className="w-full h-full object-cover rounded-full"
           />
-        ) : (
-          <span className="text-2xl">🥤</span>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="w-36 h-36 bg-orange-500 rounded-full mx-auto mb-1.5 flex items-center justify-center overflow-hidden">
+          <span className="text-4xl">🥤</span>
+        </div>
+      )}
 
       {/* Category Badge */}
       {category && (
