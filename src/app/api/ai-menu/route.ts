@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
-import { createClient } from 'next-sanity';
+import { NextResponse } from "next/server";
+import { createClient } from "next-sanity";
 
 const client = createClient({
-  projectId: 'eh05fgze',
-  dataset: 'mashti-menu',
-  apiVersion: '2024-01-01',
+  projectId: "eh05fgze",
+  dataset: "mashti-menu",
+  apiVersion: "2024-01-01",
   useCdn: true,
 });
 
@@ -12,6 +12,7 @@ interface MenuItem {
   title: string;
   description: string;
   icon: string;
+  imageUrl?: string;
   category: string;
   price: string;
   temperature: "hot" | "cold" | "both";
@@ -49,6 +50,7 @@ interface SanityMenuItem {
   name: string;
   description?: string;
   price: number;
+  imageUrl?: string;
   category?: {
     name: string;
   };
@@ -58,7 +60,9 @@ interface SanityMenuItem {
 
 // Simple in-memory cache for this API route (per server instance)
 const ONE_HOUR_MS = 60 * 60 * 1000;
-const DEFAULT_CACHE_TTL_MS = Number(process.env.AI_MENU_CACHE_TTL_MS || ONE_HOUR_MS);
+const DEFAULT_CACHE_TTL_MS = Number(
+  process.env.AI_MENU_CACHE_TTL_MS || ONE_HOUR_MS
+);
 const DEFAULT_FALLBACK_TTL_MS = Number(
   process.env.AI_MENU_FALLBACK_TTL_MS || 5 * 60 * 1000
 );
@@ -66,29 +70,44 @@ const DEFAULT_FALLBACK_TTL_MS = Number(
 type CachedPayload = { menuItems: MenuItem[]; message?: string };
 let aiMenuCache: { payload: CachedPayload; expiresAt: number } | null = null;
 
-function buildCacheHeaders(ttlMs: number, status: 'HIT' | 'MISS' | 'FALLBACK'): HeadersInit {
+function buildCacheHeaders(
+  ttlMs: number,
+  status: "HIT" | "MISS" | "FALLBACK"
+): HeadersInit {
   const sMaxAge = Math.max(0, Math.floor(ttlMs / 1000));
   const browserMaxAge = Math.min(600, sMaxAge); // cap browser at 10m to keep UI fresh
   return {
-    'Cache-Control': `public, max-age=${browserMaxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=86400`,
-    'X-Cache': status,
-    'X-Cache-TTL': String(sMaxAge),
+    "Cache-Control": `public, max-age=${browserMaxAge}, s-maxage=${sMaxAge}, stale-while-revalidate=86400`,
+    "X-Cache": status,
+    "X-Cache-TTL": String(sMaxAge),
   };
 }
 
 // Helper function to determine temperature based on category
 function getTemperature(category: string): "hot" | "cold" | "both" {
   const hotCategories = ["Coffee & Tea", "Hot Drinks"];
-  const coldCategories = ["Smoothies", "Shakes", "Juices", "Ice Cream", "Cold Drinks", "Fresh Juice"];
-  
+  const coldCategories = [
+    "Smoothies",
+    "Shakes",
+    "Juices",
+    "Ice Cream",
+    "Cold Drinks",
+    "Fresh Juice",
+  ];
+
   if (hotCategories.includes(category)) return "hot";
   if (coldCategories.includes(category)) return "cold";
-  
+
   // Default based on category
   if (category.includes("Coffee") || category.includes("Tea")) return "hot";
-  if (category.includes("Smoothie") || category.includes("Juice") || category.includes("Ice Cream")) return "cold";
+  if (
+    category.includes("Smoothie") ||
+    category.includes("Juice") ||
+    category.includes("Ice Cream")
+  )
+    return "cold";
   if (category.includes("Shake")) return "cold";
-  
+
   return "both";
 }
 
@@ -99,74 +118,75 @@ function getIcon(category: string, name: string): string {
 
   // Strong name-based overrides first
   // Protein/fitness shakes (even if they mention coffee)
-  if (n.includes('shake')) {
+  if (n.includes("shake")) {
     if (
-      n.includes('protein') ||
-      n.includes('boost') ||
-      n.includes('peanut') ||
-      n.includes('nescafe')
+      n.includes("protein") ||
+      n.includes("boost") ||
+      n.includes("peanut") ||
+      n.includes("nescafe")
     ) {
-      return '🏋️';
+      return "🏋️";
     }
-    return '🥤';
+    return "🥤";
   }
 
   // Specific items requested as shake icons
   if (
-    n.includes('shir pesteh moz nutella') ||
-    n.includes('shir pesteh moz') ||
-    n.includes('shir pesteh') ||
-    n.includes('shir fandogh') ||
-    n.includes('vitamine akbar mashti') ||
-    n.includes('vitamin akbar mashti') ||
-    n.includes('maajoon')
+    n.includes("shir pesteh moz nutella") ||
+    n.includes("shir pesteh moz") ||
+    n.includes("shir pesteh") ||
+    n.includes("shir fandogh") ||
+    n.includes("vitamine akbar mashti") ||
+    n.includes("vitamin akbar mashti") ||
+    n.includes("maajoon")
   ) {
-    return '🥤';
+    return "🥤";
   }
 
   // Explicit dessert-style drinks/plates
   // (keep other dessert items below)
 
   // Name-based priority (hot drinks / desserts)
-  if (n.includes('tea')) return '🍵';
+  if (n.includes("tea")) return "🍵";
   if (
-    n.includes('coffee') ||
-    n.includes('espresso') ||
-    n.includes('americano') ||
-    n.includes('latte') ||
-    n.includes('cappuccino') ||
-    n.includes('macchiato') ||
-    n.includes('nescafe')
+    n.includes("coffee") ||
+    n.includes("espresso") ||
+    n.includes("americano") ||
+    n.includes("latte") ||
+    n.includes("cappuccino") ||
+    n.includes("macchiato") ||
+    n.includes("nescafe")
   ) {
-    return '☕';
+    return "☕";
   }
-  if (n.includes('ferrero')) return '🍨';
-  if (n.includes('affogato')) return '🍨';
-  if (n.includes('faloodeh')) return '🍧';
-  if (n.includes('lavashak')) return '🍋';
-  if (n.includes('baklava') || n.includes('zoolbia') || n.includes('bamieh')) return '🍰';
-  if (n.includes('bastani') || n.includes('havij bastani')) return '🍨';
-  if (n.includes('shir moz anbe') || n.includes('shir moz')) return '🥤';
+  if (n.includes("ferrero")) return "🍨";
+  if (n.includes("affogato")) return "🍨";
+  if (n.includes("faloodeh")) return "🍧";
+  if (n.includes("lavashak")) return "🍋";
+  if (n.includes("baklava") || n.includes("zoolbia") || n.includes("bamieh"))
+    return "🍰";
+  if (n.includes("bastani") || n.includes("havij bastani")) return "🍨";
+  if (n.includes("shir moz anbe") || n.includes("shir moz")) return "🥤";
 
   // Category-based fallback
-  if (c.includes('juice') || category === 'Fresh Juice') return '🧃';
-  if (c.includes('smoothie')) return '🥤';
-  if (c.includes('shake')) return '🥤';
-  if (c.includes('ice cream')) return '🍨';
-  if (c.includes('protein')) return '🏋️';
-  if (c.includes('dessert') || c.includes('sweets')) return '🍰';
-  if (c.includes('cold drinks')) return '🥤';
-  if (c.includes('hot drinks')) return '☕';
-  if (c.includes('coffee')) return '☕';
-  if (c.includes('tea')) return '🍵';
+  if (c.includes("juice") || category === "Fresh Juice") return "🧃";
+  if (c.includes("smoothie")) return "🥤";
+  if (c.includes("shake")) return "🥤";
+  if (c.includes("ice cream")) return "🍨";
+  if (c.includes("protein")) return "🏋️";
+  if (c.includes("dessert") || c.includes("sweets")) return "🍰";
+  if (c.includes("cold drinks")) return "🥤";
+  if (c.includes("hot drinks")) return "☕";
+  if (c.includes("coffee")) return "☕";
+  if (c.includes("tea")) return "🍵";
 
-  return '🍽️';
+  return "🍽️";
 }
 
 // Helper function to get flavors based on name and category
 function getFlavors(name: string, category: string): string[] {
   const flavors: string[] = [];
-  
+
   // Add category-based flavors
   if (category.includes("Coffee")) flavors.push("bold", "rich");
   if (category.includes("Tea")) flavors.push("soothing");
@@ -174,7 +194,7 @@ function getFlavors(name: string, category: string): string[] {
   if (category.includes("Shake")) flavors.push("sweet", "creamy");
   if (category.includes("Juice")) flavors.push("fruity", "refreshing");
   if (category.includes("Ice Cream")) flavors.push("sweet", "creamy");
-  
+
   // Add name-based flavors
   const nameLower = name.toLowerCase();
   if (nameLower.includes("chocolate")) flavors.push("rich", "sweet");
@@ -200,7 +220,7 @@ function getFlavors(name: string, category: string): string[] {
   if (nameLower.includes("baklava")) flavors.push("sweet", "rich");
   if (nameLower.includes("zoolbia")) flavors.push("sweet", "syrupy");
   if (nameLower.includes("bamieh")) flavors.push("sweet", "syrupy");
-  
+
   return [...new Set(flavors)]; // Remove duplicates
 }
 
@@ -208,38 +228,48 @@ function getFlavors(name: string, category: string): string[] {
 function getHealthBenefits(category: string, name: string): string[] {
   const benefits: string[] = [];
   const nameLower = name.toLowerCase();
-  
-  if (category.includes("Coffee") || nameLower.includes("coffee")) benefits.push("energy");
+
+  if (category.includes("Coffee") || nameLower.includes("coffee"))
+    benefits.push("energy");
   if (category.includes("Tea")) benefits.push("relaxation", "antioxidants");
-  if (category.includes("Smoothie") || category.includes("Juice")) benefits.push("vitamins", "antioxidants");
-  if (category.includes("Protein")) benefits.push("protein", "energy", "muscle building");
+  if (category.includes("Smoothie") || category.includes("Juice"))
+    benefits.push("vitamins", "antioxidants");
+  if (category.includes("Protein"))
+    benefits.push("protein", "energy", "muscle building");
   if (category.includes("Ice Cream")) benefits.push("comfort", "calcium");
-  if (nameLower.includes("pomegranate")) benefits.push("antioxidants", "heart health");
+  if (nameLower.includes("pomegranate"))
+    benefits.push("antioxidants", "heart health");
   if (nameLower.includes("orange")) benefits.push("vitamins", "immunity");
   if (nameLower.includes("carrot")) benefits.push("vitamins", "eye health");
   if (nameLower.includes("berry")) benefits.push("antioxidants", "vitamins");
   if (nameLower.includes("lavashak")) benefits.push("vitamins", "digestion");
   if (nameLower.includes("shahtoot")) benefits.push("antioxidants", "iron");
-  
+
   return benefits;
 }
 
 // Helper function to get time of day
 function getTimeOfDay(category: string, name: string): string[] {
   const nameLower = name.toLowerCase();
-  
-  if (category.includes("Coffee") || nameLower.includes("coffee")) return ["morning", "afternoon"];
+
+  if (category.includes("Coffee") || nameLower.includes("coffee"))
+    return ["morning", "afternoon"];
   if (category.includes("Tea")) return ["morning", "afternoon", "evening"];
-  if (category.includes("Smoothie") || category.includes("Juice")) return ["morning", "afternoon"];
-  if (category.includes("Shake") || category.includes("Ice Cream")) return ["afternoon", "evening"];
+  if (category.includes("Smoothie") || category.includes("Juice"))
+    return ["morning", "afternoon"];
+  if (category.includes("Shake") || category.includes("Ice Cream"))
+    return ["afternoon", "evening"];
   if (category.includes("Protein")) return ["morning", "afternoon"];
   if (category.includes("Sweets")) return ["afternoon", "evening"];
-  
+
   return ["morning", "afternoon"];
 }
 
 // Helper function to get taste profile
-function getTasteProfile(name: string, category: string): MenuItem['tasteProfile'] {
+function getTasteProfile(
+  name: string,
+  category: string
+): MenuItem["tasteProfile"] {
   const nameLower = name.toLowerCase();
 
   const clamp = (v: number) => Math.max(0, Math.min(10, v));
@@ -254,7 +284,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
     freshness: 5,
   };
 
-  if (category.includes('Juice') || nameLower.includes('juice')) {
+  if (category.includes("Juice") || nameLower.includes("juice")) {
     profile = {
       sweetness: 5,
       acidity: 4,
@@ -263,7 +293,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
       spiciness: 1,
       freshness: 9,
     };
-  } else if (category.includes('Smoothie')) {
+  } else if (category.includes("Smoothie")) {
     profile = {
       sweetness: 6,
       acidity: 4,
@@ -272,7 +302,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
       spiciness: 1,
       freshness: 7,
     };
-  } else if (category.includes('Shake')) {
+  } else if (category.includes("Shake")) {
     profile = {
       sweetness: 8,
       acidity: 2,
@@ -281,7 +311,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
       spiciness: 1,
       freshness: 3,
     };
-  } else if (category.includes('Ice Cream')) {
+  } else if (category.includes("Ice Cream")) {
     profile = {
       sweetness: 7,
       acidity: 1,
@@ -290,7 +320,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
       spiciness: 1,
       freshness: 2,
     };
-  } else if (category.includes('Coffee')) {
+  } else if (category.includes("Coffee")) {
     profile = {
       sweetness: 2,
       acidity: 5,
@@ -299,7 +329,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
       spiciness: 1,
       freshness: 3,
     };
-  } else if (category.includes('Tea')) {
+  } else if (category.includes("Tea")) {
     profile = {
       sweetness: 1,
       acidity: 4,
@@ -308,7 +338,7 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
       spiciness: 1,
       freshness: 7,
     };
-  } else if (category.includes('Protein')) {
+  } else if (category.includes("Protein")) {
     profile = {
       sweetness: 5,
       acidity: 3,
@@ -320,79 +350,109 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
   }
 
   // Name-based refinements
-  if (nameLower.includes('latte') || nameLower.includes('cappuccino') || nameLower.includes('macchiato') || nameLower.includes('mocha') || nameLower.includes('flat white')) {
+  if (
+    nameLower.includes("latte") ||
+    nameLower.includes("cappuccino") ||
+    nameLower.includes("macchiato") ||
+    nameLower.includes("mocha") ||
+    nameLower.includes("flat white")
+  ) {
     profile.creaminess = 7;
     profile.sweetness = Math.max(profile.sweetness, 4);
     profile.bitterness = Math.min(profile.bitterness, 4);
   }
-  if (nameLower.includes('affogato')) {
+  if (nameLower.includes("affogato")) {
     profile.creaminess = 8;
     profile.sweetness = Math.max(profile.sweetness, 5);
     profile.bitterness = Math.max(profile.bitterness, 3);
   }
-  if (nameLower.includes('chocolate') || nameLower.includes('nutella') || nameLower.includes('m & m')) {
+  if (
+    nameLower.includes("chocolate") ||
+    nameLower.includes("nutella") ||
+    nameLower.includes("m & m")
+  ) {
     profile.sweetness = Math.max(profile.sweetness, 8);
     profile.creaminess = Math.max(profile.creaminess, 7);
     profile.bitterness = Math.max(profile.bitterness, 4);
   }
-  if (nameLower.includes('vanilla')) {
+  if (nameLower.includes("vanilla")) {
     profile.sweetness = Math.max(profile.sweetness, 7);
     profile.creaminess = Math.max(profile.creaminess, 7);
   }
-  if (nameLower.includes('strawberry') || nameLower.includes('berry') || nameLower.includes('shahtoot')) {
+  if (
+    nameLower.includes("strawberry") ||
+    nameLower.includes("berry") ||
+    nameLower.includes("shahtoot")
+  ) {
     profile.sweetness = Math.max(profile.sweetness, 6);
     profile.acidity = Math.max(profile.acidity, 5);
     profile.freshness = Math.max(profile.freshness, 8);
   }
-  if (nameLower.includes('mango') || nameLower.includes('pineapple') || nameLower.includes('peach')) {
+  if (
+    nameLower.includes("mango") ||
+    nameLower.includes("pineapple") ||
+    nameLower.includes("peach")
+  ) {
     profile.sweetness = Math.max(profile.sweetness, 7);
     profile.freshness = Math.max(profile.freshness, 7);
     profile.acidity = Math.max(profile.acidity, 3);
   }
-  if (nameLower.includes('pomegranate') || nameLower.includes('barberry') || nameLower.includes('lavashak') || nameLower.includes('orange')) {
+  if (
+    nameLower.includes("pomegranate") ||
+    nameLower.includes("barberry") ||
+    nameLower.includes("lavashak") ||
+    nameLower.includes("orange")
+  ) {
     profile.acidity = Math.max(profile.acidity, 7);
     profile.freshness = Math.max(profile.freshness, 8);
     profile.sweetness = Math.min(profile.sweetness, 5);
   }
-  if (nameLower.includes('apple')) {
+  if (nameLower.includes("apple")) {
     profile.sweetness = Math.max(profile.sweetness, 5);
     profile.acidity = 3; // apples are mildly tart
     profile.freshness = Math.max(profile.freshness, 6);
   }
-  if (nameLower.includes('carrot')) {
+  if (nameLower.includes("carrot")) {
     profile.sweetness = Math.max(profile.sweetness, 4);
     profile.acidity = 2; // carrot juices are low-acid
     profile.freshness = Math.max(profile.freshness, 5);
   }
-  if (nameLower.includes('celery')) {
+  if (nameLower.includes("celery")) {
     profile.sweetness = Math.min(profile.sweetness, 3);
     profile.acidity = 3;
     profile.bitterness = Math.max(profile.bitterness, 2);
     profile.freshness = Math.max(profile.freshness, 8);
   }
-  if (nameLower.includes('sour cherry')) {
+  if (nameLower.includes("sour cherry")) {
     profile.sweetness = Math.min(profile.sweetness, 5);
     profile.acidity = Math.max(profile.acidity, 7);
     profile.freshness = Math.max(profile.freshness, 8);
   }
-  if (nameLower.includes('watermelon')) {
+  if (nameLower.includes("watermelon")) {
     profile.sweetness = Math.max(profile.sweetness, 6);
     profile.acidity = Math.min(profile.acidity, 3);
     profile.freshness = 9;
   }
-  if (nameLower.includes('peanut') || nameLower.includes('tahini') || nameLower.includes('pistachio') || nameLower.includes('fandogh') || nameLower.includes('pesteh') || nameLower.includes('shir ')) {
+  if (
+    nameLower.includes("peanut") ||
+    nameLower.includes("tahini") ||
+    nameLower.includes("pistachio") ||
+    nameLower.includes("fandogh") ||
+    nameLower.includes("pesteh") ||
+    nameLower.includes("shir ")
+  ) {
     profile.creaminess = Math.max(profile.creaminess, 7);
     profile.sweetness = Math.max(profile.sweetness, 5);
   }
 
   // Coffee/tea textual hints if category mislabeled
-  if (nameLower.includes('coffee')) {
+  if (nameLower.includes("coffee")) {
     profile.bitterness = Math.max(profile.bitterness, 7);
     profile.acidity = Math.max(profile.acidity, 5);
     profile.sweetness = Math.min(profile.sweetness, 3);
     profile.creaminess = Math.max(profile.creaminess, 1);
   }
-  if (nameLower.includes('tea')) {
+  if (nameLower.includes("tea")) {
     profile.bitterness = Math.max(profile.bitterness, 4);
     profile.freshness = Math.max(profile.freshness, 7);
     profile.sweetness = Math.min(profile.sweetness, 2);
@@ -414,7 +474,10 @@ function getTasteProfile(name: string, category: string): MenuItem['tasteProfile
 }
 
 // Helper function to get nutritional info
-function getNutritionalInfo(name: string, category: string): {
+function getNutritionalInfo(
+  name: string,
+  category: string
+): {
   calories: number;
   sugar: number;
   protein: number;
@@ -426,7 +489,7 @@ function getNutritionalInfo(name: string, category: string): {
   dietaryInfo: string[];
 } {
   const nameLower = name.toLowerCase();
-  
+
   // Curated vitamins for specific items (by exact name, case-insensitive)
   const VITAMIN_MAP: Record<string, string[]> = {
     // Juices
@@ -441,7 +504,7 @@ function getNutritionalInfo(name: string, category: string): {
     // Smoothies
     "strawberry smoothie": ["C", "K", "B9"],
     "watermelon strawberry smoothie": ["A", "C", "B9"],
-    "shahtootfarangi": ["C", "K"],
+    shahtootfarangi: ["C", "K"],
     "pomegranate smoothie": ["C", "K", "B9"],
     "lavashak smoothie": ["C"],
     "mango smoothie": ["A", "C", "E", "B6"],
@@ -454,7 +517,7 @@ function getNutritionalInfo(name: string, category: string): {
     "vanilla cinnamon shake": ["A", "D", "B12"],
     "caramel shake": ["A", "D", "B12"],
     "oreo shake": ["A", "D", "B12"],
-    "ferrero": ["A", "D", "B12"],
+    ferrero: ["A", "D", "B12"],
     "lotus shake": ["A", "D", "B12"],
     "nutella shake": ["A", "D", "B12"],
     "m & m shake": ["A", "D", "B12"],
@@ -474,15 +537,15 @@ function getNutritionalInfo(name: string, category: string): {
     "chocolate cup": ["A", "D", "B12"],
     "strawberry cup": ["C", "B9"],
     "mango cup": ["A", "C", "E"],
-    "faloodeh": [],
+    faloodeh: [],
     "faloodeh bastani": ["A", "D", "B12"],
     "lavashak plate": ["C"],
-    "affogato": ["A", "D", "B12"],
+    affogato: ["A", "D", "B12"],
     // Coffee & Tea
-    "espresso": ["B2", "B3", "B5"],
-    "americano": ["B2", "B3", "B5"],
-    "latte": ["A", "D", "B12"],
-    "cappuccino": ["A", "D", "B12"],
+    espresso: ["B2", "B3", "B5"],
+    americano: ["B2", "B3", "B5"],
+    latte: ["A", "D", "B12"],
+    cappuccino: ["A", "D", "B12"],
     "caramel macchiato": ["A", "D", "B12"],
     "black tea": ["B2"],
     "green tea": ["B2"],
@@ -504,7 +567,7 @@ function getNutritionalInfo(name: string, category: string): {
   let ingredients = ["water"];
   let allergens: string[] = [];
   let dietaryInfo = ["vegetarian"];
-  
+
   // Adjust based on category and name
   if (category.includes("Coffee") && !nameLower.includes("tea")) {
     calories = 5;
@@ -516,8 +579,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["coffee beans", "water"];
     allergens = [];
     dietaryInfo = ["vegan", "gluten-free"];
-  }
-  else if (category.includes("Tea") || nameLower.includes("tea")) {
+  } else if (category.includes("Tea") || nameLower.includes("tea")) {
     calories = 2;
     sugar = 0;
     protein = 0;
@@ -527,8 +589,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["tea leaves", "water"];
     allergens = [];
     dietaryInfo = ["vegan", "gluten-free"];
-  }
-  else if (category.includes("Smoothie")) {
+  } else if (category.includes("Smoothie")) {
     calories = 180;
     sugar = 25;
     protein = 6;
@@ -538,8 +599,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["fruits", "milk", "yogurt", "honey"];
     allergens = ["milk"];
     dietaryInfo = ["vegetarian"];
-  }
-  else if (category.includes("Shake")) {
+  } else if (category.includes("Shake")) {
     calories = 320;
     sugar = 35;
     protein = 8;
@@ -549,8 +609,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["milk", "ice cream", "flavoring"];
     allergens = ["milk"];
     dietaryInfo = ["vegetarian"];
-  }
-  else if (category.includes("Juice")) {
+  } else if (category.includes("Juice")) {
     calories = 110;
     sugar = 22;
     protein = 2;
@@ -560,8 +619,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["fresh fruits"];
     allergens = [];
     dietaryInfo = ["vegan", "gluten-free"];
-  }
-  else if (category.includes("Ice Cream")) {
+  } else if (category.includes("Ice Cream")) {
     calories = 250;
     sugar = 28;
     protein = 4;
@@ -571,8 +629,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["milk", "cream", "sugar", "flavoring"];
     allergens = ["milk"];
     dietaryInfo = ["vegetarian"];
-  }
-  else if (category.includes("Protein")) {
+  } else if (category.includes("Protein")) {
     calories = 280;
     sugar = 18;
     protein = 25;
@@ -582,8 +639,7 @@ function getNutritionalInfo(name: string, category: string): {
     ingredients = ["whey protein", "milk", "fruits"];
     allergens = ["milk"];
     dietaryInfo = ["high-protein"];
-  }
-  else if (category.includes("Sweets")) {
+  } else if (category.includes("Sweets")) {
     calories = 300;
     sugar = 35;
     protein = 5;
@@ -594,7 +650,7 @@ function getNutritionalInfo(name: string, category: string): {
     allergens = ["nuts", "gluten"];
     dietaryInfo = ["vegetarian"];
   }
-  
+
   // Adjust based on specific names
   if (nameLower.includes("chocolate")) {
     calories += 50;
@@ -654,7 +710,7 @@ function getNutritionalInfo(name: string, category: string): {
     sugar += 20;
     ingredients.push("flour", "honey", "rose water");
   }
-  
+
   return {
     calories,
     sugar,
@@ -664,7 +720,7 @@ function getNutritionalInfo(name: string, category: string): {
     minerals: [...new Set(minerals)],
     ingredients: [...new Set(ingredients)],
     allergens,
-    dietaryInfo
+    dietaryInfo,
   };
 }
 
@@ -688,7 +744,7 @@ function getServingSize(category: string): string {
   if (category.includes("Protein")) {
     return "350ml";
   }
-  
+
   // Default
   return "350ml";
 }
@@ -698,10 +754,12 @@ export async function GET(request: Request) {
     // Serve from cache if valid and not explicitly bypassed
     const now = Date.now();
     const url = new URL(request.url);
-    const noCache = url.searchParams.get('nocache') === '1' || url.searchParams.get('refresh') === '1';
+    const noCache =
+      url.searchParams.get("nocache") === "1" ||
+      url.searchParams.get("refresh") === "1";
     if (!noCache && aiMenuCache && aiMenuCache.expiresAt > now) {
       return NextResponse.json(aiMenuCache.payload, {
-        headers: buildCacheHeaders(aiMenuCache.expiresAt - now, 'HIT'),
+        headers: buildCacheHeaders(aiMenuCache.expiresAt - now, "HIT"),
       });
     }
     // Fetch all menu items from CMS
@@ -711,6 +769,7 @@ export async function GET(request: Request) {
         name,
         description,
         price,
+        "imageUrl": image.asset->url,
         category->{
           name
         },
@@ -729,13 +788,17 @@ export async function GET(request: Request) {
       const timeOfDay = getTimeOfDay(category, item.name);
       const tasteProfile = getTasteProfile(item.name, category);
       const nutritional = getNutritionalInfo(item.name, category);
-  const servingSize = getServingSize(category);
-      
+      const servingSize = getServingSize(category);
+
       // Determine caffeine based on category and name
       let caffeine = false;
-      
+
       // Coffee always has caffeine
-      if (category.includes("Coffee") || item.name.toLowerCase().includes("coffee") || item.name.toLowerCase().includes("nescafe")) {
+      if (
+        category.includes("Coffee") ||
+        item.name.toLowerCase().includes("coffee") ||
+        item.name.toLowerCase().includes("nescafe")
+      ) {
         caffeine = true;
       }
       // Tea - only Black Tea and Green Tea have caffeine
@@ -748,19 +811,23 @@ export async function GET(request: Request) {
           caffeine = false;
         }
       }
-      
+
       // Determine origin
-      const origin = item.name.toLowerCase().includes("persian") || 
-                    item.name.toLowerCase().includes("lavashak") ||
-                    item.name.toLowerCase().includes("shahtoot") ||
-                    item.name.toLowerCase().includes("baklava") ||
-                    item.name.toLowerCase().includes("zoolbia") ||
-                    item.name.toLowerCase().includes("bamieh") ? "Persian" : "International";
-      
+      const origin =
+        item.name.toLowerCase().includes("persian") ||
+        item.name.toLowerCase().includes("lavashak") ||
+        item.name.toLowerCase().includes("shahtoot") ||
+        item.name.toLowerCase().includes("baklava") ||
+        item.name.toLowerCase().includes("zoolbia") ||
+        item.name.toLowerCase().includes("bamieh")
+          ? "Persian"
+          : "International";
+
       return {
         title: item.name,
         description: item.description || `Delicious ${item.name.toLowerCase()}`,
         icon,
+        imageUrl: item.imageUrl,
         category,
         price: `$${item.price.toFixed(2)}`,
         temperature,
@@ -775,32 +842,41 @@ export async function GET(request: Request) {
         tasteProfile,
         preparationTime: 5,
         servingSize,
-        origin
+        origin,
       };
     });
 
     // If CMS returns nothing, provide a minimal fallback so UI still works
     if (!aiMenuItems || aiMenuItems.length === 0) {
-      const payload = { menuItems: getFallbackItems(), message: 'Using fallback items' };
-      aiMenuCache = { payload, expiresAt: Date.now() + DEFAULT_FALLBACK_TTL_MS };
+      const payload = {
+        menuItems: getFallbackItems(),
+        message: "Using fallback items",
+      };
+      aiMenuCache = {
+        payload,
+        expiresAt: Date.now() + DEFAULT_FALLBACK_TTL_MS,
+      };
       return NextResponse.json(payload, {
-        headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, 'FALLBACK'),
+        headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, "FALLBACK"),
       });
     }
     const payload = { menuItems: aiMenuItems };
     aiMenuCache = { payload, expiresAt: Date.now() + DEFAULT_CACHE_TTL_MS };
     return NextResponse.json(payload, {
-      headers: buildCacheHeaders(DEFAULT_CACHE_TTL_MS, 'MISS'),
+      headers: buildCacheHeaders(DEFAULT_CACHE_TTL_MS, "MISS"),
     });
   } catch {
     // Keep UI responsive if CMS fails; cache fallback briefly
-    const payload = { menuItems: getFallbackItems(), message: 'Fallback due to fetch error' };
+    const payload = {
+      menuItems: getFallbackItems(),
+      message: "Fallback due to fetch error",
+    };
     aiMenuCache = { payload, expiresAt: Date.now() + DEFAULT_FALLBACK_TTL_MS };
     return NextResponse.json(payload, {
-      headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, 'FALLBACK'),
+      headers: buildCacheHeaders(DEFAULT_FALLBACK_TTL_MS, "FALLBACK"),
     });
   }
-} 
+}
 
 // Minimal fallback items to keep Mashti AI responsive even if CMS is unavailable
 function getFallbackItems(): MenuItem[] {
@@ -808,7 +884,7 @@ function getFallbackItems(): MenuItem[] {
     title: string,
     category: string,
     price: string,
-    temperature: 'hot' | 'cold' | 'both',
+    temperature: "hot" | "cold" | "both"
   ): MenuItem => ({
     title,
     description: `Delicious ${title.toLowerCase()}`,
@@ -817,49 +893,51 @@ function getFallbackItems(): MenuItem[] {
     price,
     temperature,
     flavors: getFlavors(title, category),
-    caffeine: ['Coffee', 'Tea', 'Hot Drinks', 'Coffee & Tea'].some(c => category.includes(c))
+    caffeine: ["Coffee", "Tea", "Hot Drinks", "Coffee & Tea"].some((c) =>
+      category.includes(c)
+    )
       ? !/chamomile|mint|ginger|fruit/i.test(title)
       : false,
     healthBenefits: getHealthBenefits(category, title),
     timeOfDay: getTimeOfDay(category, title),
-    seasonality: ['all'],
+    seasonality: ["all"],
     popularity: 7,
-    reason: 'Great fit based on your choices',
+    reason: "Great fit based on your choices",
     ...getNutritionalInfo(title, category),
     tasteProfile: getTasteProfile(title, category),
     preparationTime: 5,
     servingSize: getServingSize(category),
-    origin: 'International',
+    origin: "International",
   });
 
   return [
     // Hot coffee
-    mk('Espresso', 'Coffee & Tea', '$2.99', 'hot'),
-    mk('Americano', 'Coffee & Tea', '$3.49', 'hot'),
-    mk('Latte', 'Coffee & Tea', '$4.49', 'hot'),
-    mk('Cappuccino', 'Coffee & Tea', '$4.49', 'hot'),
-    mk('Caramel Macchiato', 'Coffee & Tea', '$4.99', 'hot'),
+    mk("Espresso", "Coffee & Tea", "$2.99", "hot"),
+    mk("Americano", "Coffee & Tea", "$3.49", "hot"),
+    mk("Latte", "Coffee & Tea", "$4.49", "hot"),
+    mk("Cappuccino", "Coffee & Tea", "$4.49", "hot"),
+    mk("Caramel Macchiato", "Coffee & Tea", "$4.99", "hot"),
     // Hot tea
-    mk('Black Tea', 'Coffee & Tea', '$2.49', 'hot'),
-    mk('Green Tea', 'Coffee & Tea', '$2.49', 'hot'),
-    mk('Chamomile Tea', 'Coffee & Tea', '$2.49', 'hot'),
-    mk('Mint Medley Tea', 'Coffee & Tea', '$2.49', 'hot'),
-    mk('Lemon & Ginger Tea', 'Coffee & Tea', '$2.49', 'hot'),
-    mk('Mix Fruit Tea', 'Coffee & Tea', '$2.49', 'hot'),
+    mk("Black Tea", "Coffee & Tea", "$2.49", "hot"),
+    mk("Green Tea", "Coffee & Tea", "$2.49", "hot"),
+    mk("Chamomile Tea", "Coffee & Tea", "$2.49", "hot"),
+    mk("Mint Medley Tea", "Coffee & Tea", "$2.49", "hot"),
+    mk("Lemon & Ginger Tea", "Coffee & Tea", "$2.49", "hot"),
+    mk("Mix Fruit Tea", "Coffee & Tea", "$2.49", "hot"),
     // Cold juice
-    mk('Orange Juice', 'Juices', '$5.49', 'cold'),
-    mk('Apple Juice', 'Juices', '$5.49', 'cold'),
-    mk('Pomegranate Juice', 'Juices', '$5.99', 'cold'),
-    mk('Sour Cherry Juice', 'Juices', '$5.99', 'cold'),
+    mk("Orange Juice", "Juices", "$5.49", "cold"),
+    mk("Apple Juice", "Juices", "$5.49", "cold"),
+    mk("Pomegranate Juice", "Juices", "$5.99", "cold"),
+    mk("Sour Cherry Juice", "Juices", "$5.99", "cold"),
     // Smoothies
-    mk('Strawberry Smoothie', 'Smoothies', '$6.99', 'cold'),
-    mk('Mango Smoothie', 'Smoothies', '$6.99', 'cold'),
+    mk("Strawberry Smoothie", "Smoothies", "$6.99", "cold"),
+    mk("Mango Smoothie", "Smoothies", "$6.99", "cold"),
     // Protein/Nutty & Dessert examples
-    mk('Nescafe Shake', 'Protein Shakes', '$7.99', 'cold'),
-    mk('Peanut Butter Shake', 'Protein Shakes', '$7.99', 'cold'),
-    mk('Maajoon', 'Desserts', '$8.99', 'cold'),
-    mk('Vitamine Akbar Mashti', 'Desserts', '$8.99', 'cold'),
-    mk('Shir Pesteh Moz Nutella', 'Desserts', '$8.99', 'cold'),
-    mk('Shir Pesteh Moz', 'Desserts', '$8.49', 'cold'),
+    mk("Nescafe Shake", "Protein Shakes", "$7.99", "cold"),
+    mk("Peanut Butter Shake", "Protein Shakes", "$7.99", "cold"),
+    mk("Maajoon", "Desserts", "$8.99", "cold"),
+    mk("Vitamine Akbar Mashti", "Desserts", "$8.99", "cold"),
+    mk("Shir Pesteh Moz Nutella", "Desserts", "$8.99", "cold"),
+    mk("Shir Pesteh Moz", "Desserts", "$8.49", "cold"),
   ];
 }

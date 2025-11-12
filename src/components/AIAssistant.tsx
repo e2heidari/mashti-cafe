@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, memo, useCallback, useEffect } from "react";
+import Image from "next/image";
 import { pushGTMEvent } from "@/lib/gtm";
 import { drinkFlow } from "@/data/drinkFlow";
 
@@ -15,6 +16,7 @@ interface MenuItem {
   title: string;
   description: string;
   icon: string;
+  imageUrl?: string;
   category: string;
   price: string;
   temperature: "hot" | "cold" | "both";
@@ -715,7 +717,21 @@ const AIAssistant = memo(function AIAssistant({
                     className="border border-gray-200 rounded-xl p-4 hover:shadow-lg transition-all duration-300 bg-white"
                   >
                     <div className="flex items-start space-x-3 space-x-reverse">
-                      <div className="text-3xl">{item.icon}</div>
+                      {item.imageUrl ? (
+                        <div className="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden">
+                          <Image
+                            src={item.imageUrl}
+                            alt={item.title}
+                            width={80}
+                            height={80}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="text-3xl flex-shrink-0">
+                          {item.icon}
+                        </div>
+                      )}
                       <div className="flex-1">
                         <div className="flex justify-between items-start mb-2">
                           <h4 className="font-semibold text-gray-900 font-pike text-lg md:text-xl">
