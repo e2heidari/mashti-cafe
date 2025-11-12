@@ -1,4 +1,4 @@
-import { cache } from "react";
+import { cache, Suspense } from "react";
 import { groq } from "next-sanity";
 import { client } from "@/sanity/lib/client";
 import CentralMenuClient, {
@@ -72,15 +72,39 @@ const getMenuData = cache(async () => {
 export default async function CentralMenuPage() {
   try {
     const { categories, menuItems } = await getMenuData();
-    return <CentralMenuClient categories={categories} menuItems={menuItems} />;
+    return (
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="text-gray-600 text-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+              <p className="text-lg">Loading menu...</p>
+            </div>
+          </div>
+        }
+      >
+        <CentralMenuClient categories={categories} menuItems={menuItems} />
+      </Suspense>
+    );
   } catch (error) {
     console.error("Failed to load menu data for Central branch:", error);
     return (
-      <CentralMenuClient
-        categories={[]}
-        menuItems={[]}
-        error="Failed to load menu"
-      />
+      <Suspense
+        fallback={
+          <div className="min-h-screen bg-white flex items-center justify-center">
+            <div className="text-gray-600 text-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-600 mx-auto mb-4"></div>
+              <p className="text-lg">Loading menu...</p>
+            </div>
+          </div>
+        }
+      >
+        <CentralMenuClient
+          categories={[]}
+          menuItems={[]}
+          error="Failed to load menu"
+        />
+      </Suspense>
     );
   }
 }

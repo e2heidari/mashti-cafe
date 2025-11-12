@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState, useCallback, Suspense } from "react";
+import { useMemo, useState, useCallback, Suspense, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Navigation from "@/components/Navigation";
 import MenuItem from "@/components/MenuItem";
 import dynamic from "next/dynamic";
@@ -48,8 +48,18 @@ export default function CentralMenuClient({
   error = null,
 }: CentralMenuClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [filter, setFilter] = useState("");
+
+  const slugify = useCallback((value: string) => {
+    return value
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+  }, []);
 
   const initialActiveMenu = useMemo(() => {
     const firstCategory = categories.find((cat) =>
@@ -60,15 +70,73 @@ export default function CentralMenuClient({
 
   const [activeMenu, setActiveMenu] = useState(initialActiveMenu);
 
-  const handleCategoryClick = useCallback((categoryName: string) => {
-    setActiveMenu(categoryName);
-    setFilter("");
-  }, []);
+  useEffect(() => {
+    if (!searchParams) return;
 
-  const handleFilterClick = useCallback((filterType: string) => {
-    setFilter(filterType);
-    setActiveMenu("");
-  }, []);
+    const categorySlug = searchParams.get("category");
+    const filterParam = searchParams.get("filter");
+
+    if (filterParam) {
+      setFilter(filterParam);
+      setActiveMenu("");
+    } else if (categorySlug) {
+      const matchedCategory = categories.find(
+        (cat) => slugify(cat.name) === categorySlug
+      );
+      if (matchedCategory) {
+        setActiveMenu(matchedCategory.name);
+        setFilter("");
+        return;
+      }
+    } else {
+      setFilter("");
+      setActiveMenu(initialActiveMenu);
+    }
+  }, [searchParams, categories, initialActiveMenu, slugify]);
+
+  const updateQueryString = useCallback(
+    (params: Record<string, string | null>) => {
+      const nextParams = new URLSearchParams(searchParams?.toString());
+
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === null) {
+          nextParams.delete(key);
+        } else {
+          nextParams.set(key, value);
+        }
+      });
+
+      const queryString = nextParams.toString();
+      router.replace(`${pathname}${queryString ? `?${queryString}` : ""}`, {
+        scroll: false,
+      });
+    },
+    [pathname, router, searchParams]
+  );
+
+  const handleCategoryClick = useCallback(
+    (categoryName: string) => {
+      setActiveMenu(categoryName);
+      setFilter("");
+      updateQueryString({
+        category: slugify(categoryName),
+        filter: null,
+      });
+    },
+    [slugify, updateQueryString]
+  );
+
+  const handleFilterClick = useCallback(
+    (filterType: string) => {
+      setFilter(filterType);
+      setActiveMenu("");
+      updateQueryString({
+        filter: filterType,
+        category: null,
+      });
+    },
+    [updateQueryString]
+  );
 
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.order - b.order),
@@ -171,21 +239,27 @@ export default function CentralMenuClient({
         <div className="border-b-4 border-red-600 w-16 mx-auto my-4"></div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-8">
-          {sortedCategories.map((cat) => (
-            <button
-              key={cat._id}
-              onClick={() => handleCategoryClick(cat.name)}
-              className={`border px-5 py-2 rounded-full font-semibold text-base transition-all font-lander
+          {sortedCategories.map((cat) => {
+            const isActive = activeMenu
+              ? activeMenu === cat.name
+              : searchParams?.get("category") === slugify(cat.name);
+
+            return (
+              <button
+                key={cat._id}
+                onClick={() => handleCategoryClick(cat.name)}
+                className={`border px-5 py-2 rounded-full font-semibold text-base transition-all font-lander
                 ${
-                  activeMenu === cat.name
+                  isActive
                     ? "border-red-600 text-red-600 font-bold bg-white"
                     : "border-gray-200 text-black bg-white"
                 }
                 hover:border-red-600 hover:text-red-600'`}
-            >
-              {cat.name}
-            </button>
-          ))}
+              >
+                {cat.name}
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex flex-wrap justify-center gap-3 mb-8">
@@ -239,6 +313,10 @@ export default function CentralMenuClient({
                 onClick={() => {
                   setFilter("");
                   setActiveMenu(initialActiveMenu);
+                  updateQueryString({
+                    filter: null,
+                    category: slugify(initialActiveMenu),
+                  });
                 }}
                 className="px-6 py-3 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors font-bold font-pike"
               >
