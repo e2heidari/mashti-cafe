@@ -34,7 +34,7 @@ const MenuItem = memo(function MenuItem({
     : 0;
 
   return (
-    <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 hover:transform hover:scale-105 transition-all">
+    <div className="bg-white/10 backdrop-blur-sm rounded-lg hover:transform hover:scale-105 transition-all">
       {/* Image or Icon */}
       {imageUrl ? (
         <div className="w-42 h-42 rounded-full mx-auto mb-1.5 overflow-hidden">

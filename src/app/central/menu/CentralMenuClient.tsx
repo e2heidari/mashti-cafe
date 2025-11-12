@@ -324,11 +324,11 @@ export default function CentralMenuClient({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
               {filteredItems.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white border border-gray-100 shadow-xs rounded-lg p-5 mb-4 flex flex-col h-full"
+                  className="bg-white border border-gray-100 shadow-xs rounded-lg p-2 md:p-5 mb-4 flex flex-col h-full"
                 >
                   <MenuItem
                     name={item.name}
