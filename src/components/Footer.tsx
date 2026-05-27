@@ -187,6 +187,17 @@ export default function Footer() {
         <p className="text-white text-sm text-center opacity-80">
           © 2024 Mashti Cafe. All rights reserved.
         </p>
+        <p className="text-white text-xs text-center opacity-70">
+          Website by{" "}
+          <a
+            href="https://Neshoni.ca"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold hover:underline"
+          >
+            AXON CODE INC.
+          </a>
+        </p>
       </div>
     </footer>
   );
