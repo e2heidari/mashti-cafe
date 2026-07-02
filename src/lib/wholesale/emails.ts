@@ -37,12 +37,23 @@ export function buildAdminOrderRequestEmail({
     ? escapeHtml(customer.message.trim())
     : "";
 
-  const itemsText = items
-    .map(
-      (item) =>
-        `• ${item.sku ? `[${item.sku}] ` : ""}${item.productName}${item.category ? ` (${item.category})` : ""} — ${item.unitLabel} — Qty: ${item.requestedQuantity} — $${item.unitPrice.toFixed(2)} each — Line total: $${item.lineTotal.toFixed(2)}`
-    )
-    .join("\n");
+  const itemsText = [
+    "Item | SKU | Category | Unit | Qty | Unit Price | Line Total",
+    ...items.map((item) => {
+      const sku = item.sku?.trim() || "—";
+      const category = item.category?.trim() || "—";
+
+      return [
+        item.productName,
+        sku,
+        category,
+        item.unitLabel,
+        String(item.requestedQuantity),
+        `$${item.unitPrice.toFixed(2)}`,
+        `$${item.lineTotal.toFixed(2)}`,
+      ].join(" | ");
+    }),
+  ].join("\n");
 
   const text = `
 New Wholesale Order Request
@@ -83,28 +94,60 @@ This is an order request. Availability and final quantities will be confirmed by
         <p><strong>Delivery Address:</strong> ${safeDeliveryAddress}</p>
       </div>
 
-      <div style="background-color: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-        <h3 style="color: #333; margin-top: 0;">Requested Items</h3>
-        ${items
-          .map((item) => {
-            const safeSku = item.sku?.trim() ? escapeHtml(item.sku.trim()) : "";
-            const safeProductName = escapeHtml(item.productName);
-            const safeCategory = item.category?.trim()
-              ? escapeHtml(item.category.trim())
-              : "";
-            const safeUnitLabel = escapeHtml(item.unitLabel);
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: #333; margin: 0 0 12px;">Requested Items</h3>
+        <table
+          role="presentation"
+          cellpadding="0"
+          cellspacing="0"
+          width="100%"
+          style="border-collapse: collapse; border: 1px solid #e0e0e0; background-color: #ffffff;"
+        >
+          <thead>
+            <tr style="background-color: #333333;">
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Item</th>
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">SKU</th>
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Category</th>
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Unit</th>
+              <th align="center" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Qty</th>
+              <th align="right" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Unit Price</th>
+              <th align="right" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items
+              .map((item, index) => {
+                const safeSku = item.sku?.trim()
+                  ? escapeHtml(item.sku.trim())
+                  : "—";
+                const safeProductName = escapeHtml(item.productName);
+                const safeCategory = item.category?.trim()
+                  ? escapeHtml(item.category.trim())
+                  : "—";
+                const safeUnitLabel = escapeHtml(item.unitLabel);
+                const rowBackground = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
 
-            return `
-          <div style="border-bottom: 1px solid #ddd; padding: 10px 0;">
-            <p style="margin: 0 0 6px;"><strong>${safeSku ? `${safeSku} — ` : ""}${safeProductName}</strong>${safeCategory ? ` <span style="color:#666;">(${safeCategory})</span>` : ""}</p>
-            <p style="margin: 0; color: #555;">${safeUnitLabel} • Qty: ${item.requestedQuantity} • $${item.unitPrice.toFixed(2)} each • Line total: $${item.lineTotal.toFixed(2)}</p>
-          </div>
-        `;
-          })
-          .join("")}
-        <p style="margin: 16px 0 0; font-size: 18px; font-weight: bold; color: #e80812;">
-          Estimated Total: $${requestedTotalAmount.toFixed(2)}
-        </p>
+                return `
+            <tr style="background-color: ${rowBackground};">
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 14px; color: #222222; vertical-align: top;"><strong>${safeProductName}</strong></td>
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 12px; color: #555555; vertical-align: top; font-family: Consolas, Monaco, 'Courier New', monospace; white-space: nowrap;">${safeSku}</td>
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 13px; color: #555555; vertical-align: top;">${safeCategory}</td>
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 13px; color: #555555; vertical-align: top; white-space: nowrap;">${safeUnitLabel}</td>
+              <td align="center" style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 14px; color: #222222; vertical-align: top; font-weight: 600;">${item.requestedQuantity}</td>
+              <td align="right" style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 13px; color: #555555; vertical-align: top; white-space: nowrap;">$${item.unitPrice.toFixed(2)}</td>
+              <td align="right" style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 14px; color: #222222; vertical-align: top; font-weight: 600; white-space: nowrap;">$${item.lineTotal.toFixed(2)}</td>
+            </tr>
+          `;
+              })
+              .join("")}
+          </tbody>
+          <tfoot>
+            <tr style="background-color: #fff5f5;">
+              <td colspan="6" align="right" style="padding: 14px 10px; font-size: 15px; font-weight: 700; color: #333333; border-top: 2px solid #e80812;">Estimated Total</td>
+              <td align="right" style="padding: 14px 10px; font-size: 18px; font-weight: 700; color: #e80812; border-top: 2px solid #e80812; white-space: nowrap;">$${requestedTotalAmount.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
       </div>
 
       ${

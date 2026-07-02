@@ -260,104 +260,107 @@ function WholesaleContent() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {filteredProducts.map((product) => {
                   const quantity = getQuantityForProduct(product._id);
+                  const sku = product.sku?.trim() || "";
 
                   return (
-                    <div
+                    <article
                       key={product._id}
-                      className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300"
+                      className="flex flex-col h-full rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-gray-300 hover:shadow-md transition-all duration-200"
                     >
-                      <div className="relative h-48 sm:h-64">
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.imageAlt || product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <div className="text-center">
-                              <div className="text-gray-400 text-3xl sm:text-4xl mb-2">
-                                🍦
-                              </div>
-                              <p className="text-gray-500 text-xs sm:text-sm font-sodo">
-                                No Image
-                              </p>
+                      <div className="flex gap-4 p-4 pb-3 min-h-0">
+                        <div className="relative w-[4.5rem] h-[4.5rem] shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                          {product.imageUrl ? (
+                            <Image
+                              src={product.imageUrl}
+                              alt={product.imageAlt || product.name}
+                              fill
+                              sizes="72px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-full flex items-center justify-center text-gray-300 text-xl"
+                              aria-hidden="true"
+                            >
+                              🍦
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
 
-                      <div className="p-4 sm:p-6">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <h3 className="text-lg sm:text-xl font-bold text-gray-900 font-pike">
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <h3 className="text-base font-bold text-gray-900 font-pike leading-snug line-clamp-2">
                             {product.name}
                           </h3>
-                          {product.category?.trim() ? (
-                            <span className="shrink-0 rounded-full bg-red-50 text-red-700 px-3 py-1 text-xs font-semibold font-sodo">
-                              {product.category}
-                            </span>
+                          {sku ? (
+                            <p className="mt-1.5 text-xs text-gray-400 font-sodo truncate">
+                              {sku}
+                            </p>
                           ) : null}
-                        </div>
-                        <p className="text-sm sm:text-base text-gray-600 mb-3 font-sodo leading-relaxed">
-                          {product.description}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3 font-sodo">
-                          <strong>Unit:</strong> {product.unitLabel}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 mb-4 font-sodo">
-                          <strong>Ingredients:</strong>{" "}
-                          {product.ingredients.join(", ")}
-                        </p>
-
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <span className="text-xl sm:text-2xl font-bold text-red-600 font-pike">
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <span className="text-xs text-gray-500 font-sodo truncate">
+                              {product.unitLabel}
+                            </span>
+                            <span className="shrink-0 text-base font-bold text-red-600 font-pike">
                               ${product.unitPrice.toFixed(2)}
                             </span>
-                            <div className="flex items-center space-x-2">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setQuantityForProduct(
-                                    product._id,
-                                    quantity - 1
-                                  )
-                                }
-                                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors text-gray-900 font-bold"
-                              >
-                                -
-                              </button>
-                              <span className="w-8 text-center font-semibold text-gray-900">
-                                {quantity}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setQuantityForProduct(
-                                    product._id,
-                                    quantity + 1
-                                  )
-                                }
-                                className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-colors text-gray-900 font-bold"
-                              >
-                                +
-                              </button>
-                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-auto border-t border-gray-100 bg-gray-50 px-4 py-4">
+                        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+                          <div
+                            className="inline-flex h-10 items-stretch rounded-lg border border-gray-200 bg-white overflow-hidden"
+                            role="group"
+                            aria-label={`Quantity for ${product.name}`}
+                          >
+                            <button
+                              type="button"
+                              aria-label={`Decrease quantity for ${product.name}`}
+                              onClick={() =>
+                                setQuantityForProduct(
+                                  product._id,
+                                  quantity - 1
+                                )
+                              }
+                              className="w-9 sm:w-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors border-r border-gray-200 text-base leading-none"
+                            >
+                              −
+                            </button>
+                            <span
+                              className="w-9 sm:w-10 flex items-center justify-center text-sm font-semibold text-gray-900 tabular-nums"
+                              aria-live="polite"
+                            >
+                              {quantity}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Increase quantity for ${product.name}`}
+                              onClick={() =>
+                                setQuantityForProduct(
+                                  product._id,
+                                  quantity + 1
+                                )
+                              }
+                              className="w-9 sm:w-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors border-l border-gray-200 text-base leading-none"
+                            >
+                              +
+                            </button>
                           </div>
                           <button
                             type="button"
+                            aria-label={`Add ${quantity} ${product.name} to cart`}
                             onClick={() => addToCart(product)}
-                            className="w-full bg-red-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike text-sm sm:text-base"
+                            className="h-10 w-full bg-red-600 text-white px-3 sm:px-4 rounded-full font-semibold hover:bg-red-700 active:bg-red-800 transition-colors font-pike text-xs sm:text-sm"
                           >
                             Add to Cart
                           </button>
                         </div>
                       </div>
-                    </div>
+                    </article>
                   );
                 })}
               </div>
