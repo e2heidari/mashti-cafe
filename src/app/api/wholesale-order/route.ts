@@ -13,6 +13,14 @@ import type {
 } from "@/lib/wholesale/types";
 import { getSanityWriteClient } from "@/sanity/lib/writeClient";
 
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || value === null || typeof value === "string";
+}
+
 function isValidCustomer(
   customer: Partial<WholesaleOrderCustomer> | undefined
 ): customer is WholesaleOrderCustomer {
@@ -33,12 +41,14 @@ function isValidItems(
     items.length > 0 &&
     items.every(
       (item) =>
-        item.productId?.trim() &&
-        item.productName?.trim() &&
-        item.unitType?.trim() &&
+        isNonEmptyString(item.productId) &&
+        isNonEmptyString(item.productName) &&
+        isNonEmptyString(item.unitType) &&
+        isOptionalString(item.sku) &&
+        isOptionalString(item.category) &&
         typeof item.unitValue === "number" &&
         item.unitValue > 0 &&
-        item.unitLabel?.trim() &&
+        isNonEmptyString(item.unitLabel) &&
         typeof item.unitPrice === "number" &&
         item.unitPrice >= 0 &&
         typeof item.requestedQuantity === "number" &&
