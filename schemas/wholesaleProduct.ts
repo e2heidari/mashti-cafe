@@ -50,7 +50,8 @@ export default defineType({
       name: 'category',
       title: 'Category',
       type: 'string',
-      description: 'e.g. Ice Cream, Juice, Syrup',
+      description: 'e.g. FROZEN — ICE CREAM, DAIRY — MILK VARIETIES',
+      validation: (Rule) => Rule.required(),
     }),
     defineField({
       name: 'ingredients',
