@@ -42,16 +42,17 @@ function OrderSuccessContent() {
                 />
               </svg>
               <h1 className="text-4xl font-bold text-gray-900 font-pike mb-4">
-                Order Submitted Successfully!
+                Order Request Received
               </h1>
               <p className="text-xl text-gray-600 font-sodo mb-8">
-                Thank you for your wholesale order. We&apos;ll contact you soon.
+                Thank you for your wholesale order request. Our team will review
+                availability and confirm final quantities with you.
               </p>
             </div>
 
             <div className="bg-gray-100 rounded-lg p-8 mb-8 max-w-md mx-auto">
               <p className="text-sm text-gray-600 font-sodo mb-2">
-                Your Order Number:
+                Your Request Number:
               </p>
               <p className="text-3xl font-bold text-gray-900 font-pike">
                 {orderNumber || "WH-000000"}
@@ -65,20 +66,20 @@ function OrderSuccessContent() {
               <ul className="text-left text-gray-600 font-sodo space-y-2">
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
-                  We&apos;ll review your order and contact you within 24 hours
+                  We&apos;ll review your requested items and available stock
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
-                  You&apos;ll receive a confirmation email with your order
-                  details
+                  You&apos;ll receive a final confirmation email after we
+                  finalize quantities
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
-                  Our team will discuss delivery options and payment
+                  Our team will contact you if any adjustments are needed
                 </li>
                 <li className="flex items-start">
                   <span className="text-blue-600 mr-2">•</span>
-                  Your order will be prepared and delivered as agreed
+                  Delivery and payment details will be confirmed after review
                 </li>
               </ul>
             </div>

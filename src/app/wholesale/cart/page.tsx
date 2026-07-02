@@ -5,27 +5,18 @@ import Navigation from "@/components/Navigation";
 import AIAssistant from "@/components/AIAssistant";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import type { CartItem, WholesaleOrderCustomer } from "@/lib/wholesale/types";
 
-// Disable static generation for this page
 export const dynamic = "force-dynamic";
 
-interface WholesaleProduct {
-  _id: string;
-  name: string;
-  description: string;
-  ingredients: string[];
-  weight: string;
-  price: number;
-  imageUrl: string;
-  imageAlt?: string;
-  order: number;
-  active: boolean;
-}
-
-interface CartItem {
-  product: WholesaleProduct;
-  quantity: number;
-}
+const initialOrderForm: WholesaleOrderCustomer = {
+  businessName: "",
+  contactName: "",
+  email: "",
+  phone: "",
+  deliveryAddress: "",
+  message: "",
+};
 
 function CartContent() {
   const [isAIOpen, setIsAIOpen] = useState(false);
@@ -33,21 +24,20 @@ function CartContent() {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
+  const [orderForm, setOrderForm] = useState(initialOrderForm);
   const router = useRouter();
 
-  const [orderForm, setOrderForm] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    message: "",
-  });
-
-  // Load cart from localStorage on component mount
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedCart = localStorage.getItem("wholesaleCart");
       if (savedCart) {
-        setCart(JSON.parse(savedCart));
+        const parsedCart = JSON.parse(savedCart) as CartItem[];
+        const filteredCart = parsedCart.filter((item) => item.product.active !== false);
+
+        setCart(filteredCart);
+        if (filteredCart.length !== parsedCart.length) {
+          localStorage.setItem("wholesaleCart", JSON.stringify(filteredCart));
+        }
       }
     }
   }, []);
@@ -80,7 +70,7 @@ function CartContent() {
 
   const getTotalPrice = () => {
     return cart.reduce(
-      (total, item) => total + item.product.price * item.quantity,
+      (total, item) => total + item.product.unitPrice * item.quantity,
       0
     );
   };
@@ -89,13 +79,17 @@ function CartContent() {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  const handleCartClick = () => {
-    // Do nothing when already on cart page
-  };
+  const handleCartClick = () => {};
 
-  const handleSubmitOrder = async () => {
+  const handleSubmitOrderRequest = async () => {
     if (cart.length === 0) {
       setSubmitMessage("Please add items to your cart first.");
+      return;
+    }
+    if (cart.some((item) => item.product.active === false)) {
+      setSubmitMessage(
+        "Some items are no longer available. Please remove them from your cart."
+      );
       return;
     }
 
@@ -104,21 +98,26 @@ function CartContent() {
 
     try {
       const orderData = {
-        ...orderForm,
+        customer: {
+          businessName: orderForm.businessName.trim(),
+          contactName: orderForm.contactName.trim(),
+          email: orderForm.email.trim(),
+          phone: orderForm.phone.trim(),
+          deliveryAddress: orderForm.deliveryAddress.trim(),
+          message: orderForm.message?.trim() || "",
+        },
         items: cart.map((item) => ({
-          name: item.product.name,
-          weight: item.product.weight,
-          quantity: item.quantity,
-          price: item.product.price,
-          total: item.product.price * item.quantity,
+          productId: item.product._id,
+          sku: item.product.sku?.trim() || "",
+          productName: item.product.name,
+          category: item.product.category?.trim() || "",
+          unitType: item.product.unitType,
+          unitValue: item.product.unitValue,
+          unitLabel: item.product.unitLabel,
+          unitPrice: item.product.unitPrice,
+          requestedQuantity: item.quantity,
         })),
-        totalAmount: getTotalPrice(),
       };
-
-      // Generate order number
-      const randomNum = Math.floor(Math.random() * 9999);
-      const newOrderNumber = `EH-${randomNum}`;
-      const orderDataWithNumber = { ...orderData, orderNumber: newOrderNumber };
 
       const baseUrl =
         typeof window !== "undefined" ? window.location.origin : "";
@@ -127,7 +126,7 @@ function CartContent() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(orderDataWithNumber),
+        body: JSON.stringify(orderData),
       });
 
       if (!response.ok) {
@@ -140,22 +139,23 @@ function CartContent() {
         .catch(() => ({ success: false, message: "Invalid JSON response" }));
 
       if (result && result.success) {
-        // Clear cart
         setCart([]);
         if (typeof window !== "undefined") {
           localStorage.removeItem("wholesaleCart");
         }
-        setOrderForm({ name: "", email: "", phone: "", message: "" });
+        setOrderForm(initialOrderForm);
         setIsOrderModalOpen(false);
 
-        // Navigate to success page
-        router.push(`/wholesale/order-success?orderNumber=${newOrderNumber}`);
+        const orderNumber = result.orderNumber || "";
+        router.push(
+          `/wholesale/order-success?orderNumber=${encodeURIComponent(orderNumber)}`
+        );
       } else {
-        setSubmitMessage(`Error: ${result.message}`);
+        setSubmitMessage(`Error: ${result.message || "Submission failed"}`);
       }
     } catch (error) {
-      console.error("Error submitting order:", error);
-      setSubmitMessage("Error submitting order. Please try again.");
+      console.error("Error submitting order request:", error);
+      setSubmitMessage("Error submitting order request. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -197,11 +197,11 @@ function CartContent() {
                   Your Cart is Empty
                 </h1>
                 <p className="text-lg sm:text-xl text-gray-600 font-sodo mb-6 sm:mb-8">
-                  Add some products to your cart to get started.
+                  Add products to your cart to submit a wholesale order request.
                 </p>
               </div>
               <button
-                onClick={() => router.push("/wholesale?showProducts=true")}
+                onClick={() => router.push("/wholesale")}
                 className="bg-red-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike text-sm sm:text-base"
               >
                 Browse Products
@@ -236,7 +236,7 @@ function CartContent() {
                 onClick={() => router.push("/wholesale")}
                 className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base order-1 sm:order-1"
               >
-                ← Back to Home
+                ← Back to Products
               </button>
               <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-pike text-center flex-1 order-2 sm:order-2">
                 Your Cart ({getCartItemCount()} items)
@@ -267,11 +267,16 @@ function CartContent() {
                     <h3 className="font-semibold text-gray-900 font-pike text-sm">
                       {item.product.name}
                     </h3>
+                    {item.product.category?.trim() ? (
+                      <p className="text-xs text-red-600 font-sodo">
+                        {item.product.category}
+                      </p>
+                    ) : null}
                     <p className="text-xs text-gray-600 font-sodo">
-                      {item.product.weight}
+                      {item.product.unitLabel}
                     </p>
                     <p className="text-xs text-gray-500 font-sodo">
-                      ${item.product.price.toFixed(2)} each
+                      ${item.product.unitPrice.toFixed(2)} per unit
                     </p>
                   </div>
                   <div className="flex flex-col items-end space-y-2">
@@ -298,7 +303,7 @@ function CartContent() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className="font-semibold text-gray-900 text-sm">
-                        ${(item.product.price * item.quantity).toFixed(2)}
+                        ${(item.product.unitPrice * item.quantity).toFixed(2)}
                       </span>
                       <button
                         onClick={() => removeFromCart(item.product._id)}
@@ -312,24 +317,27 @@ function CartContent() {
               ))}
               <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-                  <span className="text-lg sm:text-xl font-bold text-gray-900 font-pike">
-                    {`Total: $${getTotalPrice().toFixed(2)}`}
-                  </span>
+                  <div>
+                    <span className="text-lg sm:text-xl font-bold text-gray-900 font-pike">
+                      {`Estimated Total: $${getTotalPrice().toFixed(2)}`}
+                    </span>
+                    <p className="text-xs sm:text-sm text-gray-500 font-sodo mt-1">
+                      Final pricing and quantities will be confirmed by our team.
+                    </p>
+                  </div>
                   <button
                     onClick={() => setIsOrderModalOpen(true)}
                     className="w-full sm:w-auto bg-green-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-green-700 transition-colors font-pike text-sm sm:text-base"
                   >
-                    Submit Order
+                    Submit Order Request
                   </button>
                 </div>
               </div>
-
-              {/* Close card container before the bottom actions */}
             </div>
 
             <div className="text-center">
               <button
-                onClick={() => router.push("/wholesale?showProducts=true")}
+                onClick={() => router.push("/wholesale")}
                 className="bg-gray-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base"
               >
                 Continue Shopping
@@ -339,29 +347,52 @@ function CartContent() {
         </section>
       </div>
 
-      {/* Order Modal */}
       {isOrderModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <h2 className="text-xl text-gray-900 sm:text-2xl font-bold mb-4 font-pike">
-              Submit Order
+            <h2 className="text-xl text-gray-900 sm:text-2xl font-bold mb-2 font-pike">
+              Submit Order Request
             </h2>
+            <p className="text-sm text-gray-600 font-sodo mb-4">
+              Tell us about your business. We will review availability and
+              confirm final quantities.
+            </p>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                handleSubmitOrder();
+                handleSubmitOrderRequest();
               }}
               className="space-y-3 sm:space-y-4"
             >
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Name *
+                  Business Name *
                 </label>
                 <input
                   type="text"
-                  value={orderForm.name}
+                  value={orderForm.businessName}
                   onChange={(e) =>
-                    setOrderForm({ ...orderForm, name: e.target.value })
+                    setOrderForm({
+                      ...orderForm,
+                      businessName: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  Contact Name *
+                </label>
+                <input
+                  type="text"
+                  value={orderForm.contactName}
+                  onChange={(e) =>
+                    setOrderForm({
+                      ...orderForm,
+                      contactName: e.target.value,
+                    })
                   }
                   className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
                   required
@@ -397,7 +428,24 @@ function CartContent() {
               </div>
               <div>
                 <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
-                  Message (Optional)
+                  Delivery Address *
+                </label>
+                <textarea
+                  value={orderForm.deliveryAddress}
+                  onChange={(e) =>
+                    setOrderForm({
+                      ...orderForm,
+                      deliveryAddress: e.target.value,
+                    })
+                  }
+                  className="w-full p-2 sm:p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 text-sm sm:text-base"
+                  rows={3}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">
+                  Message / Notes
                 </label>
                 <textarea
                   value={orderForm.message}
@@ -425,7 +473,7 @@ function CartContent() {
                   disabled={isSubmitting}
                   className="flex-1 bg-green-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-green-700 transition-colors font-pike disabled:opacity-50 text-sm sm:text-base"
                 >
-                  {isSubmitting ? "Submitting..." : "Submit Order"}
+                  {isSubmitting ? "Submitting..." : "Submit Order Request"}
                 </button>
                 <button
                   type="button"
