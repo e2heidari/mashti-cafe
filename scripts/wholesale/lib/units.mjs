@@ -1,6 +1,6 @@
 export const SKU_REGEX = /^[A-Z]{2,4}-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
-const MEASURED_UNITS = new Set(["L", "mL", "kg", "g"]);
+const MEASURED_UNITS = new Set(["L", "mL", "kg", "g", "lb"]);
 
 export function formatUnitLabel(unitValue, unitType, unitDisplayOverride) {
   const override = unitDisplayOverride?.trim();

@@ -2662,7 +2662,7 @@
       "sku": "SW-NOON-KHAMEI-CREAM-PUFF-EACH",
       "name": "Noon Khamei (Cream Puff)",
       "description": "Noon Khamei (Cream Puff) wholesale item.",
-      "category": "Sweets",
+      "category": "SWEETS",
       "ingredients": [
         "Not specified"
       ],
@@ -2678,7 +2678,7 @@
       "sku": "SW-PIRASHKI-EACH",
       "name": "Pirashki",
       "description": "Pirashki wholesale item.",
-      "category": "Sweets",
+      "category": "SWEETS",
       "ingredients": [
         "Not specified"
       ],
@@ -2694,7 +2694,7 @@
       "sku": "SW-ZABOON-EACH",
       "name": "Zaboon",
       "description": "Zaboon wholesale item.",
-      "category": "Sweets",
+      "category": "SWEETS",
       "ingredients": [
         "Not specified"
       ],

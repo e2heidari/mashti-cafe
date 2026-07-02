@@ -12,7 +12,7 @@
     "SNACKS, CHIPS & QUICK EATS": "SN",
     "PACKAGING & DISPOSABLES": "PK",
     "CLEANING & SANITATION": "CL",
-    "Sweets": "SW"
+    "SWEETS": "SW"
   },
   "allowed": [
     "FROZEN — ICE CREAM",
@@ -27,6 +27,6 @@
     "SNACKS, CHIPS & QUICK EATS",
     "PACKAGING & DISPOSABLES",
     "CLEANING & SANITATION",
-    "Sweets"
+    "SWEETS"
   ]
 }
