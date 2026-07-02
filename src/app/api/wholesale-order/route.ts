@@ -52,9 +52,11 @@ function isValidItems(
         isOptionalString(item.sku) &&
         isOptionalString(item.category) &&
         typeof item.unitValue === "number" &&
+        Number.isFinite(item.unitValue) &&
         item.unitValue > 0 &&
         isNonEmptyString(item.unitLabel) &&
         typeof item.unitPrice === "number" &&
+        Number.isFinite(item.unitPrice) &&
         item.unitPrice >= 0 &&
         typeof item.requestedQuantity === "number" &&
         Number.isFinite(item.requestedQuantity) &&
