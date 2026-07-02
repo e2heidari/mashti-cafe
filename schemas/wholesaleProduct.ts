@@ -5,6 +5,7 @@ const UNIT_TYPE_OPTIONS = [
   { title: 'mL', value: 'mL' },
   { title: 'kg', value: 'kg' },
   { title: 'g', value: 'g' },
+  { title: 'lb', value: 'lb' },
   { title: 'each', value: 'each' },
   { title: 'cup', value: 'cup' },
   { title: 'box', value: 'box' },
@@ -14,6 +15,10 @@ const UNIT_TYPE_OPTIONS = [
   { title: 'container', value: 'container' },
   { title: 'tray', value: 'tray' },
   { title: 'case', value: 'case' },
+  { title: 'jar', value: 'jar' },
+  { title: 'pack', value: 'pack' },
+  { title: 'pcs', value: 'pcs' },
+  { title: 'portion', value: 'portion' },
 ]
 
 export default defineType({
