@@ -93,40 +93,43 @@ export function validateImportPayload(payload, categories, unitTypes) {
   }
 
   payload.products.forEach((product, index) => {
-    errors.push(...validateProductRow(product, index, categories, unitTypes));
+    const rowErrors = validateProductRow(product, index, categories, unitTypes);
+    errors.push(...rowErrors);
 
-    if (product?.sku) {
-      const sku = normalizeSku(product.sku);
-      const unitPrice = normalizeUnitPrice(product.unitPrice);
-      const hasNonPositivePrice = Number.isFinite(unitPrice) && unitPrice <= 0;
-      const explicitActiveTrue = product.active === true;
+    if (rowErrors.length > 0) {
+      return;
+    }
 
-      if (hasNonPositivePrice) {
-        warnings.push({
-          type: "nonPositivePrice",
-          sku,
-          message: `${sku} has unitPrice ${unitPrice.toFixed(2)} and will default to inactive unless active:true is explicitly set`,
-        });
-      }
+    const sku = normalizeSku(product.sku);
+    const unitPrice = normalizeUnitPrice(product.unitPrice);
+    const hasNonPositivePrice = Number.isFinite(unitPrice) && unitPrice <= 0;
+    const explicitActiveTrue = product.active === true;
 
-      skuCounts.set(sku, (skuCounts.get(sku) || 0) + 1);
-      normalizedProducts.push({
-        ...product,
+    if (hasNonPositivePrice) {
+      warnings.push({
+        type: "nonPositivePrice",
         sku,
-        name: product.name.trim(),
-        description: product.description.trim(),
-        category: product.category.trim(),
-        ingredients: product.ingredients.map((item) => item.trim()),
-        unitType: product.unitType,
-        unitValue: product.unitValue,
-        unitPrice,
-        unitDisplayOverride: product.unitDisplayOverride?.trim() || "",
-        order: product.order,
-        active: explicitActiveTrue || (!hasNonPositivePrice && product.active !== false),
-        imageFile: product.imageFile?.trim() || "",
-        imageAlt: product.imageAlt?.trim() || product.name.trim(),
+        message: `${sku} has unitPrice ${unitPrice.toFixed(2)} and will default to inactive unless active:true is explicitly set`,
       });
     }
+
+    skuCounts.set(sku, (skuCounts.get(sku) || 0) + 1);
+    normalizedProducts.push({
+      ...product,
+      sku,
+      name: product.name.trim(),
+      description: product.description.trim(),
+      category: product.category.trim(),
+      ingredients: product.ingredients.map((item) => item.trim()),
+      unitType: product.unitType,
+      unitValue: product.unitValue,
+      unitPrice,
+      unitDisplayOverride: product.unitDisplayOverride?.trim() || "",
+      order: product.order,
+      active: explicitActiveTrue || (!hasNonPositivePrice && product.active !== false),
+      imageFile: product.imageFile?.trim() || "",
+      imageAlt: product.imageAlt?.trim() || product.name.trim(),
+    });
   });
 
   for (const [sku, count] of skuCounts.entries()) {
