@@ -50,7 +50,7 @@ function filterProducts(
     }
 
     const haystack = [
-      product.sku,
+      product.sku?.trim() || "",
       product.name,
       product.description,
       category,
