@@ -28,7 +28,7 @@ type RawProduct = {
   unitPrice?: number;
   weight?: string;
   price?: number;
-  imageUrl: string;
+  imageUrl?: string | null;
   imageAlt?: string;
   order: number;
   active: boolean;

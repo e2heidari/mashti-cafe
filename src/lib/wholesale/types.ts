@@ -10,7 +10,7 @@ export interface WholesaleProduct {
   unitDisplayOverride?: string;
   unitLabel: string;
   unitPrice: number;
-  imageUrl: string;
+  imageUrl?: string | null;
   imageAlt?: string;
   order: number;
   active: boolean;
