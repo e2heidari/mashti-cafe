@@ -3,6 +3,7 @@ export const WHOLESALE_UNIT_TYPES = [
   "mL",
   "kg",
   "g",
+  "lb",
   "each",
   "cup",
   "box",
@@ -12,11 +13,15 @@ export const WHOLESALE_UNIT_TYPES = [
   "container",
   "tray",
   "case",
+  "jar",
+  "pack",
+  "pcs",
+  "portion",
 ] as const;
 
 export type WholesaleUnitType = (typeof WHOLESALE_UNIT_TYPES)[number];
 
-const MEASURED_UNITS = new Set<WholesaleUnitType>(["L", "mL", "kg", "g"]);
+const MEASURED_UNITS = new Set<WholesaleUnitType>(["L", "mL", "kg", "g", "lb"]);
 
 export function isWholesaleUnitType(value: string): value is WholesaleUnitType {
   return (WHOLESALE_UNIT_TYPES as readonly string[]).includes(value);

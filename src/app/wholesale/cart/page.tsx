@@ -33,6 +33,34 @@ function isValidCartItem(item: unknown): item is CartItem {
     return false;
   }
 
+  if (typeof product.name !== "string" || !product.name.trim()) {
+    return false;
+  }
+
+  if (
+    typeof product.unitPrice !== "number" ||
+    !Number.isFinite(product.unitPrice) ||
+    product.unitPrice < 0
+  ) {
+    return false;
+  }
+
+  if (typeof product.unitLabel !== "string" || !product.unitLabel.trim()) {
+    return false;
+  }
+
+  if (typeof product.unitType !== "string" || !product.unitType.trim()) {
+    return false;
+  }
+
+  if (
+    typeof product.unitValue !== "number" ||
+    !Number.isFinite(product.unitValue) ||
+    product.unitValue <= 0
+  ) {
+    return false;
+  }
+
   if (
     product.active !== undefined &&
     typeof product.active !== "boolean"
