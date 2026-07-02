@@ -13,10 +13,7 @@ export function formatUnitLabel(unitValue, unitType, unitDisplayOverride) {
   }
 
   if (MEASURED_UNITS.has(unitType)) {
-    const formattedValue = Number.isInteger(unitValue)
-      ? String(unitValue)
-      : String(unitValue);
-    return `${formattedValue} ${unitType}`;
+    return `${String(unitValue)} ${unitType}`;
   }
 
   if (unitValue === 1) {

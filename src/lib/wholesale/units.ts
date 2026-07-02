@@ -42,10 +42,7 @@ export function formatUnitLabel(
   }
 
   if (MEASURED_UNITS.has(unitType as WholesaleUnitType)) {
-    const formattedValue = Number.isInteger(unitValue)
-      ? String(unitValue)
-      : String(unitValue);
-    return `${formattedValue} ${unitType}`;
+    return `${String(unitValue)} ${unitType}`;
   }
 
   if (unitValue === 1) {
