@@ -1,0 +1,14 @@
+{
+  "defaultUpdateFields": [
+    "name",
+    "description",
+    "category",
+    "ingredients",
+    "unitType",
+    "unitValue",
+    "unitDisplayOverride",
+    "order",
+    "active"
+  ],
+  "defaultSkipFields": ["unitPrice", "image"]
+}
