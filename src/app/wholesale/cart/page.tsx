@@ -61,10 +61,7 @@ function isValidCartItem(item: unknown): item is CartItem {
     return false;
   }
 
-  if (
-    product.active !== undefined &&
-    typeof product.active !== "boolean"
-  ) {
+  if (typeof product.active !== "boolean") {
     return false;
   }
 
