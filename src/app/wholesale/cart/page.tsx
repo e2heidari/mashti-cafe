@@ -18,6 +18,69 @@ const initialOrderForm: WholesaleOrderCustomer = {
   message: "",
 };
 
+function isValidCartItem(item: unknown): item is CartItem {
+  if (!item || typeof item !== "object") {
+    return false;
+  }
+
+  const { product, quantity } = item as Partial<CartItem>;
+
+  if (!product || typeof product !== "object") {
+    return false;
+  }
+
+  if (typeof product._id !== "string" || !product._id.trim()) {
+    return false;
+  }
+
+  if (
+    product.active !== undefined &&
+    typeof product.active !== "boolean"
+  ) {
+    return false;
+  }
+
+  return typeof quantity === "number" && Number.isFinite(quantity) && quantity >= 1;
+}
+
+function loadWholesaleCartFromStorage(): CartItem[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  const savedCart = localStorage.getItem("wholesaleCart");
+  if (!savedCart) {
+    return [];
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(savedCart);
+
+    if (!Array.isArray(parsed)) {
+      localStorage.removeItem("wholesaleCart");
+      return [];
+    }
+
+    const validCart = parsed.filter(isValidCartItem);
+    const filteredCart = validCart.filter(
+      (item) => item.product.active !== false
+    );
+
+    if (
+      validCart.length !== parsed.length ||
+      filteredCart.length !== validCart.length
+    ) {
+      localStorage.setItem("wholesaleCart", JSON.stringify(filteredCart));
+    }
+
+    return filteredCart;
+  } catch (error) {
+    console.error("Failed to parse wholesale cart from localStorage:", error);
+    localStorage.removeItem("wholesaleCart");
+    return [];
+  }
+}
+
 function CartContent() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -28,18 +91,7 @@ function CartContent() {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedCart = localStorage.getItem("wholesaleCart");
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart) as CartItem[];
-        const filteredCart = parsedCart.filter((item) => item.product.active !== false);
-
-        setCart(filteredCart);
-        if (filteredCart.length !== parsedCart.length) {
-          localStorage.setItem("wholesaleCart", JSON.stringify(filteredCart));
-        }
-      }
-    }
+    setCart(loadWholesaleCartFromStorage());
   }, []);
 
   const updateQuantity = (productId: string, quantity: number) => {
