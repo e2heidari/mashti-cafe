@@ -21,15 +21,20 @@ function isOptionalString(value: unknown): boolean {
   return value === undefined || value === null || typeof value === "string";
 }
 
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+}
+
 function isValidCustomer(
   customer: Partial<WholesaleOrderCustomer> | undefined
 ): customer is WholesaleOrderCustomer {
-  return Boolean(
-    customer?.businessName?.trim() &&
-      customer?.contactName?.trim() &&
-      customer?.email?.trim() &&
-      customer?.phone?.trim() &&
-      customer?.deliveryAddress?.trim()
+  return (
+    isNonEmptyString(customer?.businessName) &&
+    isNonEmptyString(customer?.contactName) &&
+    isNonEmptyString(customer?.email) &&
+    isValidEmail(customer.email) &&
+    isNonEmptyString(customer?.phone) &&
+    isNonEmptyString(customer?.deliveryAddress)
   );
 }
 
@@ -52,6 +57,7 @@ function isValidItems(
         typeof item.unitPrice === "number" &&
         item.unitPrice >= 0 &&
         typeof item.requestedQuantity === "number" &&
+        Number.isFinite(item.requestedQuantity) &&
         item.requestedQuantity >= 1
     )
   );

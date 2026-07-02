@@ -6,6 +6,7 @@ import Navigation from "../../components/Navigation";
 import dynamicImport from "next/dynamic";
 import { useRouter } from "next/navigation";
 import type { CartItem, WholesaleProduct } from "@/lib/wholesale/types";
+import { loadWholesaleCartFromStorage } from "@/lib/wholesale/cart";
 
 export const dynamic = "force-dynamic";
 
@@ -79,12 +80,7 @@ function WholesaleContent() {
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedCart = localStorage.getItem("wholesaleCart");
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-    }
+    setCart(loadWholesaleCartFromStorage());
   }, []);
 
   useEffect(() => {
