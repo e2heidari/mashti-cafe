@@ -6,6 +6,7 @@ import {
   generateOrderNumber,
   normalizeOrderItems,
   parseWholesaleAdminEmails,
+  seedFinalizedItemsFromRequested,
 } from "@/lib/wholesale/orders";
 import type {
   WholesaleOrderCustomer,
@@ -106,6 +107,8 @@ export async function POST(request: NextRequest) {
 
     const requestedItems = normalizeOrderItems(items);
     const requestedTotalAmount = calculateRequestedTotal(requestedItems);
+    const finalizedItems = seedFinalizedItemsFromRequested(requestedItems);
+    const finalizedTotalAmount = requestedTotalAmount;
     const orderNumber = generateOrderNumber();
     const submittedAt = new Date().toISOString();
 
@@ -118,7 +121,8 @@ export async function POST(request: NextRequest) {
         customer: normalizedCustomer,
         requestedItems,
         requestedTotalAmount,
-        finalizedItems: [],
+        finalizedItems,
+        finalizedTotalAmount,
         submittedAt,
       });
     } catch (error) {

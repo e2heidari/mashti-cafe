@@ -46,6 +46,19 @@ export interface WholesaleOrderLineItem extends WholesaleOrderLineItemInput {
   lineTotal: number;
 }
 
+export interface WholesaleOrderFinalizedLineItem {
+  productId: string;
+  sku?: string;
+  productName: string;
+  category?: string;
+  unitType: string;
+  unitValue: number;
+  unitLabel: string;
+  unitPrice: number;
+  finalizedQuantity: number;
+  lineTotal: number;
+}
+
 export interface WholesaleOrderRequestPayload {
   customer: WholesaleOrderCustomer;
   items: WholesaleOrderLineItemInput[];

@@ -1,4 +1,8 @@
-import type { WholesaleOrderLineItem, WholesaleOrderLineItemInput } from "./types";
+import type {
+  WholesaleOrderFinalizedLineItem,
+  WholesaleOrderLineItem,
+  WholesaleOrderLineItemInput,
+} from "./types";
 
 export function generateOrderNumber(now = new Date()): string {
   const datePart = [
@@ -37,6 +41,27 @@ export function calculateRequestedTotal(
       .reduce((total, item) => total + item.lineTotal, 0)
       .toFixed(2)
   );
+}
+
+export function seedFinalizedItemsFromRequested(
+  requestedItems: WholesaleOrderLineItem[]
+): WholesaleOrderFinalizedLineItem[] {
+  return requestedItems.map((item) => {
+    const finalizedQuantity = item.requestedQuantity;
+
+    return {
+      productId: item.productId,
+      sku: item.sku?.trim() || "",
+      category: item.category?.trim() || "",
+      productName: item.productName,
+      unitType: item.unitType,
+      unitValue: item.unitValue,
+      unitLabel: item.unitLabel,
+      unitPrice: item.unitPrice,
+      finalizedQuantity,
+      lineTotal: calculateLineTotal(item.unitPrice, finalizedQuantity),
+    };
+  });
 }
 
 export function parseWholesaleAdminEmails(): string[] {
