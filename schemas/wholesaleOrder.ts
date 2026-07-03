@@ -4,6 +4,11 @@ export default defineType({
   name: 'wholesaleOrder',
   title: 'Wholesale Order',
   type: 'document',
+  groups: [
+    { name: 'requested', title: 'Requested Order Info', default: true },
+    { name: 'finalized', title: 'Finalized Quote Info' },
+    { name: 'emailTracking', title: 'Email / Send Tracking' },
+  ],
   fields: [
     defineField({
       name: 'orderNumber',
@@ -21,6 +26,7 @@ export default defineType({
           { title: 'Submitted', value: 'submitted' },
           { title: 'Under Review', value: 'under_review' },
           { title: 'Finalized', value: 'finalized' },
+          { title: 'Quote Sent', value: 'quote_sent' },
           { title: 'Cancelled', value: 'cancelled' },
         ],
       },
@@ -31,6 +37,7 @@ export default defineType({
       name: 'customer',
       title: 'Customer',
       type: 'object',
+      group: 'requested',
       fields: [
         defineField({
           name: 'businessName',
@@ -66,6 +73,7 @@ export default defineType({
           name: 'message',
           title: 'Message / Notes',
           type: 'text',
+          description: 'Notes from the customer at order request time.',
         }),
       ],
       validation: (Rule) => Rule.required(),
@@ -74,6 +82,7 @@ export default defineType({
       name: 'requestedItems',
       title: 'Requested Items',
       type: 'array',
+      group: 'requested',
       of: [
         {
           type: 'object',
@@ -151,12 +160,22 @@ export default defineType({
       name: 'requestedTotalAmount',
       title: 'Requested Total Amount',
       type: 'number',
+      group: 'requested',
       validation: (Rule) => Rule.required().min(0),
+    }),
+    defineField({
+      name: 'submittedAt',
+      title: 'Submitted At',
+      type: 'datetime',
+      group: 'requested',
+      validation: (Rule) => Rule.required(),
+      readOnly: true,
     }),
     defineField({
       name: 'finalizedItems',
       title: 'Finalized Items',
       type: 'array',
+      group: 'finalized',
       of: [
         {
           type: 'object',
@@ -225,17 +244,36 @@ export default defineType({
       name: 'finalizedTotalAmount',
       title: 'Finalized Total Amount',
       type: 'number',
+      group: 'finalized',
     }),
     defineField({
-      name: 'submittedAt',
-      title: 'Submitted At',
-      type: 'datetime',
-      validation: (Rule) => Rule.required(),
+      name: 'sellerNote',
+      title: 'Seller Note',
+      type: 'text',
+      group: 'finalized',
+      description: 'Note from seller included in final quote email.',
     }),
     defineField({
       name: 'finalizedAt',
       title: 'Finalized At',
       type: 'datetime',
+      group: 'finalized',
+    }),
+    defineField({
+      name: 'finalEmailSentAt',
+      title: 'Final Email Sent At',
+      type: 'datetime',
+      group: 'emailTracking',
+      readOnly: true,
+      description: 'Set automatically when the quote email is sent to the customer.',
+    }),
+    defineField({
+      name: 'finalEmailSentTo',
+      title: 'Final Email Sent To',
+      type: 'string',
+      group: 'emailTracking',
+      readOnly: true,
+      description: 'Customer email address that received the final quote.',
     }),
   ],
   preview: {
