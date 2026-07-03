@@ -1,8 +1,17 @@
 import type {
   WholesaleOrderFinalizedLineItem,
+  WholesaleOrderFinalizedLineItemInput,
   WholesaleOrderLineItem,
   WholesaleOrderLineItemInput,
 } from "./types";
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || value === null || typeof value === "string";
+}
 
 export function generateOrderNumber(now = new Date()): string {
   const datePart = [
@@ -46,22 +55,93 @@ export function calculateRequestedTotal(
 export function seedFinalizedItemsFromRequested(
   requestedItems: WholesaleOrderLineItem[]
 ): WholesaleOrderFinalizedLineItem[] {
-  return requestedItems.map((item) => {
-    const finalizedQuantity = item.requestedQuantity;
-
-    return {
+  return requestedItems.map((item) =>
+    recalculateFinalizedLineItem({
       productId: item.productId,
-      sku: item.sku?.trim() || "",
-      category: item.category?.trim() || "",
+      sku: item.sku,
+      category: item.category,
       productName: item.productName,
       unitType: item.unitType,
       unitValue: item.unitValue,
       unitLabel: item.unitLabel,
       unitPrice: item.unitPrice,
-      finalizedQuantity,
-      lineTotal: calculateLineTotal(item.unitPrice, finalizedQuantity),
-    };
-  });
+      finalizedQuantity: item.requestedQuantity,
+    })
+  );
+}
+
+export function isValidFinalizedItem(
+  item: unknown
+): item is WholesaleOrderFinalizedLineItemInput {
+  if (!item || typeof item !== "object") {
+    return false;
+  }
+
+  const candidate = item as Partial<WholesaleOrderFinalizedLineItemInput>;
+
+  return (
+    isNonEmptyString(candidate.productId) &&
+    isNonEmptyString(candidate.productName) &&
+    isNonEmptyString(candidate.unitType) &&
+    isOptionalString(candidate.sku) &&
+    isOptionalString(candidate.category) &&
+    typeof candidate.unitValue === "number" &&
+    Number.isFinite(candidate.unitValue) &&
+    candidate.unitValue > 0 &&
+    isNonEmptyString(candidate.unitLabel) &&
+    typeof candidate.unitPrice === "number" &&
+    Number.isFinite(candidate.unitPrice) &&
+    candidate.unitPrice >= 0 &&
+    typeof candidate.finalizedQuantity === "number" &&
+    Number.isFinite(candidate.finalizedQuantity) &&
+    candidate.finalizedQuantity >= 1
+  );
+}
+
+export function isValidFinalizedItems(
+  items: unknown
+): items is WholesaleOrderFinalizedLineItemInput[] {
+  return (
+    Array.isArray(items) &&
+    items.length > 0 &&
+    items.every(isValidFinalizedItem)
+  );
+}
+
+export function recalculateFinalizedLineItem(
+  item: WholesaleOrderFinalizedLineItemInput
+): WholesaleOrderFinalizedLineItem {
+  const unitPrice = item.unitPrice;
+  const finalizedQuantity = item.finalizedQuantity;
+
+  return {
+    productId: item.productId.trim(),
+    sku: item.sku?.trim() || "",
+    category: item.category?.trim() || "",
+    productName: item.productName.trim(),
+    unitType: item.unitType.trim(),
+    unitValue: item.unitValue,
+    unitLabel: item.unitLabel.trim(),
+    unitPrice,
+    finalizedQuantity,
+    lineTotal: calculateLineTotal(unitPrice, finalizedQuantity),
+  };
+}
+
+export function normalizeFinalizedItems(
+  items: WholesaleOrderFinalizedLineItemInput[]
+): WholesaleOrderFinalizedLineItem[] {
+  return items.map(recalculateFinalizedLineItem);
+}
+
+export function calculateFinalizedTotal(
+  items: WholesaleOrderFinalizedLineItem[]
+): number {
+  return Number(
+    items
+      .reduce((total, item) => total + item.lineTotal, 0)
+      .toFixed(2)
+  );
 }
 
 export function parseWholesaleAdminEmails(): string[] {
