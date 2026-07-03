@@ -1,0 +1,42 @@
+{
+  "allowed": [
+    "L",
+    "mL",
+    "kg",
+    "g",
+    "lb",
+    "each",
+    "cup",
+    "box",
+    "bag",
+    "bottle",
+    "can",
+    "container",
+    "tray",
+    "case",
+    "jar",
+    "pack",
+    "pcs",
+    "portion"
+  ],
+  "displayNames": {
+    "L": "L",
+    "mL": "mL",
+    "kg": "kg",
+    "g": "g",
+    "lb": "lb",
+    "each": "each",
+    "cup": "cup",
+    "box": "box",
+    "bag": "bag",
+    "bottle": "bottle",
+    "can": "can",
+    "container": "container",
+    "tray": "tray",
+    "case": "case",
+    "jar": "jar",
+    "pack": "pack",
+    "pcs": "pcs",
+    "portion": "portion"
+  }
+}

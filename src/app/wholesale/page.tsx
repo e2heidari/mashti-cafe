@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Image from "next/image";
 import Navigation from "../../components/Navigation";
 import dynamicImport from "next/dynamic";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
+import type { CartItem, WholesaleProduct } from "@/lib/wholesale/types";
+import { loadWholesaleCartFromStorage } from "@/lib/wholesale/cart";
 
-// Disable static generation for this page
 export const dynamic = "force-dynamic";
 
-// Dynamically import AI Assistant to reduce initial bundle size
 const AIAssistant = dynamicImport(
   () => import("../../components/AIAssistant"),
   {
@@ -18,124 +18,71 @@ const AIAssistant = dynamicImport(
   }
 );
 
-interface WholesaleProduct {
-  _id: string;
-  name: string;
-  description: string;
-  ingredients: string[];
-  weight: string;
-  price: number;
-  imageUrl: string;
-  imageAlt?: string;
-  order: number;
-  active: boolean;
+// CMS wholesale sections remain available via /api/wholesale-sections.
+// The About Wholesale block is hidden on /wholesale for now.
+
+function getProductCategories(products: WholesaleProduct[]): string[] {
+  const categories = products
+    .map((product) => product.category?.trim())
+    .filter((category): category is string => Boolean(category));
+
+  return Array.from(new Set(categories)).sort((a, b) => a.localeCompare(b));
 }
 
-interface CartItem {
-  product: WholesaleProduct;
-  quantity: number;
-}
+function filterProducts(
+  products: WholesaleProduct[],
+  searchQuery: string,
+  selectedCategory: string
+): WholesaleProduct[] {
+  const query = searchQuery.trim().toLowerCase();
 
-interface WholesaleSection {
-  _id: string;
-  title: string;
-  description: string;
-  imageUrl: string;
-  imageAlt?: string;
-  buttonText: string;
-  order: number;
-  active: boolean;
-}
+  return products.filter((product) => {
+    const category = product.category?.trim() || "";
+    const matchesCategory =
+      selectedCategory === "all" ||
+      category.toLowerCase() === selectedCategory.toLowerCase();
 
-// Fallback sections if CMS is not available
-const fallbackSections: WholesaleSection[] = [
-  {
-    _id: "fallback-1",
-    title: "Wholesale Division",
-    description:
-      "Discover our premium wholesale ice cream and juice products. Perfect for restaurants, cafes, and retail businesses looking for authentic Persian flavors.",
-    imageUrl: "/images/wholesales.jpeg",
-    buttonText: "View Products",
-    order: 1,
-    active: true,
-  },
-  {
-    _id: "fallback-2",
-    title: "Bulk Orders & Distribution",
-    description:
-      "We specialize in bulk orders and reliable distribution services. From small cafes to large restaurants, we deliver quality products on time.",
-    imageUrl: "/images/northvan.jpeg",
-    buttonText: "Order Now",
-    order: 2,
-    active: true,
-  },
-  {
-    _id: "fallback-3",
-    title: "Quality & Authenticity",
-    description:
-      "Every product is crafted with authentic Persian recipes and premium ingredients. Experience the true taste of Iran in every bite.",
-    imageUrl: "/images/about.jpeg",
-    buttonText: "Learn More",
-    order: 3,
-    active: true,
-  },
-];
+    if (!matchesCategory) {
+      return false;
+    }
+
+    if (!query) {
+      return true;
+    }
+
+    const haystack = [
+      product.sku?.trim() || "",
+      product.name,
+      product.description,
+      category,
+      product.unitLabel,
+      product.ingredients.join(" "),
+    ]
+      .join(" ")
+      .toLowerCase();
+
+    return haystack.includes(query);
+  });
+}
 
 function WholesaleContent() {
   const [isAIOpen, setIsAIOpen] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [showProducts, setShowProducts] = useState(false);
-  const [wholesaleSections, setWholesaleSections] = useState<
-    WholesaleSection[]
-  >([]);
   const [wholesaleProducts, setWholesaleProducts] = useState<
     WholesaleProduct[]
   >([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [productQuantities, setProductQuantities] = useState<
+    Record<string, number>
+  >({});
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // Check URL parameters for showProducts
   useEffect(() => {
-    const showProductsParam = searchParams.get("showProducts");
-    if (showProductsParam === "true") {
-      setShowProducts(true);
-    } else {
-      setShowProducts(false);
-    }
-  }, [searchParams]);
-
-  // Load cart from localStorage on component mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedCart = localStorage.getItem("wholesaleCart");
-      if (savedCart) {
-        setCart(JSON.parse(savedCart));
-      }
-    }
+    setCart(loadWholesaleCartFromStorage());
   }, []);
 
-  // Fetch wholesale sections from CMS
-  useEffect(() => {
-    const fetchWholesaleSections = async () => {
-      try {
-        const response = await fetch("/api/wholesale-sections");
-        if (!response.ok) throw new Error("Failed to fetch sections");
-        const data = await response.json();
-        setWholesaleSections(data.wholesaleSections || []);
-      } catch (error) {
-        console.error("Error fetching wholesale sections:", error);
-        setError("Failed to load sections");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWholesaleSections();
-  }, []);
-
-  // Fetch wholesale products from CMS
   useEffect(() => {
     const fetchWholesaleProducts = async () => {
       try {
@@ -145,74 +92,71 @@ function WholesaleContent() {
         setWholesaleProducts(data.wholesaleProducts || []);
       } catch (error) {
         console.error("Error fetching wholesale products:", error);
-        // Keep using fallback data if CMS fails
+      } finally {
+        setProductsLoading(false);
       }
     };
 
     fetchWholesaleProducts();
   }, []);
 
+  const categories = useMemo(
+    () => getProductCategories(wholesaleProducts),
+    [wholesaleProducts]
+  );
+
+  const filteredProducts = useMemo(
+    () => filterProducts(wholesaleProducts, searchQuery, selectedCategory),
+    [wholesaleProducts, searchQuery, selectedCategory]
+  );
+
+  const getQuantityForProduct = (productId: string) =>
+    productQuantities[productId] ?? 1;
+
+  const setQuantityForProduct = (productId: string, quantity: number) => {
+    setProductQuantities((prev) => ({
+      ...prev,
+      [productId]: Math.max(1, quantity),
+    }));
+  };
+
   const addToCart = (product: WholesaleProduct) => {
+    if (!product.active) {
+      return;
+    }
+
+    const quantity = getQuantityForProduct(product._id);
+
     setCart((prevCart) => {
       const existingItem = prevCart.find(
         (item) => item.product._id === product._id
       );
-      if (existingItem) {
-        const newCart = prevCart.map((item) =>
-          item.product._id === product._id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        );
-        if (typeof window !== "undefined") {
-          localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-        }
-        return newCart;
-      } else {
-        const newCart = [...prevCart, { product, quantity: 1 }];
-        if (typeof window !== "undefined") {
-          localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-        }
-        return newCart;
+
+      const newCart = existingItem
+        ? prevCart.map((item) =>
+            item.product._id === product._id
+              ? { ...item, quantity: item.quantity + quantity }
+              : item
+          )
+        : [...prevCart, { product, quantity }];
+
+      if (typeof window !== "undefined") {
+        localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
       }
+
+      return newCart;
     });
+
+    setQuantityForProduct(product._id, 1);
   };
-
-  // const updateQuantity = (productId: string, quantity: number) => {
-  //   if (quantity <= 0) {
-  //     removeFromCart(productId);
-  //     return;
-  //   }
-  //   setCart((prevCart) => {
-  //     const newCart = prevCart.map((item) =>
-  //       item.product._id === productId ? { ...item, quantity } : item
-  //     );
-  //     if (typeof window !== "undefined") {
-  //       localStorage.setItem("wholesaleCart", JSON.stringify(newCart));
-  //     }
-  //     return newCart;
-  //   });
-  // };
-
-  // removeFromCart will be reintroduced when cart UI supports removal actions
 
   const getCartItemCount = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
-  // const getTotalPrice = () => {
-  //   return cart.reduce(
-  //     (total, item) => total + item.product.price * item.quantity,
-  //     0
-  //   );
-  // };
-
   const handleCartClick = () => {
     router.push("/wholesale/cart");
   };
-
-  // const handleSubmitOrder = () => {
-  //   // This will be handled by the cart page component
-  // };
 
   return (
     <div className="min-h-screen bg-white">
@@ -228,178 +172,199 @@ function WholesaleContent() {
       </Suspense>
 
       <div className="pt-48">
-        {/* Main Content - Similar to Central Branch */}
-        {!showProducts ? (
-          <section className="py-8 sm:py-16 px-4 sm:px-6 lg:px-8 bg-white">
-            <div className="max-w-7xl mx-auto">
-              {loading ? (
-                <div className="text-center py-12 sm:py-20">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
-                  <p className="text-gray-600 text-base sm:text-lg font-sodo">
-                    Loading wholesale sections...
-                  </p>
-                </div>
-              ) : error ? (
-                <div className="text-center py-12 sm:py-20">
-                  <p className="text-red-600 text-base sm:text-lg mb-4 font-sodo">
-                    Failed to load wholesale sections
-                  </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="bg-red-600 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full hover:bg-red-700 transition-colors font-pike text-sm sm:text-base"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              ) : wholesaleSections.length === 0 ? (
-                <div className="text-center py-12 sm:py-20">
-                  <p className="text-gray-600 text-base sm:text-lg font-sodo mb-4">
-                    No wholesale sections available from CMS
-                  </p>
-                  <p className="text-xs sm:text-sm text-gray-500 font-sodo">
-                    Showing sample content. Add content in Sanity Studio to
-                    replace this.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Show fallback data if no sections from CMS */}
-                  {(wholesaleSections.length === 0
-                    ? fallbackSections
-                    : wholesaleSections
-                  ).map((section, index) => (
-                    <div
-                      key={section._id}
-                      className={`flex flex-col lg:flex-row items-center gap-6 sm:gap-8 ${
-                        index <
-                        (wholesaleSections.length === 0
-                          ? fallbackSections.length
-                          : wholesaleSections.length) -
-                          1
-                          ? "mb-12 sm:mb-16"
-                          : ""
-                      } ${index % 2 === 1 ? "lg:flex-row-reverse" : ""}`}
-                    >
-                      <div className="w-full lg:w-1/2">
-                        <Image
-                          src={section.imageUrl}
-                          alt={section.imageAlt || section.title}
-                          width={600}
-                          height={400}
-                          className="w-full h-auto rounded-xl sm:rounded-2xl shadow-lg sm:shadow-2xl object-cover"
-                          priority
-                        />
-                      </div>
-                      <div className="w-full lg:w-1/2 text-center lg:text-left px-2 sm:px-0">
-                        <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4 font-pike">
-                          {section.title}
-                        </h3>
-                        <p className="text-base sm:text-lg text-gray-600 mb-4 sm:mb-6 font-sodo leading-relaxed">
-                          {section.description}
-                        </p>
-                        <button
-                          onClick={() => {
-                            setShowProducts(true);
-                            router.push("/wholesale?showProducts=true");
-                          }}
-                          className="bg-red-600 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike text-sm sm:text-base"
-                        >
-                          {section.buttonText}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
+        <section
+          id="wholesale-products"
+          className="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 bg-white"
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="mb-8 sm:mb-10 text-center sm:text-left">
+              <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 font-pike mb-3">
+                Wholesale Products
+              </h1>
+              <p className="text-base sm:text-lg text-gray-600 font-sodo max-w-3xl">
+                Browse our wholesale catalog, add your requested quantities, and
+                submit an order request for seller confirmation.
+              </p>
             </div>
-          </section>
-        ) : (
-          <>
-            {/* Products Section */}
-            <section className="sm:py-16 px-4 sm:px-6 lg:px-8 bg-white">
-              <div className="max-w-7xl mx-auto">
-                <div className="mb-8 sm:mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-                  <button
-                    onClick={() => {
-                      setShowProducts(false);
-                      router.push("/wholesale");
-                    }}
-                    className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-gray-700 transition-colors font-pike text-sm sm:text-base order-1 sm:order-1"
-                  >
-                    ← Back to Home
-                  </button>
-                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 font-pike text-center w-full sm:flex-1 order-2 sm:order-2">
-                    Our Wholesale Products
-                  </h2>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                  {wholesaleProducts.map((product) => (
-                    <div
+            <div className="mb-6 sm:mb-8 space-y-4">
+              <div>
+                <label
+                  htmlFor="wholesale-search"
+                  className="sr-only"
+                >
+                  Search wholesale products
+                </label>
+                <input
+                  id="wholesale-search"
+                  type="search"
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search by name, category, description, or ingredients..."
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 text-gray-900 font-sodo"
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("all")}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors font-pike ${
+                    selectedCategory === "all"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  All
+                </button>
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors font-pike ${
+                      selectedCategory === category
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+
+              <p className="text-sm text-gray-500 font-sodo">
+                Showing {filteredProducts.length} of {wholesaleProducts.length}{" "}
+                products
+              </p>
+            </div>
+
+            {productsLoading ? (
+              <div className="text-center py-12 sm:py-20">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-600 mx-auto mb-4"></div>
+                <p className="text-gray-600 text-base sm:text-lg font-sodo">
+                  Loading wholesale products...
+                </p>
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-12 sm:py-16 bg-gray-50 rounded-2xl border border-gray-200">
+                <p className="text-gray-700 text-lg font-pike mb-2">
+                  No products match your search
+                </p>
+                <p className="text-gray-500 font-sodo">
+                  Try a different keyword or category filter.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {filteredProducts.map((product) => {
+                  const quantity = getQuantityForProduct(product._id);
+                  const sku = product.sku?.trim() || "";
+
+                  return (
+                    <article
                       key={product._id}
-                      className="bg-white rounded-lg shadow-lg overflow-hidden border border-gray-200 hover:shadow-xl transition-shadow duration-300"
+                      className="flex flex-col h-full rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-gray-300 hover:shadow-md transition-all duration-200"
                     >
-                      <div className="relative h-48 sm:h-64">
-                        {product.imageUrl ? (
-                          <Image
-                            src={product.imageUrl}
-                            alt={product.imageAlt || product.name}
-                            fill
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <div className="text-center">
-                              <div className="text-gray-400 text-3xl sm:text-4xl mb-2">
-                                🍦
-                              </div>
-                              <p className="text-gray-500 text-xs sm:text-sm font-sodo">
-                                No Image
-                              </p>
+                      <div className="flex gap-4 p-4 pb-3 min-h-0">
+                        <div className="relative w-[4.5rem] h-[4.5rem] shrink-0 rounded-lg overflow-hidden bg-gray-50 border border-gray-100">
+                          {product.imageUrl ? (
+                            <Image
+                              src={product.imageUrl}
+                              alt={product.imageAlt || product.name}
+                              fill
+                              sizes="72px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div
+                              className="w-full h-full flex items-center justify-center text-gray-300 text-xl"
+                              aria-hidden="true"
+                            >
+                              🍦
                             </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                          <h3 className="text-base font-bold text-gray-900 font-pike leading-snug line-clamp-2">
+                            {product.name}
+                          </h3>
+                          {sku ? (
+                            <p className="mt-1.5 text-xs text-gray-400 font-sodo truncate">
+                              {sku}
+                            </p>
+                          ) : null}
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <span className="text-xs text-gray-500 font-sodo truncate">
+                              {product.unitLabel}
+                            </span>
+                            <span className="shrink-0 text-base font-bold text-red-600 font-pike">
+                              ${product.unitPrice.toFixed(2)}
+                            </span>
                           </div>
-                        )}
+                        </div>
                       </div>
 
-                      <div className="p-4 sm:p-6">
-                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 font-pike mb-2">
-                          {product.name}
-                        </h3>
-                        <p className="text-sm sm:text-base text-gray-600 mb-3 font-sodo leading-relaxed">
-                          {product.description}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3 font-sodo">
-                          <strong>Weight:</strong> {product.weight}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500 mb-3 sm:mb-4 font-sodo">
-                          <strong>Ingredients:</strong>{" "}
-                          {product.ingredients.join(", ")}
-                        </p>
-
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
-                          <span className="text-xl sm:text-2xl font-bold text-red-600 font-pike">
-                            ${product.price.toFixed(2)}
-                          </span>
+                      <div className="mt-auto border-t border-gray-100 bg-gray-50 px-4 py-4">
+                        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
+                          <div
+                            className="inline-flex h-10 items-stretch rounded-lg border border-gray-200 bg-white overflow-hidden"
+                            role="group"
+                            aria-label={`Quantity for ${product.name}`}
+                          >
+                            <button
+                              type="button"
+                              aria-label={`Decrease quantity for ${product.name}`}
+                              onClick={() =>
+                                setQuantityForProduct(
+                                  product._id,
+                                  quantity - 1
+                                )
+                              }
+                              className="w-9 sm:w-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors border-r border-gray-200 text-base leading-none"
+                            >
+                              −
+                            </button>
+                            <span
+                              className="w-9 sm:w-10 flex items-center justify-center text-sm font-semibold text-gray-900 tabular-nums"
+                              aria-live="polite"
+                            >
+                              {quantity}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Increase quantity for ${product.name}`}
+                              onClick={() =>
+                                setQuantityForProduct(
+                                  product._id,
+                                  quantity + 1
+                                )
+                              }
+                              className="w-9 sm:w-10 flex items-center justify-center text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition-colors border-l border-gray-200 text-base leading-none"
+                            >
+                              +
+                            </button>
+                          </div>
                           <button
+                            type="button"
+                            aria-label={`Add ${quantity} ${product.name} to cart`}
                             onClick={() => addToCart(product)}
-                            className="w-full sm:w-auto bg-red-600 text-white px-4 py-2 rounded-full font-semibold hover:bg-red-700 transition-colors font-pike text-sm sm:text-base"
+                            className="h-10 w-full bg-red-600 text-white px-3 sm:px-4 rounded-full font-semibold hover:bg-red-700 active:bg-red-800 transition-colors font-pike text-xs sm:text-sm"
                           >
                             Add to Cart
                           </button>
                         </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    </article>
+                  );
+                })}
               </div>
-            </section>
-          </>
-        )}
+            )}
+          </div>
+        </section>
 
-        {/* AI Assistant Modal */}
         <AIAssistant isOpen={isAIOpen} onClose={() => setIsAIOpen(false)} />
-
-        {/* Mobile cart modal removed: cart uses dedicated route */}
       </div>
     </div>
   );
