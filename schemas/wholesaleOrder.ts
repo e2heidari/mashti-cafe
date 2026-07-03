@@ -83,6 +83,8 @@ export default defineType({
       title: 'Requested Items',
       type: 'array',
       group: 'requested',
+      description:
+        'Original customer request snapshot at submit time. Use for reference only — edit the Finalized Items tab to prepare the quote.',
       of: [
         {
           type: 'object',
@@ -176,44 +178,56 @@ export default defineType({
       title: 'Finalized Items',
       type: 'array',
       group: 'finalized',
+      description:
+        'Seller-edited quote lines. Adjust quantity and unit price, remove unavailable products, then update Finalized Total Amount before sending the quote.',
       of: [
         {
           type: 'object',
+          name: 'finalizedLineItem',
+          title: 'Finalized Line Item',
           fields: [
             defineField({
               name: 'productId',
               title: 'Product ID',
               type: 'string',
+              readOnly: true,
+              description: 'Catalog reference — copied from the customer request.',
             }),
             defineField({
               name: 'sku',
               title: 'SKU',
               type: 'string',
+              readOnly: true,
             }),
             defineField({
               name: 'productName',
               title: 'Product Name',
               type: 'string',
+              readOnly: true,
             }),
             defineField({
               name: 'category',
               title: 'Category',
               type: 'string',
+              readOnly: true,
             }),
             defineField({
               name: 'unitType',
               title: 'Unit Type',
               type: 'string',
+              readOnly: true,
             }),
             defineField({
               name: 'unitValue',
               title: 'Unit Value',
               type: 'number',
+              readOnly: true,
             }),
             defineField({
               name: 'unitLabel',
               title: 'Unit Label',
               type: 'string',
+              readOnly: true,
             }),
             defineField({
               name: 'weight',
@@ -225,18 +239,44 @@ export default defineType({
               name: 'unitPrice',
               title: 'Unit Price',
               type: 'number',
+              description: 'Quoted price per unit for this line.',
+              validation: (Rule) => Rule.required().min(0),
             }),
             defineField({
               name: 'finalizedQuantity',
               title: 'Finalized Quantity',
               type: 'number',
+              description: 'Quantity included in the final quote.',
+              validation: (Rule) => Rule.required().min(1),
             }),
             defineField({
               name: 'lineTotal',
               title: 'Line Total',
               type: 'number',
+              readOnly: true,
+              description: 'unitPrice × finalizedQuantity — update manually if you change price or quantity.',
             }),
           ],
+          preview: {
+            select: {
+              productName: 'productName',
+              sku: 'sku',
+              finalizedQuantity: 'finalizedQuantity',
+              unitPrice: 'unitPrice',
+              lineTotal: 'lineTotal',
+            },
+            prepare({ productName, sku, finalizedQuantity, unitPrice, lineTotal }) {
+              const qty = finalizedQuantity != null ? `× ${finalizedQuantity}` : ''
+              const price =
+                unitPrice != null ? `@ $${Number(unitPrice).toFixed(2)}` : ''
+              const total =
+                lineTotal != null ? ` = $${Number(lineTotal).toFixed(2)}` : ''
+              return {
+                title: productName || 'Line item',
+                subtitle: [sku, qty, price, total].filter(Boolean).join(' '),
+              }
+            },
+          },
         },
       ],
     }),
@@ -245,6 +285,9 @@ export default defineType({
       title: 'Finalized Total Amount',
       type: 'number',
       group: 'finalized',
+      description:
+        'Total for the final quote. Update to match the sum of finalized line totals after editing items.',
+      validation: (Rule) => Rule.min(0),
     }),
     defineField({
       name: 'sellerNote',
