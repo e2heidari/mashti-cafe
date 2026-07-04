@@ -1,4 +1,4 @@
-import { defineField, defineType } from 'sanity'
+import { ALL_FIELDS_GROUP, defineField, defineType } from 'sanity'
 
 import { FinalizedTotalPreviewInput } from '../sanity/plugins/wholesaleOrder/FinalizedTotalPreviewInput'
 
@@ -10,12 +10,14 @@ export default defineType({
     { name: 'requested', title: 'Requested Order Info', default: true },
     { name: 'finalized', title: 'Finalized Quote Info' },
     { name: 'emailTracking', title: 'Email / Send Tracking' },
+    { ...ALL_FIELDS_GROUP, hidden: true },
   ],
   fields: [
     defineField({
       name: 'orderNumber',
       title: 'Order Number',
       type: 'string',
+      group: 'requested',
       validation: (Rule) => Rule.required(),
       readOnly: true,
     }),
@@ -23,6 +25,7 @@ export default defineType({
       name: 'status',
       title: 'Status',
       type: 'string',
+      group: 'requested',
       options: {
         list: [
           { title: 'Submitted', value: 'submitted' },
