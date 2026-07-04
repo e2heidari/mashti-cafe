@@ -2,6 +2,7 @@ import { defineConfig } from 'sanity'
 import { deskTool } from 'sanity/desk'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './schemas'
+import { wholesaleOrderPlugin } from './sanity/plugins/wholesaleOrder'
 
 export default defineConfig({
   name: 'default',
@@ -10,7 +11,7 @@ export default defineConfig({
   projectId: 'eh05fgze',
   dataset: 'mashti-menu',
 
-  plugins: [deskTool(), visionTool()],
+  plugins: [deskTool(), visionTool(), wholesaleOrderPlugin()],
 
   schema: {
     types: schemaTypes,
