@@ -166,6 +166,37 @@ async function patchOrderStatusAtRevision(
     .commit();
 }
 
+async function handleQuoteEmailSendFailure(
+  writeClient: WriteClient,
+  orderId: string,
+  lockRev: string,
+  sendError: unknown
+): Promise<NextResponse> {
+  console.error("Failed to send wholesale quote email:", sendError);
+
+  try {
+    await patchOrderStatusAtRevision(
+      writeClient,
+      orderId,
+      lockRev,
+      "quote_send_failed"
+    );
+  } catch (statusError) {
+    console.error(
+      "Failed to mark wholesale order as quote_send_failed:",
+      statusError
+    );
+  }
+
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Failed to send quote email. Order was not marked as sent.",
+    },
+    { status: 502 }
+  );
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.WHOLESALE_SEND_QUOTE_SECRET?.trim()) {
@@ -325,37 +356,29 @@ export async function POST(request: NextRequest) {
     const { Resend } = await import("resend");
     const resend = new Resend(resendApiKey);
 
-    const { error } = await resend.emails.send({
-      from: fromEmail,
-      to: [customerEmail],
-      subject: emailContent.subject,
-      text: emailContent.text,
-      html: emailContent.html,
-    });
+    try {
+      const { error } = await resend.emails.send({
+        from: fromEmail,
+        to: [customerEmail],
+        subject: emailContent.subject,
+        text: emailContent.text,
+        html: emailContent.html,
+      });
 
-    if (error) {
-      console.error("Failed to send wholesale quote email:", error);
-
-      try {
-        await patchOrderStatusAtRevision(
+      if (error) {
+        return handleQuoteEmailSendFailure(
           writeClient,
           order._id,
           lockRev,
-          "quote_send_failed"
-        );
-      } catch (statusError) {
-        console.error(
-          "Failed to mark wholesale order as quote_send_failed:",
-          statusError
+          error
         );
       }
-
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Failed to send quote email. Order was not marked as sent.",
-        },
-        { status: 502 }
+    } catch (sendError) {
+      return handleQuoteEmailSendFailure(
+        writeClient,
+        order._id,
+        lockRev,
+        sendError
       );
     }
 
