@@ -35,6 +35,29 @@ function isSendBlocked(doc: WholesaleOrderDoc | null | undefined): boolean {
   return BLOCKED_STATUSES.has(doc.status ?? "");
 }
 
+function resolveNextAppBaseUrl(): string | null {
+  const raw = import.meta.env.SANITY_STUDIO_NEXT_APP_URL;
+  if (typeof raw !== "string") {
+    return null;
+  }
+
+  const trimmed = raw.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return trimmed.replace(/\/+$/, "");
+}
+
+function buildSendQuoteStudioUrl(): string | null {
+  const baseUrl = resolveNextAppBaseUrl();
+  if (!baseUrl) {
+    return null;
+  }
+
+  return `${baseUrl}/api/wholesale-order/send-quote-studio`;
+}
+
 function blockedReason(doc: WholesaleOrderDoc | null | undefined): string {
   if (!doc) {
     return "Save the order before sending a quote.";
@@ -70,8 +93,19 @@ export const SendQuoteAction: DocumentActionComponent = (props) => {
     onHandle: () => {
       void (async () => {
         try {
+          const sendQuoteUrl = buildSendQuoteStudioUrl();
+          if (!sendQuoteUrl) {
+            toast.push({
+              status: "error",
+              title: "Send quote not configured",
+              description:
+                "Set SANITY_STUDIO_NEXT_APP_URL (e.g. http://localhost:3000) in .env.local and restart Studio.",
+            });
+            return;
+          }
+
           const orderId = resolveOrderId(props);
-          const response = await fetch("/api/wholesale-order/send-quote-studio", {
+          const response = await fetch(sendQuoteUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ orderId }),
