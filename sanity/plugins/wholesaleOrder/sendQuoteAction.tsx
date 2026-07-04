@@ -89,7 +89,7 @@ export const SendQuoteAction: DocumentActionComponent = (props) => {
     disabled: blocked,
     title: blocked
       ? blockedReason(doc)
-      : "Email the finalized quote to the customer.",
+      : "Email the finalized order to the customer.",
     onHandle: () => {
       void (async () => {
         try {

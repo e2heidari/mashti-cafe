@@ -8,7 +8,7 @@ export default defineType({
   type: 'document',
   groups: [
     { name: 'requested', title: 'Requested Order Info', default: true },
-    { name: 'finalized', title: 'Finalized Quote Info' },
+    { name: 'finalized', title: 'Finalized Order Info' },
     { name: 'emailTracking', title: 'Email / Send Tracking' },
     { ...ALL_FIELDS_GROUP, hidden: true },
   ],
@@ -91,7 +91,7 @@ export default defineType({
       type: 'array',
       group: 'requested',
       description:
-        'Original customer request snapshot at submit time. Use for reference only — edit the Finalized Items tab to prepare the quote.',
+        'Original customer request snapshot at submit time. Use for reference only — edit the Finalized Order Info tab to prepare the final order.',
       of: [
         {
           type: 'object',
@@ -186,7 +186,7 @@ export default defineType({
       type: 'array',
       group: 'finalized',
       description:
-        'Seller-edited quote lines. Adjust quantity and unit price, remove unavailable products, then send the quote.',
+        'Seller-edited order lines. Adjust quantity and unit price, remove unavailable products, then send the quote.',
       of: [
         {
           type: 'object',
@@ -253,7 +253,7 @@ export default defineType({
               name: 'finalizedQuantity',
               title: 'Finalized Quantity',
               type: 'number',
-              description: 'Quantity included in the final quote.',
+              description: 'Quantity included in the final order.',
               validation: (Rule) => Rule.required().min(1),
             }),
             defineField({
@@ -290,12 +290,12 @@ export default defineType({
     }),
     defineField({
       name: 'finalizedTotalPreview',
-      title: 'Current Calculated Quote Total',
+      title: 'Current Calculated Order Total',
       type: 'string',
       group: 'finalized',
       readOnly: true,
       description:
-        'Live preview from finalized line items. Does not overwrite saved quote data.',
+        'Live preview from finalized line items. Does not overwrite saved order data.',
       components: {
         input: FinalizedTotalPreviewInput,
       },
@@ -315,7 +315,7 @@ export default defineType({
       title: 'Seller Note',
       type: 'text',
       group: 'finalized',
-      description: 'Note from seller included in final quote email.',
+      description: 'Note from seller included in the quote email.',
     }),
     defineField({
       name: 'finalizedAt',
@@ -337,7 +337,7 @@ export default defineType({
       type: 'string',
       group: 'emailTracking',
       readOnly: true,
-      description: 'Customer email address that received the final quote.',
+      description: 'Customer email address that received the quote email.',
     }),
   ],
   preview: {
