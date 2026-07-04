@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { buildAdminOrderRequestEmail } from "@/lib/wholesale/emails";
+import { buildAdminOrderRequestEmail, buildCustomerOrderRequestConfirmationEmail } from "@/lib/wholesale/emails";
 import {
   calculateRequestedTotal,
   generateOrderNumber,
@@ -145,7 +145,15 @@ export async function POST(request: NextRequest) {
       process.env.WHOLESALE_SUBJECT_PREFIX || "Mashti Wholesale";
     const adminEmails = parseWholesaleAdminEmails();
 
-    const emailContent = buildAdminOrderRequestEmail({
+    const adminEmailContent = buildAdminOrderRequestEmail({
+      orderNumber,
+      customer: normalizedCustomer,
+      items: requestedItems,
+      requestedTotalAmount,
+      subjectPrefix,
+    });
+
+    const customerEmailContent = buildCustomerOrderRequestConfirmationEmail({
       orderNumber,
       customer: normalizedCustomer,
       items: requestedItems,
@@ -167,11 +175,12 @@ export async function POST(request: NextRequest) {
       resendApiKey.length < 10
     ) {
       console.warn(
-        "Wholesale order request saved. Admin notification email not sent (RESEND_API_KEY missing or invalid)."
+        "Wholesale order request saved. Notification emails not sent (RESEND_API_KEY missing or invalid)."
       );
       console.log("Order Number:", orderNumber);
       console.log("Admin recipients:", adminEmails.join(", "));
-      console.log(emailContent.text);
+      console.log("Customer recipient:", normalizedCustomer.email);
+      console.log(adminEmailContent.text);
 
       return successResponse(true);
     }
@@ -179,19 +188,48 @@ export async function POST(request: NextRequest) {
     try {
       const { Resend } = await import("resend");
       const resend = new Resend(resendApiKey);
+      let emailWarning = false;
 
-      const { error } = await resend.emails.send({
+      try {
+        const { error: customerError } = await resend.emails.send({
+          from: fromEmail,
+          to: [normalizedCustomer.email],
+          subject: customerEmailContent.subject,
+          text: customerEmailContent.text,
+          html: customerEmailContent.html,
+        });
+
+        if (customerError) {
+          console.error(
+            "Wholesale order request saved, but customer confirmation email failed:",
+            customerError
+          );
+          console.log("Order Number:", orderNumber);
+          console.log("Customer recipient:", normalizedCustomer.email);
+          emailWarning = true;
+        }
+      } catch (customerSendError) {
+        console.error(
+          "Wholesale order request saved, but customer confirmation email failed:",
+          customerSendError
+        );
+        console.log("Order Number:", orderNumber);
+        console.log("Customer recipient:", normalizedCustomer.email);
+        emailWarning = true;
+      }
+
+      const { error: adminError } = await resend.emails.send({
         from: fromEmail,
         to: adminEmails,
-        subject: emailContent.subject,
-        text: emailContent.text,
-        html: emailContent.html,
+        subject: adminEmailContent.subject,
+        text: adminEmailContent.text,
+        html: adminEmailContent.html,
       });
 
-      if (error) {
+      if (adminError) {
         console.error(
           "Wholesale order request saved, but admin notification email failed:",
-          error
+          adminError
         );
         console.log("Order Number:", orderNumber);
         console.log("Admin recipients:", adminEmails.join(", "));
@@ -199,14 +237,15 @@ export async function POST(request: NextRequest) {
         return successResponse(true);
       }
 
-      return successResponse(false);
+      return successResponse(emailWarning);
     } catch (error) {
       console.error(
-        "Wholesale order request saved, but admin notification email failed:",
+        "Wholesale order request saved, but notification emails failed:",
         error
       );
       console.log("Order Number:", orderNumber);
       console.log("Admin recipients:", adminEmails.join(", "));
+      console.log("Customer recipient:", normalizedCustomer.email);
 
       return successResponse(true);
     }

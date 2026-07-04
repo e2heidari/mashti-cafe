@@ -12,6 +12,14 @@ type AdminOrderRequestEmailInput = {
   subjectPrefix: string;
 };
 
+type CustomerOrderRequestConfirmationEmailInput = {
+  orderNumber: string;
+  customer: WholesaleOrderCustomer;
+  items: WholesaleOrderLineItem[];
+  requestedTotalAmount: number;
+  subjectPrefix: string;
+};
+
 type CustomerQuoteEmailInput = {
   orderNumber: string;
   customer: WholesaleOrderCustomer;
@@ -179,6 +187,156 @@ This is an order request. Availability and final quantities will be confirmed by
 
   return {
     subject: `${subjectPrefix}: ${customer.businessName} (${orderNumber})`,
+    text,
+    html,
+  };
+}
+
+export function buildCustomerOrderRequestConfirmationEmail({
+  orderNumber,
+  customer,
+  items,
+  requestedTotalAmount,
+  subjectPrefix,
+}: CustomerOrderRequestConfirmationEmailInput) {
+  const safeOrderNumber = escapeHtml(orderNumber);
+  const safeBusinessName = escapeHtml(customer.businessName);
+  const safeContactName = escapeHtml(customer.contactName);
+
+  const itemsText = [
+    "Item | SKU | Category | Unit | Qty | Unit Price | Line Total",
+    ...items.map((item) => {
+      const sku = item.sku?.trim() || "—";
+      const category = item.category?.trim() || "—";
+
+      return [
+        item.productName,
+        sku,
+        category,
+        item.unitLabel,
+        String(item.requestedQuantity),
+        `$${item.unitPrice.toFixed(2)}`,
+        `$${item.lineTotal.toFixed(2)}`,
+      ].join(" | ");
+    }),
+  ].join("\n");
+
+  const text = `
+Mashti Wholesale — Request Received
+
+Hello ${customer.contactName},
+
+Thank you for your wholesale order request. We have received it and our team will review it shortly.
+
+Order Number: ${orderNumber}
+Business: ${customer.businessName}
+
+Requested Items:
+${itemsText}
+
+Estimated Total: $${requestedTotalAmount.toFixed(2)}
+
+Our team will review your request and follow up with final quote and order details by email.
+
+If you have any questions, please contact us.
+
+Thank you,
+Mashti Wholesale
+`.trim();
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto;">
+      <h2 style="color: #e80812; margin: 0 0 4px;">Mashti Wholesale</h2>
+      <p style="color: #333333; font-size: 16px; font-weight: 600; margin: 0 0 20px;">Request Received</p>
+
+      <p style="color: #333333; font-size: 15px; margin: 0 0 16px;">Hello ${safeContactName},</p>
+
+      <p style="color: #555555; font-size: 14px; line-height: 1.5; margin: 0 0 12px;">
+        Thank you for your wholesale order request. We have received it and our team will review it shortly.
+      </p>
+
+      <p style="color: #555555; font-size: 14px; line-height: 1.5; margin: 0 0 20px;">
+        Our team will follow up with final quote and order details by email.
+      </p>
+
+      <div style="background-color: #e80812; color: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px;"><strong>Order Number:</strong> ${safeOrderNumber}</p>
+        <p style="margin: 0;"><strong>Business:</strong> ${safeBusinessName}</p>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <h3 style="color: #333; margin: 0 0 12px;">Requested Items</h3>
+        <table
+          role="presentation"
+          cellpadding="0"
+          cellspacing="0"
+          width="100%"
+          style="border-collapse: collapse; border: 1px solid #e0e0e0; background-color: #ffffff;"
+        >
+          <thead>
+            <tr style="background-color: #333333;">
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Item</th>
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">SKU</th>
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Category</th>
+              <th align="left" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Unit</th>
+              <th align="center" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Qty</th>
+              <th align="right" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Unit Price</th>
+              <th align="right" style="padding: 12px 10px; font-size: 12px; font-weight: 700; color: #ffffff; border-bottom: 2px solid #e80812; text-transform: uppercase; letter-spacing: 0.03em;">Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items
+              .map((item, index) => {
+                const safeSku = item.sku?.trim()
+                  ? escapeHtml(item.sku.trim())
+                  : "—";
+                const safeProductName = escapeHtml(item.productName);
+                const safeCategory = item.category?.trim()
+                  ? escapeHtml(item.category.trim())
+                  : "—";
+                const safeUnitLabel = escapeHtml(item.unitLabel);
+                const rowBackground = index % 2 === 0 ? "#ffffff" : "#f9f9f9";
+
+                return `
+            <tr style="background-color: ${rowBackground};">
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 14px; color: #222222; vertical-align: top;"><strong>${safeProductName}</strong></td>
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 12px; color: #555555; vertical-align: top; font-family: Consolas, Monaco, 'Courier New', monospace; white-space: nowrap;">${safeSku}</td>
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 13px; color: #555555; vertical-align: top;">${safeCategory}</td>
+              <td style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 13px; color: #555555; vertical-align: top; white-space: nowrap;">${safeUnitLabel}</td>
+              <td align="center" style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 14px; color: #222222; vertical-align: top; font-weight: 600;">${item.requestedQuantity}</td>
+              <td align="right" style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 13px; color: #555555; vertical-align: top; white-space: nowrap;">$${item.unitPrice.toFixed(2)}</td>
+              <td align="right" style="padding: 12px 10px; border-bottom: 1px solid #ececec; font-size: 14px; color: #222222; vertical-align: top; font-weight: 600; white-space: nowrap;">$${item.lineTotal.toFixed(2)}</td>
+            </tr>
+          `;
+              })
+              .join("")}
+          </tbody>
+          <tfoot>
+            <tr style="background-color: #fff5f5;">
+              <td colspan="6" align="right" style="padding: 14px 10px; font-size: 15px; font-weight: 700; color: #333333; border-top: 2px solid #e80812;">Estimated Total</td>
+              <td align="right" style="padding: 14px 10px; font-size: 18px; font-weight: 700; color: #e80812; border-top: 2px solid #e80812; white-space: nowrap;">$${requestedTotalAmount.toFixed(2)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <p style="color: #666; font-size: 13px; line-height: 1.5; margin: 0 0 20px;">
+        This is a confirmation of your request. Availability and final quantities will be confirmed separately.
+      </p>
+
+      <p style="color: #555555; font-size: 14px; line-height: 1.5; margin: 0 0 20px;">
+        If you have any questions, please contact us.
+      </p>
+
+      <p style="color: #333333; font-size: 14px; margin: 0 0 4px;">Thank you,</p>
+      <p style="color: #333333; font-size: 14px; font-weight: 600; margin: 0 0 24px;">Mashti Wholesale</p>
+
+      <p style="color: #999999; font-size: 12px; margin: 0;">Mashti Cafe — Wholesale</p>
+    </div>
+  `.trim();
+
+  return {
+    subject: `${subjectPrefix}: We received your order request (${orderNumber})`,
     text,
     html,
   };
