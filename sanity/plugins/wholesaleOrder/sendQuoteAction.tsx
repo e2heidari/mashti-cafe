@@ -60,7 +60,7 @@ function buildSendQuoteStudioUrl(): string | null {
 
 function blockedReason(doc: WholesaleOrderDoc | null | undefined): string {
   if (!doc) {
-    return "Save the order before sending a quote.";
+    return "Save the order before sending the final order to the customer.";
   }
 
   if (doc.finalEmailSentAt) {
@@ -73,7 +73,7 @@ function blockedReason(doc: WholesaleOrderDoc | null | undefined): string {
     case "sending_quote":
       return "A quote send is already in progress.";
     case "cancelled":
-      return "Cannot send a quote for a cancelled order.";
+      return "Cannot send the final order for a cancelled order.";
     default:
       return "This order cannot be sent in its current state.";
   }
@@ -85,11 +85,11 @@ export const SendQuoteAction: DocumentActionComponent = (props) => {
   const blocked = isSendBlocked(doc);
 
   return {
-    label: "Send quote to customer",
+    label: "Send final order to customer",
     disabled: blocked,
     title: blocked
       ? blockedReason(doc)
-      : "Email the finalized quote to the customer.",
+      : "Email the finalized order details to the customer.",
     onHandle: () => {
       void (async () => {
         try {
@@ -97,7 +97,7 @@ export const SendQuoteAction: DocumentActionComponent = (props) => {
           if (!sendQuoteUrl) {
             toast.push({
               status: "error",
-              title: "Send quote not configured",
+              title: "Send final order not configured",
               description:
                 "Set SANITY_STUDIO_NEXT_APP_URL (e.g. http://localhost:3000) in .env.local and restart Studio.",
             });
