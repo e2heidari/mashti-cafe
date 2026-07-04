@@ -20,13 +20,17 @@ function resolveCors(request: NextRequest): {
   allowed: boolean;
   reflectOrigin: string | null;
 } {
+  const allowedOrigins = parseStudioOrigins();
   const origin = request.headers.get("origin")?.trim();
 
-  if (!origin) {
-    return { allowed: true, reflectOrigin: null };
+  if (allowedOrigins.length === 0) {
+    return { allowed: false, reflectOrigin: null };
   }
 
-  const allowedOrigins = parseStudioOrigins();
+  if (!origin) {
+    return { allowed: false, reflectOrigin: null };
+  }
+
   if (allowedOrigins.includes(origin)) {
     return { allowed: true, reflectOrigin: origin };
   }

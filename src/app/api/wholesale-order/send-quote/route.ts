@@ -389,6 +389,7 @@ export async function POST(request: NextRequest) {
         .patch(order._id)
         .ifRevisionId(lockRev)
         .set({
+          finalizedTotalAmount,
           finalEmailSentAt: now,
           finalEmailSentTo: customerEmail,
           status: "quote_sent",

@@ -181,7 +181,7 @@ export default defineType({
       type: 'array',
       group: 'finalized',
       description:
-        'Seller-edited quote lines. Adjust quantity and unit price, remove unavailable products, then update Finalized Total Amount before sending the quote.',
+        'Seller-edited quote lines. Adjust quantity and unit price, remove unavailable products, then send the quote.',
       of: [
         {
           type: 'object',
@@ -288,8 +288,9 @@ export default defineType({
       title: 'Finalized Total Amount',
       type: 'number',
       group: 'finalized',
+      readOnly: true,
       description:
-        'Total for the final quote. Update to match the sum of finalized line totals after editing items.',
+        'Sum of finalized line totals. Synced automatically when the quote email is sent.',
       validation: (Rule) => Rule.min(0),
     }),
     defineField({
