@@ -1,5 +1,7 @@
 import { defineField, defineType } from 'sanity'
 
+import { FinalizedTotalPreviewInput } from '../sanity/plugins/wholesaleOrder/FinalizedTotalPreviewInput'
+
 export default defineType({
   name: 'wholesaleOrder',
   title: 'Wholesale Order',
@@ -282,6 +284,18 @@ export default defineType({
         },
       ],
       validation: (Rule) => Rule.required().min(1),
+    }),
+    defineField({
+      name: 'finalizedTotalPreview',
+      title: 'Current Calculated Quote Total',
+      type: 'string',
+      group: 'finalized',
+      readOnly: true,
+      description:
+        'Live preview from finalized line items. Does not overwrite saved quote data.',
+      components: {
+        input: FinalizedTotalPreviewInput,
+      },
     }),
     defineField({
       name: 'finalizedTotalAmount',
