@@ -44,6 +44,7 @@ export interface WholesaleOrderLineItemInput {
 
 export interface WholesaleOrderLineItem extends WholesaleOrderLineItemInput {
   lineTotal: number;
+  _key?: string;
 }
 
 export interface WholesaleOrderFinalizedLineItem {
@@ -57,6 +58,7 @@ export interface WholesaleOrderFinalizedLineItem {
   unitPrice: number;
   finalizedQuantity: number;
   lineTotal: number;
+  _key?: string;
 }
 
 /** Raw finalized line from Sanity — lineTotal is not trusted until recalculated. */
@@ -71,6 +73,7 @@ export interface WholesaleOrderFinalizedLineItemInput {
   unitPrice: number;
   finalizedQuantity: number;
   lineTotal?: number;
+  _key?: string;
 }
 
 export interface WholesaleOrderRequestPayload {

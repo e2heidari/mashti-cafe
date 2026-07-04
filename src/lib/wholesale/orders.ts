@@ -13,6 +13,19 @@ function isOptionalString(value: unknown): boolean {
   return value === undefined || value === null || typeof value === "string";
 }
 
+/** Sanity array item key — unique within one array on a document. */
+export function generateArrayItemKey(): string {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+}
+
+function resolveArrayItemKey(existingKey: unknown): string {
+  if (typeof existingKey === "string" && existingKey.trim().length > 0) {
+    return existingKey.trim();
+  }
+
+  return generateArrayItemKey();
+}
+
 export function generateOrderNumber(now = new Date()): string {
   const datePart = [
     now.getFullYear(),
@@ -36,6 +49,7 @@ export function normalizeOrderItems(
 ): WholesaleOrderLineItem[] {
   return items.map((item) => ({
     ...item,
+    _key: generateArrayItemKey(),
     sku: item.sku?.trim() || "",
     category: item.category?.trim() || "",
     lineTotal: calculateLineTotal(item.unitPrice, item.requestedQuantity),
@@ -66,6 +80,7 @@ export function seedFinalizedItemsFromRequested(
       unitLabel: item.unitLabel,
       unitPrice: item.unitPrice,
       finalizedQuantity: item.requestedQuantity,
+      _key: item._key,
     })
   );
 }
@@ -115,6 +130,7 @@ export function recalculateFinalizedLineItem(
   const finalizedQuantity = item.finalizedQuantity;
 
   return {
+    _key: resolveArrayItemKey(item._key),
     productId: item.productId.trim(),
     sku: item.sku?.trim() || "",
     category: item.category?.trim() || "",
