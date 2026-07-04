@@ -9,8 +9,15 @@ import {
 import type { WholesaleOrderCustomer } from "@/lib/wholesale/types";
 import { getSanityWriteClient } from "@/sanity/lib/writeClient";
 
+const BLOCKED_SEND_STATUSES = new Set([
+  "quote_sent",
+  "sending_quote",
+  "cancelled",
+]);
+
 type WholesaleOrderDocument = {
   _id: string;
+  _rev: string;
   orderNumber: string;
   status: string;
   customer?: Partial<WholesaleOrderCustomer>;
@@ -48,6 +55,27 @@ function isResendConfigured(apiKey: string | undefined): apiKey is string {
   );
 }
 
+function blockedStatusMessage(status: string): string {
+  switch (status) {
+    case "cancelled":
+      return "Cannot send a quote for a cancelled order.";
+    case "quote_sent":
+      return "A quote has already been sent for this order.";
+    case "sending_quote":
+      return "A quote send is already in progress for this order.";
+    default:
+      return "This order cannot be sent in its current state.";
+  }
+}
+
+async function patchOrderStatus(
+  writeClient: ReturnType<typeof getSanityWriteClient>,
+  orderId: string,
+  status: string
+): Promise<void> {
+  await writeClient.patch(orderId).set({ status }).commit();
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.WHOLESALE_SEND_QUOTE_SECRET?.trim()) {
@@ -82,6 +110,7 @@ export async function POST(request: NextRequest) {
     const order = await writeClient.fetch<WholesaleOrderDocument | null>(
       `*[_type == "wholesaleOrder" && _id == $orderId][0]{
         _id,
+        _rev,
         orderNumber,
         status,
         customer,
@@ -99,13 +128,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (order.status === "cancelled") {
+    if (BLOCKED_SEND_STATUSES.has(order.status)) {
       return NextResponse.json(
         {
           success: false,
-          message: "Cannot send a quote for a cancelled order.",
+          message: blockedStatusMessage(order.status),
         },
-        { status: 400 }
+        { status: order.status === "sending_quote" ? 409 : 400 }
       );
     }
 
@@ -178,6 +207,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    try {
+      await writeClient
+        .patch(order._id)
+        .ifRevisionId(order._rev)
+        .set({ status: "sending_quote" })
+        .commit();
+    } catch (lockError) {
+      console.error("Failed to lock wholesale order for quote send:", lockError);
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Could not start quote send. Another send may be in progress or the order was updated.",
+        },
+        { status: 409 }
+      );
+    }
+
     const fromEmail =
       process.env.WHOLESALE_FROM_EMAIL ||
       "Mashti Wholesale <onboarding@resend.dev>";
@@ -206,10 +253,20 @@ export async function POST(request: NextRequest) {
 
     if (error) {
       console.error("Failed to send wholesale quote email:", error);
+
+      try {
+        await patchOrderStatus(writeClient, order._id, "quote_send_failed");
+      } catch (statusError) {
+        console.error(
+          "Failed to mark wholesale order as quote_send_failed:",
+          statusError
+        );
+      }
+
       return NextResponse.json(
         {
           success: false,
-          message: "Failed to send quote email. Order was not updated.",
+          message: "Failed to send quote email. Order was not marked as sent.",
         },
         { status: 502 }
       );
@@ -217,17 +274,32 @@ export async function POST(request: NextRequest) {
 
     const now = new Date().toISOString();
 
-    await writeClient
-      .patch(order._id)
-      .set({
-        finalizedItems,
-        finalizedTotalAmount,
-        finalizedAt: now,
-        finalEmailSentAt: now,
-        finalEmailSentTo: customerEmail,
-        status: "quote_sent",
-      })
-      .commit();
+    try {
+      await writeClient
+        .patch(order._id)
+        .set({
+          finalizedItems,
+          finalizedTotalAmount,
+          finalizedAt: now,
+          finalEmailSentAt: now,
+          finalEmailSentTo: customerEmail,
+          status: "quote_sent",
+        })
+        .commit();
+    } catch (patchError) {
+      console.error(
+        "Quote email sent but failed to finalize wholesale order:",
+        patchError
+      );
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Quote email was sent, but the order could not be finalized. Status remains sending_quote — contact support before retrying.",
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
