@@ -6,7 +6,10 @@ import {
   isValidFinalizedItems,
   normalizeFinalizedItems,
 } from "@/lib/wholesale/orders";
-import type { WholesaleOrderCustomer } from "@/lib/wholesale/types";
+import type {
+  WholesaleOrderCustomer,
+  WholesaleOrderFinalizedLineItem,
+} from "@/lib/wholesale/types";
 import { getSanityWriteClient } from "@/sanity/lib/writeClient";
 
 const BLOCKED_SEND_STATUSES = new Set([
@@ -25,6 +28,15 @@ type WholesaleOrderDocument = {
   sellerNote?: string | null;
   finalEmailSentAt?: string | null;
 };
+
+type PreparedQuote = {
+  customer: WholesaleOrderCustomer;
+  customerEmail: string;
+  finalizedItems: WholesaleOrderFinalizedLineItem[];
+  finalizedTotalAmount: number;
+};
+
+type WriteClient = ReturnType<typeof getSanityWriteClient>;
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
@@ -68,12 +80,90 @@ function blockedStatusMessage(status: string): string {
   }
 }
 
-async function patchOrderStatus(
-  writeClient: ReturnType<typeof getSanityWriteClient>,
+const ORDER_PROJECTION = `{
+  _id,
+  _rev,
+  orderNumber,
+  status,
+  customer,
+  finalizedItems,
+  sellerNote,
+  finalEmailSentAt
+}`;
+
+async function fetchOrder(
+  writeClient: WriteClient,
+  orderId: string
+): Promise<WholesaleOrderDocument | null> {
+  return writeClient.fetch<WholesaleOrderDocument | null>(
+    `*[_type == "wholesaleOrder" && _id == $orderId][0]${ORDER_PROJECTION}`,
+    { orderId }
+  );
+}
+
+function prepareQuote(order: WholesaleOrderDocument):
+  | { ok: true; quote: PreparedQuote }
+  | { ok: false; message: string } {
+  const customerEmail = order.customer?.email?.trim();
+  if (!customerEmail || !isValidEmail(customerEmail)) {
+    return {
+      ok: false,
+      message: "Customer email is missing or invalid.",
+    };
+  }
+
+  if (!isValidFinalizedItems(order.finalizedItems)) {
+    return {
+      ok: false,
+      message:
+        "Finalized items are missing or invalid. Review quantity and unit price for each line.",
+    };
+  }
+
+  const finalizedItems = normalizeFinalizedItems(order.finalizedItems);
+  const finalizedTotalAmount = calculateFinalizedTotal(finalizedItems);
+
+  const customer: WholesaleOrderCustomer = {
+    businessName: order.customer?.businessName?.trim() || "",
+    contactName: order.customer?.contactName?.trim() || "",
+    email: customerEmail,
+    phone: order.customer?.phone?.trim() || "",
+    deliveryAddress: order.customer?.deliveryAddress?.trim() || "",
+    message: order.customer?.message?.trim() || "",
+  };
+
+  if (
+    !isNonEmptyString(customer.businessName) ||
+    !isNonEmptyString(customer.contactName)
+  ) {
+    return {
+      ok: false,
+      message: "Customer business or contact name is missing.",
+    };
+  }
+
+  return {
+    ok: true,
+    quote: {
+      customer,
+      customerEmail,
+      finalizedItems,
+      finalizedTotalAmount,
+    },
+  };
+}
+
+async function patchOrderStatusAtRevision(
+  writeClient: WriteClient,
   orderId: string,
+  revision: string,
   status: string
 ): Promise<void> {
-  await writeClient.patch(orderId).set({ status }).commit();
+  await writeClient
+    .patch(orderId)
+    .ifRevisionId(revision)
+    .set({ status })
+    .commit();
 }
 
 export async function POST(request: NextRequest) {
@@ -106,20 +196,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const trimmedOrderId = orderId.trim();
     const writeClient = getSanityWriteClient();
-    const order = await writeClient.fetch<WholesaleOrderDocument | null>(
-      `*[_type == "wholesaleOrder" && _id == $orderId][0]{
-        _id,
-        _rev,
-        orderNumber,
-        status,
-        customer,
-        finalizedItems,
-        sellerNote,
-        finalEmailSentAt
-      }`,
-      { orderId: orderId.trim() }
-    );
+    const order = await fetchOrder(writeClient, trimmedOrderId);
 
     if (!order) {
       return NextResponse.json(
@@ -148,49 +227,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const customerEmail = order.customer?.email?.trim();
-    if (!customerEmail || !isValidEmail(customerEmail)) {
+    const initialQuote = prepareQuote(order);
+    if (!initialQuote.ok) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "Customer email is missing or invalid.",
-        },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidFinalizedItems(order.finalizedItems)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "Finalized items are missing or invalid. Review quantity and unit price for each line.",
-        },
-        { status: 400 }
-      );
-    }
-
-    const finalizedItems = normalizeFinalizedItems(order.finalizedItems);
-    const finalizedTotalAmount = calculateFinalizedTotal(finalizedItems);
-
-    const customer: WholesaleOrderCustomer = {
-      businessName: order.customer?.businessName?.trim() || "",
-      contactName: order.customer?.contactName?.trim() || "",
-      email: customerEmail,
-      phone: order.customer?.phone?.trim() || "",
-      deliveryAddress: order.customer?.deliveryAddress?.trim() || "",
-      message: order.customer?.message?.trim() || "",
-    };
-
-    if (
-      !isNonEmptyString(customer.businessName) ||
-      !isNonEmptyString(customer.contactName)
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Customer business or contact name is missing.",
-        },
+        { success: false, message: initialQuote.message },
         { status: 400 }
       );
     }
@@ -225,6 +265,48 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const lockedOrder = await fetchOrder(writeClient, trimmedOrderId);
+    if (!lockedOrder || lockedOrder.status !== "sending_quote") {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Quote send lock could not be verified. Refresh the order and try again.",
+        },
+        { status: 409 }
+      );
+    }
+
+    const lockRev = lockedOrder._rev;
+    const lockedQuote = prepareQuote(lockedOrder);
+    if (!lockedQuote.ok) {
+      try {
+        await patchOrderStatusAtRevision(
+          writeClient,
+          order._id,
+          lockRev,
+          "quote_send_failed"
+        );
+      } catch (statusError) {
+        console.error(
+          "Failed to mark wholesale order as quote_send_failed after lock validation:",
+          statusError
+        );
+      }
+
+      return NextResponse.json(
+        { success: false, message: lockedQuote.message },
+        { status: 400 }
+      );
+    }
+
+    const {
+      customer,
+      customerEmail,
+      finalizedItems,
+      finalizedTotalAmount,
+    } = lockedQuote.quote;
+
     const fromEmail =
       process.env.WHOLESALE_FROM_EMAIL ||
       "Mashti Wholesale <onboarding@resend.dev>";
@@ -232,11 +314,11 @@ export async function POST(request: NextRequest) {
       process.env.WHOLESALE_SUBJECT_PREFIX || "Mashti Wholesale";
 
     const emailContent = buildCustomerQuoteEmail({
-      orderNumber: order.orderNumber,
+      orderNumber: lockedOrder.orderNumber,
       customer,
       items: finalizedItems,
       finalizedTotalAmount,
-      sellerNote: order.sellerNote,
+      sellerNote: lockedOrder.sellerNote,
       subjectPrefix,
     });
 
@@ -255,7 +337,12 @@ export async function POST(request: NextRequest) {
       console.error("Failed to send wholesale quote email:", error);
 
       try {
-        await patchOrderStatus(writeClient, order._id, "quote_send_failed");
+        await patchOrderStatusAtRevision(
+          writeClient,
+          order._id,
+          lockRev,
+          "quote_send_failed"
+        );
       } catch (statusError) {
         console.error(
           "Failed to mark wholesale order as quote_send_failed:",
@@ -277,6 +364,7 @@ export async function POST(request: NextRequest) {
     try {
       await writeClient
         .patch(order._id)
+        .ifRevisionId(lockRev)
         .set({
           finalizedItems,
           finalizedTotalAmount,
@@ -295,15 +383,15 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           message:
-            "Quote email was sent, but the order could not be finalized. Status remains sending_quote — contact support before retrying.",
+            "Quote email was sent, but the order was changed before it could be finalized. Status remains sending_quote — review the order in Sanity before retrying.",
         },
-        { status: 500 }
+        { status: 409 }
       );
     }
 
     return NextResponse.json({
       success: true,
-      orderNumber: order.orderNumber,
+      orderNumber: lockedOrder.orderNumber,
       message: "Quote email sent successfully.",
       finalEmailSentTo: customerEmail,
     });
