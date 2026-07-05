@@ -57,7 +57,7 @@ export function FinalizedTotalPreviewInput(_props: StringInputProps) {
     <Card padding={4} radius={2} shadow={1} tone="transparent" border>
       <Stack space={3}>
         <Text size={1} weight="semibold">
-          Current calculated quote total
+          Current calculated order total
         </Text>
         <Flex align="center" gap={3}>
           <Text size={4} weight="bold" style={{ color: "#e80812" }}>

@@ -236,7 +236,7 @@ ${itemsText}
 
 Estimated Total: $${requestedTotalAmount.toFixed(2)}
 
-Our team will review your request and follow up with final quote and order details by email.
+Our team will review your request and follow up with your final order details by email.
 
 If you have any questions, please contact us.
 
@@ -256,7 +256,7 @@ Mashti Wholesale
       </p>
 
       <p style="color: #555555; font-size: 14px; line-height: 1.5; margin: 0 0 20px;">
-        Our team will follow up with final quote and order details by email.
+        Our team will follow up with your final order details by email.
       </p>
 
       <div style="background-color: #e80812; color: white; padding: 16px 20px; border-radius: 8px; margin-bottom: 20px;">

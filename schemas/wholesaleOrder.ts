@@ -29,7 +29,7 @@ export default defineType({
   type: 'document',
   groups: [
     { name: 'requested', title: 'Requested Order Info', default: true },
-    { name: 'finalized', title: 'Finalized Quote Info' },
+    { name: 'finalized', title: 'Finalized Order Info' },
     { name: 'emailTracking', title: 'Email / Send Tracking' },
     { ...ALL_FIELDS_GROUP, hidden: true },
   ],
@@ -52,12 +52,18 @@ export default defineType({
       },
       initialValue: 'submitted',
       validation: (Rule) => Rule.required(),
+      readOnly: true,
+      description:
+        'Part of the customer request snapshot. Status is updated automatically by the order workflow.',
     }),
     defineField({
       name: 'customer',
       title: 'Customer',
       type: 'object',
       group: 'requested',
+      readOnly: true,
+      description:
+        "Requested Order Info contains the customer's original request and cannot be edited.",
       fields: [
         defineField({
           name: 'businessName',
@@ -103,8 +109,9 @@ export default defineType({
       title: 'Requested Items',
       type: 'array',
       group: 'requested',
+      readOnly: true,
       description:
-        'Original customer request snapshot at submit time. Use for reference only — edit the Finalized Items tab to prepare the quote.',
+        "Requested Order Info contains the customer's original request and cannot be edited. Use Finalized Order Info to prepare the final order.",
       of: [
         {
           type: 'object',
@@ -183,6 +190,7 @@ export default defineType({
       title: 'Requested Total Amount',
       type: 'number',
       group: 'requested',
+      readOnly: true,
       validation: (Rule) => Rule.required().min(0),
     }),
     defineField({
@@ -199,7 +207,7 @@ export default defineType({
       type: 'array',
       group: 'finalized',
       description:
-        'Seller-edited quote lines. Adjust quantity and unit price, remove unavailable products, then send the quote.',
+        'Use Finalized Order Info to prepare the final order before sending it to the customer. Adjust quantity and unit price, remove unavailable products, then send the final order.',
       of: [
         {
           type: 'object',
@@ -266,7 +274,7 @@ export default defineType({
               name: 'finalizedQuantity',
               title: 'Finalized Quantity',
               type: 'number',
-              description: 'Quantity included in the final quote.',
+              description: 'Quantity included in the final order.',
               validation: (Rule) => Rule.required().min(1),
             }),
             defineField({
@@ -303,12 +311,12 @@ export default defineType({
     }),
     defineField({
       name: 'finalizedTotalPreview',
-      title: 'Current Calculated Quote Total',
+      title: 'Current Calculated Order Total',
       type: 'string',
       group: 'finalized',
       readOnly: true,
       description:
-        'Live preview from finalized line items. Does not overwrite saved quote data.',
+        'Live preview from finalized line items. Preview only. Does not modify the saved order.',
       components: {
         input: FinalizedTotalPreviewInput,
       },
@@ -328,13 +336,14 @@ export default defineType({
       title: 'Seller Note',
       type: 'text',
       group: 'finalized',
-      description: 'Note from seller included in final quote email.',
+      description: 'Note from seller included in the quote email.',
     }),
     defineField({
       name: 'finalizedAt',
       title: 'Finalized At',
       type: 'datetime',
       group: 'finalized',
+      readOnly: true,
     }),
     defineField({
       name: 'finalEmailSentAt',
@@ -350,7 +359,7 @@ export default defineType({
       type: 'string',
       group: 'emailTracking',
       readOnly: true,
-      description: 'Customer email address that received the final quote.',
+      description: 'Customer email address that received the quote email.',
     }),
   ],
   preview: {
