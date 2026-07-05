@@ -2,6 +2,27 @@ import { ALL_FIELDS_GROUP, defineField, defineType } from 'sanity'
 
 import { FinalizedTotalPreviewInput } from '../sanity/plugins/wholesaleOrder/FinalizedTotalPreviewInput'
 
+const WHOLESALE_ORDER_STATUS_OPTIONS = [
+  { title: 'Submitted', value: 'submitted' },
+  { title: 'Under Review', value: 'under_review' },
+  { title: 'Finalized', value: 'finalized' },
+  { title: 'Sending final order', value: 'sending_quote' },
+  { title: 'Final order sent', value: 'quote_sent' },
+  { title: 'Final order send failed', value: 'quote_send_failed' },
+  { title: 'Cancelled', value: 'cancelled' },
+] as const
+
+function wholesaleOrderStatusLabel(status: string | undefined): string {
+  if (!status) {
+    return 'Submitted'
+  }
+
+  return (
+    WHOLESALE_ORDER_STATUS_OPTIONS.find((option) => option.value === status)
+      ?.title ?? status
+  )
+}
+
 export default defineType({
   name: 'wholesaleOrder',
   title: 'Wholesale Order',
@@ -27,15 +48,7 @@ export default defineType({
       type: 'string',
       group: 'requested',
       options: {
-        list: [
-          { title: 'Submitted', value: 'submitted' },
-          { title: 'Under Review', value: 'under_review' },
-          { title: 'Finalized', value: 'finalized' },
-          { title: 'Sending Quote', value: 'sending_quote' },
-          { title: 'Quote Sent', value: 'quote_sent' },
-          { title: 'Quote Send Failed', value: 'quote_send_failed' },
-          { title: 'Cancelled', value: 'cancelled' },
-        ],
+        list: [...WHOLESALE_ORDER_STATUS_OPTIONS],
       },
       initialValue: 'submitted',
       validation: (Rule) => Rule.required(),
@@ -348,9 +361,10 @@ export default defineType({
       submittedAt: 'submittedAt',
     },
     prepare({ orderNumber, businessName, status, submittedAt }) {
+      const statusLabel = wholesaleOrderStatusLabel(status)
       return {
         title: orderNumber || 'Wholesale Order',
-        subtitle: `${businessName || 'Unknown business'} • ${status || 'submitted'} • ${submittedAt ? new Date(submittedAt).toLocaleDateString() : ''}`,
+        subtitle: `${businessName || 'Unknown business'} • ${statusLabel} • ${submittedAt ? new Date(submittedAt).toLocaleDateString() : ''}`,
       }
     },
   },

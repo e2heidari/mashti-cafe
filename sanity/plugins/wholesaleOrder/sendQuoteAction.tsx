@@ -69,9 +69,9 @@ function blockedReason(doc: WholesaleOrderDoc | null | undefined): string {
 
   switch (doc.status) {
     case "quote_sent":
-      return "This order is already marked as quote sent.";
+      return "This order is already marked as final order sent.";
     case "sending_quote":
-      return "A quote send is already in progress.";
+      return "Sending final order is already in progress.";
     case "cancelled":
       return "Cannot send a quote for a cancelled order.";
     default:
