@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { buildCustomerQuoteEmail } from "@/lib/wholesale/emails";
+import { buildAdminFinalOrderCopyEmail, buildCustomerQuoteEmail } from "@/lib/wholesale/emails";
 import {
   calculateFinalizedTotal,
   isValidFinalizedItems,
   normalizeFinalizedItems,
+  parseWholesaleAdminEmails,
 } from "@/lib/wholesale/orders";
 import type {
   WholesaleOrderCustomer,
@@ -197,6 +198,89 @@ async function handleQuoteEmailSendFailure(
   );
 }
 
+type ResendEmailClient = {
+  emails: {
+    send: (payload: {
+      from: string;
+      to: string[];
+      subject: string;
+      text: string;
+      html: string;
+    }) => Promise<{ error?: unknown }>;
+  };
+};
+
+async function trySendAdminFinalOrderCopy({
+  resend,
+  fromEmail,
+  subjectPrefix,
+  orderNumber,
+  customer,
+  customerEmail,
+  finalizedItems,
+  finalizedTotalAmount,
+  sellerNote,
+}: {
+  resend: ResendEmailClient;
+  fromEmail: string;
+  subjectPrefix: string;
+  orderNumber: string;
+  customer: WholesaleOrderCustomer;
+  customerEmail: string;
+  finalizedItems: WholesaleOrderFinalizedLineItem[];
+  finalizedTotalAmount: number;
+  sellerNote?: string | null;
+}): Promise<boolean> {
+  const customerEmailLower = customerEmail.toLowerCase();
+  const adminEmails = parseWholesaleAdminEmails().filter(
+    (email) => email.toLowerCase() !== customerEmailLower
+  );
+
+  if (adminEmails.length === 0) {
+    return false;
+  }
+
+  const adminEmailContent = buildAdminFinalOrderCopyEmail({
+    orderNumber,
+    customer,
+    customerEmail,
+    items: finalizedItems,
+    finalizedTotalAmount,
+    sellerNote,
+    subjectPrefix,
+  });
+
+  try {
+    const { error } = await resend.emails.send({
+      from: fromEmail,
+      to: adminEmails,
+      subject: adminEmailContent.subject,
+      text: adminEmailContent.text,
+      html: adminEmailContent.html,
+    });
+
+    if (error) {
+      console.error(
+        "Customer quote email sent, but admin final order copy failed:",
+        error
+      );
+      console.log("Order Number:", orderNumber);
+      console.log("Admin recipients:", adminEmails.join(", "));
+      return true;
+    }
+  } catch (adminSendError) {
+    console.error(
+      "Customer quote email sent, but admin final order copy failed:",
+      adminSendError
+    );
+    console.log("Order Number:", orderNumber);
+    console.log("Admin recipients:", adminEmails.join(", "));
+    return true;
+  }
+
+  return false;
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.WHOLESALE_SEND_QUOTE_SECRET?.trim()) {
@@ -382,6 +466,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const adminCopyWarning = await trySendAdminFinalOrderCopy({
+      resend,
+      fromEmail,
+      subjectPrefix,
+      orderNumber: lockedOrder.orderNumber,
+      customer,
+      customerEmail,
+      finalizedItems,
+      finalizedTotalAmount,
+      sellerNote: lockedOrder.sellerNote,
+    });
+
     const now = new Date().toISOString();
 
     try {
@@ -413,8 +509,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderNumber: lockedOrder.orderNumber,
-      message: "Quote email sent successfully.",
+      message: adminCopyWarning
+        ? "Quote email sent successfully. Admin copy could not be delivered — check server logs."
+        : "Quote email sent successfully.",
       finalEmailSentTo: customerEmail,
+      ...(adminCopyWarning ? { adminCopyWarning: true } : {}),
     });
   } catch (error) {
     console.error("Wholesale send quote API error:", error);
