@@ -44,6 +44,36 @@ export interface WholesaleOrderLineItemInput {
 
 export interface WholesaleOrderLineItem extends WholesaleOrderLineItemInput {
   lineTotal: number;
+  _key?: string;
+}
+
+export interface WholesaleOrderFinalizedLineItem {
+  productId: string;
+  sku?: string;
+  productName: string;
+  category?: string;
+  unitType: string;
+  unitValue: number;
+  unitLabel: string;
+  unitPrice: number;
+  finalizedQuantity: number;
+  lineTotal: number;
+  _key?: string;
+}
+
+/** Raw finalized line from Sanity — lineTotal is not trusted until recalculated. */
+export interface WholesaleOrderFinalizedLineItemInput {
+  productId: string;
+  sku?: string;
+  productName: string;
+  category?: string;
+  unitType: string;
+  unitValue: number;
+  unitLabel: string;
+  unitPrice: number;
+  finalizedQuantity: number;
+  lineTotal?: number;
+  _key?: string;
 }
 
 export interface WholesaleOrderRequestPayload {
