@@ -35,8 +35,7 @@ function isSendBlocked(doc: WholesaleOrderDoc | null | undefined): boolean {
   return BLOCKED_STATUSES.has(doc.status ?? "");
 }
 
-function resolveNextAppBaseUrl(): string | null {
-  const raw = import.meta.env.SANITY_STUDIO_NEXT_APP_URL;
+function normalizeBaseUrl(raw: string | null | undefined): string | null {
   if (typeof raw !== "string") {
     return null;
   }
@@ -47,6 +46,62 @@ function resolveNextAppBaseUrl(): string | null {
   }
 
   return trimmed.replace(/\/+$/, "");
+}
+
+/**
+ * Read env without touching import.meta.env (undefined in Next-embedded Studio).
+ */
+function readProcessEnv(key: string): string | null {
+  try {
+    if (typeof process === "undefined" || !process?.env) {
+      return null;
+    }
+
+    const value = process.env[key];
+    return typeof value === "string" ? value : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Standalone `sanity dev` origin — never treat as the Next.js API host. */
+function isStandaloneSanityStudioOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    const isLocal =
+      url.hostname === "localhost" || url.hostname === "127.0.0.1";
+    return isLocal && url.port === "3333";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve the Next app origin for the Studio send-quote proxy.
+ * Order: SANITY_STUDIO_NEXT_APP_URL → NEXT_PUBLIC_SANITY_STUDIO_NEXT_APP_URL →
+ * same-origin window.location.origin (embedded Studio only; never localhost:3333).
+ */
+function resolveNextAppBaseUrl(): string | null {
+  const configured =
+    normalizeBaseUrl(readProcessEnv("SANITY_STUDIO_NEXT_APP_URL")) ||
+    normalizeBaseUrl(readProcessEnv("NEXT_PUBLIC_SANITY_STUDIO_NEXT_APP_URL"));
+
+  if (configured) {
+    return configured;
+  }
+
+  try {
+    if (typeof window !== "undefined" && window.location?.origin) {
+      const origin = normalizeBaseUrl(window.location.origin);
+      if (origin && !isStandaloneSanityStudioOrigin(origin)) {
+        return origin;
+      }
+    }
+  } catch {
+    // ignore — fall through to null
+  }
+
+  return null;
 }
 
 function buildSendQuoteStudioUrl(): string | null {
@@ -99,7 +154,7 @@ export const SendQuoteAction: DocumentActionComponent = (props) => {
               status: "error",
               title: "Send final order not configured",
               description:
-                "Set SANITY_STUDIO_NEXT_APP_URL (e.g. http://localhost:3000) in .env.local and restart Studio.",
+                "Set SANITY_STUDIO_NEXT_APP_URL or NEXT_PUBLIC_SANITY_STUDIO_NEXT_APP_URL to your Next app origin (e.g. http://localhost:3000), then restart Studio.",
             });
             return;
           }
