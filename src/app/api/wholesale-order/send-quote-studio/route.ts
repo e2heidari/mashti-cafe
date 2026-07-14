@@ -16,26 +16,67 @@ function parseStudioOrigins(): string[] {
     .filter(Boolean);
 }
 
-function resolveCors(request: NextRequest): {
+type CorsDecision = {
   allowed: boolean;
   reflectOrigin: string | null;
-} {
-  const allowedOrigins = parseStudioOrigins();
-  const origin = request.headers.get("origin")?.trim();
+  denyReason:
+    | "missing_origin"
+    | "empty_allowlist"
+    | "origin_not_in_allowlist"
+    | null;
+};
 
-  if (allowedOrigins.length === 0) {
-    return { allowed: false, reflectOrigin: null };
+function resolveCors(request: NextRequest): CorsDecision {
+  const allowedOrigins = parseStudioOrigins();
+  const origin = request.headers.get("origin")?.trim() || null;
+  const requestOrigin = new URL(request.url).origin;
+
+  // Embedded Studio on the same deployed host (e.g. /studio → /api).
+  if (origin && origin === requestOrigin) {
+    return { allowed: true, reflectOrigin: origin, denyReason: null };
   }
 
   if (!origin) {
-    return { allowed: false, reflectOrigin: null };
+    return {
+      allowed: false,
+      reflectOrigin: null,
+      denyReason: "missing_origin",
+    };
+  }
+
+  if (allowedOrigins.length === 0) {
+    return {
+      allowed: false,
+      reflectOrigin: null,
+      denyReason: "empty_allowlist",
+    };
   }
 
   if (allowedOrigins.includes(origin)) {
-    return { allowed: true, reflectOrigin: origin };
+    return { allowed: true, reflectOrigin: origin, denyReason: null };
   }
 
-  return { allowed: false, reflectOrigin: null };
+  return {
+    allowed: false,
+    reflectOrigin: null,
+    denyReason: "origin_not_in_allowlist",
+  };
+}
+
+function logCorsDenial(request: NextRequest, cors: CorsDecision): void {
+  const origin = request.headers.get("origin")?.trim() || null;
+  const requestOrigin = new URL(request.url).origin;
+  const allowlist = parseStudioOrigins();
+
+  console.warn("Wholesale send-quote-studio origin denied", {
+    origin,
+    originMissing: !origin,
+    requestOrigin,
+    allowlist,
+    matched: false,
+    denyReason: cors.denyReason,
+    sameOriginWouldMatch: Boolean(origin && origin === requestOrigin),
+  });
 }
 
 function corsHeaders(reflectOrigin: string | null): HeadersInit {
@@ -66,6 +107,7 @@ export async function OPTIONS(request: NextRequest) {
   const cors = resolveCors(request);
 
   if (!cors.allowed) {
+    logCorsDenial(request, cors);
     return new NextResponse(null, { status: 403 });
   }
 
@@ -79,6 +121,7 @@ export async function POST(request: NextRequest) {
   const cors = resolveCors(request);
 
   if (!cors.allowed) {
+    logCorsDenial(request, cors);
     return corsJsonResponse(
       { success: false, message: "Origin not allowed." },
       403,
