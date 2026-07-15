@@ -167,13 +167,54 @@ async function patchOrderStatusAtRevision(
     .commit();
 }
 
+function describeEmailSendError(sendError: unknown): string {
+  if (!sendError) {
+    return "unknown email provider error";
+  }
+
+  if (typeof sendError === "string") {
+    return sendError;
+  }
+
+  if (sendError instanceof Error) {
+    return `${sendError.name}: ${sendError.message}`;
+  }
+
+  if (typeof sendError === "object") {
+    const candidate = sendError as {
+      message?: unknown;
+      name?: unknown;
+      statusCode?: unknown;
+    };
+    const parts = [
+      typeof candidate.name === "string" ? candidate.name : null,
+      typeof candidate.message === "string" ? candidate.message : null,
+      typeof candidate.statusCode === "number"
+        ? `statusCode=${candidate.statusCode}`
+        : null,
+    ].filter(Boolean);
+
+    if (parts.length > 0) {
+      return parts.join(" — ");
+    }
+  }
+
+  return String(sendError);
+}
+
 async function handleQuoteEmailSendFailure(
   writeClient: WriteClient,
   orderId: string,
   lockRev: string,
   sendError: unknown
 ): Promise<NextResponse> {
-  console.error("Failed to send wholesale quote email:", sendError);
+  const emailError = describeEmailSendError(sendError);
+  console.error("Failed to send wholesale quote email:", {
+    emailError,
+    sendError,
+    fromEmailConfigured: Boolean(process.env.WHOLESALE_FROM_EMAIL?.trim()),
+    resendConfigured: Boolean(process.env.RESEND_API_KEY?.trim()),
+  });
 
   try {
     await patchOrderStatusAtRevision(
@@ -192,7 +233,8 @@ async function handleQuoteEmailSendFailure(
   return NextResponse.json(
     {
       success: false,
-      message: "Failed to send quote email. Order was not marked as sent.",
+      message:
+        "Failed to send quote email. Order was not marked as sent. Check RESEND_API_KEY, WHOLESALE_FROM_EMAIL, and email provider logs.",
     },
     { status: 502 }
   );
